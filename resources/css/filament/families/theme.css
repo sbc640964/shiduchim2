@@ -1,0 +1,147 @@
+@import '/vendor/filament/filament/resources/css/theme.css';
+@import '/vendor/malzariey/filament-daterangepicker-filter/resources/css/filament-daterangepicker.css';
+
+@config 'tailwind.config.js';
+
+
+.fi-page.fi-resource-proposals .fi-tabs:not([aria-label=tabs]),
+.fi-page.fi-resource-students .fi-tabs:not([aria-label=tabs]),
+.fi-page.fi-resource-calls-diaries .fi-tabs:not([aria-label=tabs])
+{
+    @apply mx-0 p-0 bg-transparent border-0 shadow-none ring-0 rounded-none border-b;
+    .fi-tabs-item {
+        @apply p-3.5
+    }
+    .fi-tabs-item-active {
+        @apply rounded-none border-b-2 border-primary-500;
+    }
+}
+
+.fi-fo-field-wrp-error-message, .fi-fo-field-wrp-helper-text {
+    @apply text-xs;
+}
+
+.fi-light-section.fi-section {
+
+    @apply bg-gray-100/40;
+
+    .fi-section-header {
+        @apply py-2.5 pb-0;
+    }
+
+    .fi-section-content-ctn {
+        @apply border-t-0 pt-0;
+
+        .fi-section-content {
+            @apply pt-2 pb-4;
+        }
+    }
+}
+
+.fi-page.fi-resource-students .fi-tabs:not([aria-label=tabs]) a {
+    @apply last:ms-auto;
+}
+
+.textarea-infolist-forge {
+    @apply border-0 ring-0 focus-within:!ring-0 shadow-none rounded-none;
+
+    textarea {
+        @apply p-0;
+    }
+}
+
+.fi-fo-field-wrp:has(.textarea-no-focus-style) {
+    &>div{
+        @apply -mt-8
+    }
+
+    &:focus-within {
+        label {
+            @apply opacity-100;
+        }
+    }
+
+    label {
+        @apply opacity-0;
+    }
+}
+
+.textarea-no-focus-style {
+    @apply ring-transparent bg-gray-100 focus-within:bg-transparent;
+
+    textarea {
+        /*@apply transition-all;*/
+    }
+}
+
+.infolist-diary {
+    .fi-in-entry-wrp>div.grid.gap-y-2, .fi-fo-field-wrp>div.grid.gap-y-2 {
+        @apply gap-y-0;
+    }
+}
+
+
+.fi-main .diary-manage{
+}
+
+div:has(>.content-diaries) {
+    @apply gap-y-0;
+}
+
+
+.lite-repeater-container {
+    @apply block rounded-xl bg-white p-0 shadow-sm ring-1 ring-gray-950/5 dark:bg-white/5 dark:ring-white/10;
+
+    .fi-in-repeatable-item {
+        @apply border-b p-3 last:border-b-0 hover:bg-gray-50 transition;
+    }
+
+    >ul>div{
+        @apply gap-0;
+
+        .fi-in-entry-wrp>div>div.grid.gap-y-2 {
+            @apply gap-y-0;
+        }
+    }
+
+    .fi-in-entry-wrp-helper-text {
+        @apply text-xs;
+    }
+
+    .leading-none-text .fi-in-text-item>div {
+        @apply leading-5;
+    }
+}
+
+.repeatable-infolist-like-table {
+    @apply [&_.fi-in-entry-wrp>div>div]:gap-y-0 [&_.fi-in-entry-wrp>div>div]:font-medium [&_div.fi-in-entry-wrp-helper-text]:font-[400] [&_div.fi-in-entry-wrp-helper-text]:text-xs;
+}
+
+
+.icon-circle {
+    @apply flex items-center p-0 justify-center w-5 h-5 rounded-full;
+
+    &.icon-circle--pink {
+        @apply bg-pink-200 ring-1 ring-pink-300;
+    }
+
+    &.icon-circle--blue {
+        @apply bg-blue-200 ring-1 ring-blue-300;
+    }
+
+    &.icon-circle--fuchsia {
+        @apply bg-fuchsia-200 ring-1 ring-fuchsia-300;
+    }
+}
+
+td.description-diary p{
+    @apply text-xs font-bold;
+}
+
+.tabs-light-view {
+    @apply ring-0 shadow-none rounded-none [&_nav]:p-0 [&_nav]:pb-1.5 [&_.fi-fo-tabs-tab]:px-0;
+}
+
+.option-select-w-full .choices__list.choices__list--single {
+    @apply w-full pe-10;
+}
