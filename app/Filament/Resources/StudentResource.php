@@ -18,6 +18,7 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Infolists\Components;
 use Filament\Infolists\Infolist;
+use Filament\Pages\Concerns\ExposesTableToWidgets;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
@@ -36,6 +37,8 @@ use Spatie\Tags\Tag;
 
 class StudentResource extends Resource
 {
+    use ExposesTableToWidgets;
+
     protected static ?string $model = Person::class;
 
     protected static ?string $slug = 'students';

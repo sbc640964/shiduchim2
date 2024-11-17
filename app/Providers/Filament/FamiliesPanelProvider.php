@@ -7,6 +7,7 @@ use App\Filament\Clusters\Settings\Resources\TimeSheetsResource;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\CalendarWidget;
 //use App\Http\Middleware\UpgradeToHttpsUnderNgrokMiddleware;
+use App\Filament\Widgets\GoldListWidget;
 use Blade;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -57,6 +58,7 @@ class FamiliesPanelProvider extends PanelProvider
             ->widgets([
                 CalendarWidget::class,
                 Widgets\AccountWidget::class,
+                GoldListWidget::class,
             ])
             ->spa()
             ->middleware([

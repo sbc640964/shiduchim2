@@ -9,7 +9,12 @@ class Dashboard extends BaseDashboard
 {
     public function getTitle(): string|Htmlable
     {
-        return 'לוח בקרה';
+        return 'מבט כללי';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'מבט כללי';
     }
 
     /**
