@@ -134,16 +134,16 @@ class Subscription extends ManageRelatedRecords
                 ->visible(fn(Forms\Get $get) => $get('matchmaker'))
                 ->label('יום פעילות לשדכן')
                 ->options(function (Forms\Get $get) {
-                    if(!$get('person_id')) {
-                        return [];
-                    }
+//                    if(!$get('person_id')) {
+//                        return [];
+//                    }
 
-                    $hasDays = Person::whereId($get('person_id'))
-                        ->where('billing_status', 'active')
-                        ->whereNotNull('billing_matchmaker_day')
-                        ->pluck('billing_matchmaker_day');
+//                    $hasDays = Person::whereId($get('person_id'))
+//                        ->where('billing_status', 'active')
+//                        ->whereNotNull('billing_matchmaker_day')
+//                        ->pluck('billing_matchmaker_day');
 
-                    return collect([
+                    return [
                         '1' => 'ראשון',
                         '2' => 'שני',
                         '3' => 'שלישי',
@@ -151,9 +151,7 @@ class Subscription extends ManageRelatedRecords
                         '5' => 'חמישי',
                         '6' => 'שישי',
                         '7' => 'מוצ"ש',
-                    ])->filter(fn($day, $key) =>
-                        ! $hasDays->contains($key)
-                    )->toArray();
+                    ];
                 })
                 ->nullable(),
 
