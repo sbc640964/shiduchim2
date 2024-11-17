@@ -35,7 +35,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->slideOver()
             ->fillForm(function () {
                 return [
-                    'person_id' => $this->record->billingCard?->person_id ?? null,
+                    'person_id' => $this->record->billingCard?->person_id ?? $this->record->billing_payer_id,
                     'method' => $this->record->billing_method,
                     'credit_card_id' => $this->record->billing_credit_card_id,
                     'matchmaker' => $this->record->billing_matchmaker,
@@ -52,6 +52,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ->icon('heroicon-o-trash')
                     ->action(function (self $livewire) {
                         $livewire->record->update([
+                            'billing_payer_id' => null,
                             'billing_status' => null,
                             'billing_amount' => null,
                             'billing_balance_times' => null,
@@ -71,6 +72,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->action(function ($data, Action $action){
 
                 $this->record->update([
+                    'billing_payer_id' => $data['person_id'],
                     'billing_amount' => $data['amount'],
                     'billing_balance_times' => $data['times'],
                     'billing_matchmaker' => $data['matchmaker'],

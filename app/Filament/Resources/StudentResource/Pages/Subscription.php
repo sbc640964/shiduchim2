@@ -226,6 +226,7 @@ class Subscription extends ManageRelatedRecords
                         $record = $livewire->getRecord();
 //
                         $record->update([
+                            'billing_payer_id' => $data['person_id'],
                             'billing_status' => 'pending',
                             'billing_amount' => $data['amount'],
                             'billing_balance_times' => $data['times'],
