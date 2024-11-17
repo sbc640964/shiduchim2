@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new RunPayments)->dailyAt('05:00')->name('run-payments');
+        $schedule->command('telescope:prune')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
