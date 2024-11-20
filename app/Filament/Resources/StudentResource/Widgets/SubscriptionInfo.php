@@ -42,14 +42,19 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     'times' => $this->record->billing_balance_times,
                     'next_date' => $this->record->billing_next_date,
                     'amount' => $this->record->billing_amount,
+                    'billing_notes' => $this->record->billing_notes,
+                    'billing_start_date' => $this->record->billing_start_date,
+                    'referer' => $this->record->billing_referrer_id,
+                    'billing_published' => $this->record->billing_published,
+                    'day' => $this->record->billing_matchmaker_day,
                 ];
             })
             ->modalSubmitActionLabel('עדכן')
             ->extraModalFooterActions([
                 Action::make('deleteBilling')
-                    ->label('מחק פרטי חיוב')
+                    ->label('בטל מנוי')
                     ->requiresConfirmation()
-                    ->icon('heroicon-o-trash')
+                    ->icon('heroicon-o-x-mark')
                     ->action(function (self $livewire) {
                         $livewire->record->update([
                             'billing_payer_id' => null,
@@ -60,6 +65,11 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                             'billing_method' => null,
                             'billing_next_date' => null,
                             'billing_credit_card_id' => null,
+                            'billing_notes' => null,
+                            'billing_matchmaker_day' => null,
+                            'billing_published' => false,
+                            'billing_referrer_id' => null,
+                            'billing_start_date' => null,
                         ]);
 
                         redirect(StudentResource::getUrl('subscription', [
@@ -79,6 +89,11 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     'billing_method' => $data['method'] ?? null,
                     'billing_next_date' => $data['next_date'] ?? null,
                     'billing_credit_card_id' => $data['credit_card_id'] ?? null,
+                    'billing_notes' => $data['billing_notes'] ?? null,
+                    'billing_start_date' => $data['billing_start_date'] ?? null,
+                    'billing_published' => $data['billing_published'] ?? false,
+                    'billing_matchmaker_day' => $data['day'] ?? null,
+                    'billing_referrer_id' => $data['referer'] ?? null,
                 ]);
 
                 $action->successNotificationTitle('הפרטים נשמרו בהצלחה');

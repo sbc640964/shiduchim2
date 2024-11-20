@@ -20,6 +20,7 @@ class Task extends Model
         'data',
         'completed_at',
         'diary_completed_id',
+        'person_id',
     ];
 
     protected $casts = [

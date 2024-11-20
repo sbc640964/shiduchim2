@@ -71,7 +71,19 @@ class StudentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->columns([
+        $extraColumns = [];
+
+        return $table
+            ->when(method_exists($table->getLivewire(), 'getExtraColumns'), function (Table $table) use (&$extraColumns) {
+                $extraColumns = $table->getLivewire()->getExtraColumns();
+            })
+            ->recordUrl(fn (Model $record, $livewire) =>
+                $livewire->activeTab === 'subscriptions'
+                    ? Pages\Subscription::getUrl(['record' => $record])
+                    : Pages\ViewStudent::getUrl(['record' => $record])
+            )
+            ->columns([
+                ...$extraColumns,
             TextColumn::make('external_code_students')
                 ->label('מספר')
                 ->toggleable()
@@ -93,7 +105,6 @@ class StudentResource extends Resource
             TextColumn::make('city')
                 ->state(fn (Person $person) => $person->city?->name ?? $person->parentsFamily?->city?->name)
                 ->label('עיר')
-                ->searchable()
                 ->sortable(),
 
             TextColumn::make('father.first_name')

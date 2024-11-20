@@ -65,10 +65,31 @@ class Subscription extends ManageRelatedRecords
     static function formFields(): array
     {
         return [
+            Forms\Components\DatePicker::make('billing_start_date')
+                ->label('תאריך פניה ראשונית')
+                ->native(false)
+                ->default(now())
+                ->required(),
+
+            Forms\Components\Select::make('referer')
+                ->label('מפנה')
+                ->getOptionLabelUsing(fn($value) => Person::find($value)?->select_option_html)
+                ->searchable()
+                ->allowHtml()
+                ->getSearchResultsUsing(fn($search) => Person::query()
+                    ->when($search, fn($query, $search) => $query->searchName($search))
+                    ->with('father', 'spouse')
+                    ->limit(10)
+                    ->get()
+                    ->mapWithKeys(fn($person) => [$person->id => $person->select_option_html])
+                    ->toArray()
+                ),
+
             Forms\Components\Select::make('person_id')
                 ->label('משלם')
                 ->searchable()
                 ->allowHtml()
+                ->getOptionLabelUsing(fn($value) => Person::find($value)?->select_option_html)
                 ->getSearchResultsUsing(fn($search) => Person::query()
                     ->when($search, fn($query, $search) => $query->searchName($search))
                     ->with('father', 'spouse')
@@ -168,6 +189,16 @@ class Subscription extends ManageRelatedRecords
                 ->hidden(fn(Forms\Get $get) => !$get('times'))
                 ->placeholder('הגבייה לא תתחיל עד שתבחר תאריך')
                 ->nullable(),
+            Forms\Components\Toggle::make('billing_published')
+                ->label('פרסם לכל השדכנים')
+                ->visible(fn(Forms\Get $get) => !$get('matchmaker'))
+                ->default(true)
+                ->nullable(),
+            Forms\Components\Textarea::make('billing_notes')
+                ->label('הערות')
+                ->rule('max:255')
+                ->rows(3)
+                ->nullable(),
         ];
     }
 
@@ -179,6 +210,9 @@ class Subscription extends ManageRelatedRecords
 
         return [
             SubscriptionInfo::make([
+                'record' => $this->getRecord()
+            ]),
+            StudentResource\Widgets\SubscriptionTasks::make([
                 'record' => $this->getRecord()
             ])
         ];
@@ -222,9 +256,9 @@ class Subscription extends ManageRelatedRecords
                     ->modalHeading('הגדר מנוי')
                     ->hidden(!! $this->getRecord()->billing_status)
                     ->using(function ($data, $action, self $livewire) {//
-//                        /* @var Person $record */
+
+                        /** @var Person $record */
                         $record = $livewire->getRecord();
-//
                         $record->update([
                             'billing_payer_id' => $data['person_id'],
                             'billing_status' => 'pending',
@@ -235,6 +269,10 @@ class Subscription extends ManageRelatedRecords
                             'billing_next_date' => $data['next_date'] ?? null,
                             'billing_credit_card_id' => $data['credit_card_id'] ?? null,
                             'billing_matchmaker_day' => $data['day'] ?? null,
+                            'billing_published' => $data['billing_published'] ?? false,
+                            'billing_notes' => $data['billing_notes'] ?? null,
+                            'billing_start_date' => $data['billing_start_date'],
+                            'billing_referrer_id' => $data['referer'] ?? null,
                         ]);
 
                         return $record;

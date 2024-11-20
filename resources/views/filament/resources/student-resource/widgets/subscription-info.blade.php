@@ -22,6 +22,20 @@
                             @case('hold')
                             מושהה
                             @break
+                                @case('pending')
+                                <div>
+                                    <div>ממתין</div>
+                                    <span class="text-xs border-b border-dashed opacity-80 hover:opacity-100 cursor-pointer">
+                                        <span
+                                            x-data="{}"
+                                            x-tooltip="{
+                                                content: '{{ $record->billing_start_date->format('d/m/Y') }}',
+                                                team: $store.team,
+                                            }"
+                                        >{{ $record->billing_start_date->diffForHumans() }}</span>
+                                    </span>
+                                </div>
+                            @break
                             @default
                             לא פעיל
                         @endswitch
@@ -39,6 +53,16 @@
                 <div><span class="text-gray-950 font-bold">יום:</span> {{ $this->record->billing_matchmaker_day }}</div>
             </div>
             <div class="flex items-center ms-auto">
+                @if($record->billing_notes)
+                    <button class="p-4" x-data="{}">
+                        <x-iconsax-lin-message
+                            x-tooltip="{
+                            content: '{{ $record->billing_notes }}',
+                            team: $store.team,
+                        }"
+                            class="text-gray-600 w-6 h-6"></x-iconsax-lin-message>
+                    </button>
+                @endif
                 {{ $this->editBilling() }}
             </div>
         </div>{{-- Widget content --}}

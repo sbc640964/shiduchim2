@@ -83,6 +83,12 @@ class Person extends Model
         'billing_method',
         'billing_credit_card_id',
         'billing_matchmaker_day',
+        'billing_payer_id',
+        'billing_start_date',
+        'billing_referrer_id',
+        'billing_notes',
+        'billing_published',
+        'last_diary_id'
     ];
 
     /**
@@ -104,6 +110,8 @@ class Person extends Model
         'auto_contacts' => 'array',
         'info_private' => 'array',
         'billing_next_date' => 'datetime',
+        'billing_start_date' => 'datetime',
+        'billing_published' => 'boolean',
     ];
 
     public static function studentTagsKey(): string
@@ -680,5 +688,25 @@ class Person extends Model
     {
         return $this->belongsTo(CreditCard::class, 'billing_credit_card_id');
 
+    }
+
+    public function billingPayer(): BelongsTo
+    {
+        return $this->belongsTo(Person::class, 'billing_payer_id');
+    }
+
+    public function billingReferrer(): BelongsTo
+    {
+        return $this->belongsTo(Person::class, 'billing_referrer_id');
+    }
+
+    public function lastDiary(): BelongsTo
+    {
+        return $this->belongsTo(Diary::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 }

@@ -69,11 +69,15 @@ class CalendarWidget extends FullCalendarWidget
         JS;
     }
 
-    public function getFormSchema(): array
+    /**
+     * @param bool $withProposalId
+     * @return array
+     */
+    public function getFormSchema(bool $withProposalId = true): array
     {
         return [
             Forms\Components\Grid::make(3)
-            ->schema([
+            ->schema(array_filter([
                 Forms\Components\Textarea::make('description')
                     ->columnSpanFull()
                     ->label('תיאור')
@@ -101,7 +105,7 @@ class CalendarWidget extends FullCalendarWidget
                         '2' => 'גבוהה',
                     ])
                     ->required(),
-                Forms\Components\Select::make('proposal_id')
+                $withProposalId ? Forms\Components\Select::make('proposal_id')
                     ->label('הצעה')
                     ->searchable()
                     ->live()
@@ -109,7 +113,7 @@ class CalendarWidget extends FullCalendarWidget
                         ->searchNameInPeople($search)
                         ->get()
                         ->pluck('families_names', 'id')->toArray()
-                    ),
+                    ) : null,
                 Forms\Components\Select::make('contact_to')
                     ->visible(fn (Forms\Get $get) => $get('proposal_id'))
                     ->label('ליצור קשר עם (אם יש)')
@@ -122,7 +126,7 @@ class CalendarWidget extends FullCalendarWidget
 
                         return $proposal->contacts()->searchName($search)->get()->pluck('select_option_html', 'id');
                     })
-            ])
+            ], fn ($item) => $item !== null)),
         ];
     }
 

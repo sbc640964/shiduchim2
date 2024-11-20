@@ -98,8 +98,10 @@ trait HasPersonFilamentTableColumns
                                     'person' => $record,
                                     'proposal' => $proposal,
                                     'side' => $side,
+                                    'view' => 'family-table',
                                 ]: [
                                     'person' => $record,
+                                    'view' => 'family-table',
                                 ])
                                 ->label('ילדי המשפחה'),
                         ]);

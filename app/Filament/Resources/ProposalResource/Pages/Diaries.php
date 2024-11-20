@@ -145,6 +145,10 @@ class Diaries extends ManageRelatedRecords
             ] : []);
 
             $record->update($proposalAttributes);
+
+            $record->people->each->update([
+                'last_diary_id' => $diary->id,
+            ]);
         });
     }
 }
