@@ -118,12 +118,12 @@ class ListStudents extends ListRecords
 
                 TextColumn::make('subscriptions')
                     ->label('תקופת פרוייקט')
-//                    ->formatStateUsing(function (Person $record) {
-//                        $start = $record->subscriptions->where('credit_card_id', $record->billing_credit_card_id)->first()->created_at->format('m/Y');
-//                        $end = $record->billing_next_date->copy()->addMonths($record->billing_balance_times)->format('m/Y');
-//
-//                        return "$start - $end";
-//                    })
+                    ->formatStateUsing(function (Person $record) {
+                        $start = $record->subscriptions->where('credit_card_id', $record->billing_credit_card_id)->first()->created_at->format('m/Y');
+                        $end = $record->billing_next_date->copy()->addMonths($record->billing_balance_times)->format('m/Y');
+
+                        return "$start - $end";
+                    })
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
             ];
     }
