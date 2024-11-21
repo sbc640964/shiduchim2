@@ -120,9 +120,9 @@ class ListStudents extends ListRecords
                     ->label('תקופת פרוייקט')
                     ->formatStateUsing(function (Person $record) {
                         $start = $record->subscriptions->where('credit_card_id', $record->billing_credit_card_id)->first()->created_at->format('m/Y');
-                        $end = $record->billing_next_date->copy()->addMonths($record->billing_balance_times)->format('m/Y');
+                        $end = $record->billing_next_date->copy()->addMonths($record->billing_balance_times - 1)->format('m/Y');
 
-                        return "$start - $end";
+                        return "$start עד $end";
                     })
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
             ];
