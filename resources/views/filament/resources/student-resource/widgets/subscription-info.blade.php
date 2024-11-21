@@ -29,10 +29,10 @@
                                         <span
                                             x-data="{}"
                                             x-tooltip="{
-                                                content: '{{ $record->billing_start_date->format('d/m/Y') }}',
+                                                content: '{{ $record->billing_start_date?->format('d/m/Y') ?? '' }}',
                                                 team: $store.team,
                                             }"
-                                        >{{ $record->billing_start_date->diffForHumans() }}</span>
+                                        >{{ $record->billing_start_date?->diffForHumans() ?? '' }}</span>
                                     </span>
                                 </div>
                             @break
