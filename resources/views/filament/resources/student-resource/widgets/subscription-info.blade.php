@@ -15,7 +15,7 @@
                     @endswitch
 
                     <span class="text-sm text-gray-500">
-                        @switch($this->record->billing_status)
+                        @switch(trim($this->record->billing_status))
                             @case('active')
                                 פעיל
                             @break
