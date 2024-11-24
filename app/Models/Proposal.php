@@ -17,6 +17,7 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Spatie\Tags\HasTags;
+use App\Models\SettingOld as Setting;
 
 class Proposal extends Model
 {
