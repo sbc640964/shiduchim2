@@ -1,0 +1,30 @@
+<?php
+
+// translations for Kenepa/Banner
+return [
+    'title' => 'ניהול באנרים',
+    'subheading' => 'נהל והצג באנרים באתר',
+    'navigation_label' => 'באנרים',
+    'create' => 'צור באנר',
+    'save' => 'שמור',
+    'inactive' => 'לא פעיל',
+    'banner_list_empty_state_title' => 'אין באנרים',
+    'banner_list_empty_state_description' => 'לאחר שתיצור את הבאנר הראשון שלך, הוא יופיע כאן.',
+    'banner_edit_empty_state_title' => 'לא נבחר באנר',
+    'banner_edit_empty_state_description' => 'בחר או צור באנר כדי להתחיל.',
+    'enable_all_banners' => 'הפעל את כל הבאנרים',
+    'disable_all_banners' => 'השבת את כל הבאנרים',
+    'successfully_deleted_banner' => 'באנר נמחק',
+    'successfully_updated_banner' => 'באנר עודכן',
+    'successfully_created_banner' => 'באנר נוצר',
+    'disabled_all_banners' => 'כל הבאנרים הושבתו',
+    'enabled_all_banners' => 'כל הבאנרים הופעלו',
+    'failed_to_load_banner' => 'נכשל לטעון את הבאנר',
+    'banner_name' => 'שם',
+    'banner_content' => 'תוכן',
+    'banner_render_location' => 'מיקום הצגה',
+    'status_due' => 'מוכן',
+    'status_visible' => 'מוצג',
+    'status_fulfilled' => 'מתקיים',
+    'active_since' => 'פעיל מאז',
+];
