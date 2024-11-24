@@ -5,9 +5,11 @@ namespace App\Models;
 use ElipZis\Cacheable\Models\Traits\Cacheable;
 use Illuminate\Database\Eloquent\Model;
 
-class Setting extends Model
+class SettingOld extends Model
 {
     use Cacheable;
+
+    protected $table = 'settings_old';
 
     protected static $cached = [];
 
