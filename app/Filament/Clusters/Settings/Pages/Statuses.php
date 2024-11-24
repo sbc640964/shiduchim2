@@ -6,8 +6,6 @@ use App\Filament\Clusters\Settings;
 use App\Models\Proposal;
 use App\Models\SettingOld as Setting;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
-use Filament\Actions\Action;
-use Filament\Actions\StaticAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
