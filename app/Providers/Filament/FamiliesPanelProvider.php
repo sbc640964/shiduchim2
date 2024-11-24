@@ -29,6 +29,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Kenepa\Banner\BannerPlugin;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 
 class FamiliesPanelProvider extends PanelProvider
@@ -77,7 +78,11 @@ class FamiliesPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
-                BannerPlugin::make(),
+                BannerPlugin::make()
+                    ->disableBannerManager()
+                    ->persistsBannersInDatabase()
+                    ->bannerManagerAccessPermission('banner-manager')
+                    ->navigationLabel('באנרים'),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,
