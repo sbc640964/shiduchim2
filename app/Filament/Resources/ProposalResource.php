@@ -10,7 +10,7 @@ use App\Models\Diary;
 use App\Models\Person;
 use App\Models\Proposal;
 use App\Models\School;
-use App\Models\Setting;
+use App\Models\SettingOld as Setting;
 use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;

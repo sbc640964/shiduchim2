@@ -11,7 +11,7 @@ use App\Models\Form;
 use App\Models\Person;
 use App\Models\Phone;
 use App\Models\Proposal;
-use App\Models\Setting;
+use App\Models\SettingOld as Setting;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
