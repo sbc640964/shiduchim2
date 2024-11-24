@@ -77,6 +77,7 @@ class FamiliesPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
+                BannerPlugin::make(),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,

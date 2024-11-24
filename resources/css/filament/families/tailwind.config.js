@@ -11,6 +11,7 @@ export default {
         './resources/views/livewire/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
         './vendor/filament/*.blade.php',
+        './vendor/kenepa/banner/resources/**/*.php',
     ],
     plugins: [
         require('tailwind-scrollbar'),
