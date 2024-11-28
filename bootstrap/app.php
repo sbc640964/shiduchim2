@@ -22,7 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->call(function () {
             Call::query()
                 ->whereNull('finished_at')
-                ->whereNotNull('started_at')
                 ->where('created_at', '<', now()->subMinutes(2))->update([
                     'finished_at' => now(),
                 ]);
