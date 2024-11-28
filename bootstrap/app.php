@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\RunPayments;
+use App\Models\Call;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new RunPayments)->dailyAt('05:00')->name('run-payments');
         $schedule->command('telescope:prune')->daily();
+        $schedule->call(function () {
+            Call::where('created_at', '<', now()->subMinutes(2))->update([
+                'finished_at' => now(),
+            ]);
+        })->everyTwoMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
