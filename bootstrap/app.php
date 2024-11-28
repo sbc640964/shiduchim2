@@ -20,9 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->call(new RunPayments)->dailyAt('05:00')->name('run-payments');
         $schedule->command('telescope:prune')->daily();
         $schedule->call(function () {
-            Call::where('created_at', '<', now()->subMinutes(2))->update([
-                'finished_at' => now(),
-            ]);
+            Call::query()
+                ->whereNull('finished_at')
+                ->whereNotNull('started_at')
+                ->where('created_at', '<', now()->subMinutes(2))->update([
+                    'finished_at' => now(),
+                ]);
         })->everyTwoMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions) {
