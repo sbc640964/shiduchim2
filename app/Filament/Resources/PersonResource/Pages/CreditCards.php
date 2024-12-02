@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PersonResource\Pages;
 use App\Actions\RunPayments;
 use App\Filament\Resources\PersonResource;
 use App\Models\CreditCard;
+use App\Models\Person;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
@@ -12,7 +13,6 @@ use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Http;
 
 class CreditCards extends ManageRelatedRecords
 {
@@ -35,13 +35,13 @@ class CreditCards extends ManageRelatedRecords
 
     public function form(Form $form): Form
     {
-/*
-brand
-token
-last4
-is_active
-data
-*/
+        /*
+        brand
+        token
+        last4
+        is_active
+        data
+        */
         return $form
             ->columns(1)
             ->schema(static::formFields());
@@ -94,6 +94,40 @@ data
 //                Tables\Actions\AssociateAction::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('transfer')
+                    ->label('החלף בעלים')
+                    ->icon('heroicon-o-arrows-right-left')
+                    ->action(function ($action, $record, $data) {
+
+                        Person::query()
+                            ->where('billing_credit_card_id', $record->id)
+                            ->update([
+                                'billing_payer_id' => $data['person_id'],
+                            ]);
+
+                        $record->update([
+                            'person_id' => $data['person_id'],
+                        ]);
+
+                        $action->success();
+                    })
+                    ->modalWidth(MaxWidth::Small)
+                    ->form([
+                        Forms\Components\Select::make('person_id')
+                            ->label('בעלים חדש')
+                            ->getOptionLabelUsing(fn($value) => Person::find($value)?->select_option_html)
+                            ->searchable()
+                            ->allowHtml()
+                            ->required()
+                            ->getSearchResultsUsing(fn($search) => Person::query()
+                                ->when($search, fn($query, $search) => $query->searchName($search))
+                                ->with('father', 'spouse')
+                                ->limit(10)
+                                ->get()
+                                ->mapWithKeys(fn($person) => [$person->id => $person->select_option_html])
+                                ->toArray()
+                            )
+                    ])
 //                Tables\Actions\EditAction::make(),
 //                Tables\Actions\DissociateAction::make(),
 //                Tables\Actions\DeleteAction::make(),
@@ -111,7 +145,7 @@ data
         $card = RunPayments::createDirectDebit($record, $data);
 
         if ($card instanceof CreditCard) {
-            if($action) {
+            if ($action) {
                 $action->successNotificationTitle('הכרטיס נוסף בהצלחה');
                 $action->success();
             }
@@ -119,7 +153,7 @@ data
             return $card;
         }
 
-        if($action) {
+        if ($action) {
             $action->failureNotificationTitle($card['Message']);
             $action->failure();
             $action->halt();
