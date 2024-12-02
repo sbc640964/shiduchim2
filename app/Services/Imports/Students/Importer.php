@@ -43,7 +43,7 @@ class Importer implements WithHeadingRow
                 'guesses' => ['טלפון', 'טלפון בית'],
             ],
             [
-                'name' => 'mather_phone',
+                'name' => 'mother_phone',
                 'label' => 'טלפון אמא',
                 'rules' => ['string', 'nullable'],
                 'guesses' => ['נייד אם', 'טלפון אם', 'פלאפון אם'],

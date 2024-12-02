@@ -339,11 +339,15 @@ class RunRow
         if ($this->data['mothers_father_code_ichud'] == $this->record->father->fatherInLaw?->external_code) {
             $this->record->mother_id = $father?->spouse_id ?? null;
             $this->record->parents_family_id = $father?->current_family_id ?? null;
-            if(($data['mather_name'] ?? null) && $this->record->father->spouse && blank($this->record->father->spouse->first_name)) {
+            if(($data['mother_name'] ?? null) && $this->record->father->spouse && blank($this->record->father->spouse->first_name)) {
                 $this->record->father->spouse->update([
-                    'first_name' => $this->data['mather_name'],
+                    'first_name' => $this->data['mother_name'],
                 ]);
             }
+        }
+
+        if($this->record->father->current_family_id) {
+            $this->record->parents_family_id = $this->record->father->current_family_id;
         }
 
         filled($this->data['city']) && $this->record->city()
