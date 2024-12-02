@@ -348,6 +348,7 @@ class RunRow
 
         if($this->record->father->current_family_id) {
             $this->record->parents_family_id = $this->record->father->current_family_id;
+            $this->record->mother_id = $this->record->father->spouse_id;
         }
 
         filled($this->data['city']) && $this->record->city()
