@@ -264,7 +264,7 @@ class RunRow
 
         $phones = [
             'father' => $this->data['father_phone'],
-            'mother' => $this->data['mather_phone'],
+            'mother' => $this->data['mother_phone'],
             'parentsFamily' => $this->data['phone'],
         ];
 
