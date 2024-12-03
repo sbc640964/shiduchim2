@@ -288,6 +288,7 @@ class GoldListResource extends Resource
 
 
             TextColumn::make('billingReferrer.full_name')
+                ->description('מפנה')
                 ->label('מפנה'),
 
             TextColumn::make('id')
