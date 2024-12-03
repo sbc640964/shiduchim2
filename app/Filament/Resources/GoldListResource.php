@@ -214,7 +214,7 @@ class GoldListResource extends Resource
                     });
 
                     $start = ($lastSequence[0] ?? now())->format('m/y');
-                    $end = end($lastSequence)->copy()->addMonths($record->billing_balance_times - 1)->format('m/y');
+                    $end = (end($lastSequence) ?? now())->copy()->addMonths($record->billing_balance_times - 1)->format('m/y');
 
                     return "$start-$end";
                 }),
