@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\GoldListResource\Pages;
 use App\Models\Person;
+use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -14,6 +15,7 @@ use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -70,6 +72,7 @@ class GoldListResource extends Resource
                     TextColumn::make('full_name')
                         ->label('שם')
                         ->html()
+                        ->searchable(['first_name', 'last_name'])
                         ->formatStateUsing(fn (Person $record) => str($record->full_name . " <span class='opacity-50 text-xs'>($record->external_code_students)</span>")->toHtmlString())
                         ->description(fn (Person $record) => \Arr::join([
                             'ב"ר ',
@@ -87,8 +90,101 @@ class GoldListResource extends Resource
                 ])->collapsible()
             ])
             ->filters([
-                //
+                Tables\Filters\Filter::make('filter')
+                    ->form([
+                        Forms\Components\ToggleButtons::make('no_select_matchmaker')
+                            ->boolean('לא מוקצה', 'מוקצה')
+                            ->icons([
+                                0 => 'heroicon-o-check',
+                                1 => 'heroicon-o-x-mark',
+                            ])
+                            ->colors([
+                                0 => 'gray',
+                                1 => 'gray',
+                            ])
+                            ->grouped()
+                            ->label('לא מוקצה לשדכן'),
+                        Forms\Components\Select::make('billing_matchmaker')
+                            ->label('שדכן')
+                            ->relationship('billingMatchmaker', 'name')
+                            ->preload()
+                            ->hidden(fn (Forms\Get $get) => $get('no_select_matchmaker'))
+                            ->searchable(),
+                        Forms\Components\Select::make('billing_status')
+                            ->label('סטטוס')
+                            ->options([
+                                'active' => 'פעיל',
+                                'hold' => 'מושהה',
+                                'pending' => 'ממתין',
+                            ])
+                            ->searchable(),
+                        Forms\Components\Select::make('billing_matchmaker_day')
+                            ->label('יום')
+                            ->options([
+                                1 => 'ראשון',
+                                2 => 'שני',
+                                3 => 'שלישי',
+                                4 => 'רביעי',
+                                5 => 'חמישי',
+                                6 => 'שישי',
+                                7 => 'מוצ"ש',
+                                'none' => 'לא נבחר',
+                            ])
+                            ->searchable(),
+                    ])->columns(5)
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if ($data['no_select_matchmaker'] ?? null) {
+                            $indicators[] = 'לא מוקצה לשדכן';
+                        }
+
+                        if ($data['billing_matchmaker'] ?? null) {
+                            $indicators[] = 'שדכן: ' . User::find($data['billing_matchmaker'])->name;
+                        }
+
+                        if ($data['billing_status'] ?? null) {
+                            $indicators[] = 'סטטוס: ' . match ($data['billing_status']) {
+                                'active' => 'פעיל',
+                                'hold' => 'מושהה',
+                                'pending' => 'ממתין',
+                            };
+                        }
+
+                        if ($data['billing_matchmaker_day'] ?? null) {
+                            $indicators[] = 'יום: ' . match ($data['billing_matchmaker_day']) {
+                                '1' => 'ראשון',
+                                '2' => 'שני',
+                                '3' => 'שלישי',
+                                '4' => 'רביעי',
+                                '5' => 'חמישי',
+                                '6' => 'שישי',
+                                '7' => 'מוצ"ש',
+                                'none' => 'לא נבחר',
+                            };
+                        }
+
+                        return $indicators;
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        $query
+                            ->when($data['no_select_matchmaker'] ?? null,
+                                fn (Builder $query) => $query->whereNull('billing_matchmaker'),
+                                fn (Builder $query) => $query
+                                    ->when($data['billing_matchmaker'] ?? null, fn (Builder $query) => $query
+                                        ->where('billing_matchmaker', $data['billing_matchmaker'])
+                                    )
+                            )
+                            ->when($data['billing_status'] ?? null, fn (Builder $query, $value) => $query->where('billing_status', $value))
+                            ->when($data['billing_matchmaker_day'] ?? null, function (Builder $query, $value) {
+                                $value === 'none'
+                                    ? $query->whereNull('billing_matchmaker_day')
+                                    : $query->where('billing_matchmaker_day', $value);
+                            });
+                    }),
             ])
+            ->filtersLayout(Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(1)
             ->actions([
                 Tables\Actions\Action::make('view')
                     ->iconButton()
