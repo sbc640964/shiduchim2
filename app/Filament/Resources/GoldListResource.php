@@ -40,6 +40,7 @@ class GoldListResource extends Resource
     {
         return parent::getEloquentQuery()
             ->whereNotNull('billing_status')
+            ->where('billing_status', '!=', 'married')
             ->when(!auth()->user()->can('students_subscriptions'), function (Builder $query) {
                 $query->where('billing_matchmaker', auth()->user()->id);
             })

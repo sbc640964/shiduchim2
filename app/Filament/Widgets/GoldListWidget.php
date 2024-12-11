@@ -24,6 +24,7 @@ class GoldListWidget extends BaseWidget
             ->query(
                 StudentResource::getEloquentQuery()
                     ->where('billing_matchmaker', auth()->user()->id)
+                    ->where('billing_status', '!=', 'married')
             )
             ->recordUrl(fn ($record) => StudentResource::getUrl('proposals', [
                 'record' => $record->id,

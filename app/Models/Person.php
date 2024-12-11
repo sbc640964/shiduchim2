@@ -435,11 +435,14 @@ class Person extends Model
             $thisPerson->spouse_id = $person->id;
             $thisPerson->father_in_law_id = $person->father_id;
             $thisPerson->mother_in_law_id = $person->mother_id;
+            $thisPerson->billing_status = 'married';
 
             $person->current_family_id = $newFamily->id;
             $person->spouse_id = $this->id;
             $person->father_in_law_id = $this->father_id;
             $person->mother_in_law_id = $this->mother_id;
+            $person->billing_status = 'married';
+
 
             $thisPerson->save();
             $person->save();
