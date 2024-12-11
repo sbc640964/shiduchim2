@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Awcodes\FilamentGravatar\Gravatar;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -93,5 +94,14 @@ class User extends Authenticatable implements FilamentUser
     public function getYouOrNameAttribute(): string
     {
         return $this->id === auth()->id() ? 'אתה' : $this->name;
+    }
+
+    public function getAvaterUriAttribute()
+    {
+        return Gravatar::get(
+            email: $this->email,
+            size: 200,
+            default: 'robohash',
+        );
     }
 }

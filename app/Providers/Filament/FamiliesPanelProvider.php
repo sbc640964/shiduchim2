@@ -8,6 +8,8 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\CalendarWidget;
 //use App\Http\Middleware\UpgradeToHttpsUnderNgrokMiddleware;
 use App\Filament\Widgets\GoldListWidget;
+use Awcodes\FilamentGravatar\GravatarPlugin;
+use Awcodes\FilamentGravatar\GravatarProvider;
 use Blade;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -43,6 +45,7 @@ class FamiliesPanelProvider extends PanelProvider
             ->login()
             ->profile()
             ->maxContentWidth('full')
+            ->defaultAvatarProvider(GravatarProvider::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -78,6 +81,9 @@ class FamiliesPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
+                GravatarPlugin::make()
+                    ->default('robohash')
+                    ->size(200),
                 BannerPlugin::make()
                     ->disableBannerManager()
                     ->persistsBannersInDatabase()
@@ -120,6 +126,9 @@ class FamiliesPanelProvider extends PanelProvider
             )
             ->renderHook(PanelsRenderHook::USER_MENU_AFTER,
                 fn (): string => Blade::render('@livewire(\'time-box\')'),
+            )
+            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn (): string => Blade::render('@livewire(\'discussion-topbar\')'),
             )
             ->userMenuItems([
                 MenuItem::make()

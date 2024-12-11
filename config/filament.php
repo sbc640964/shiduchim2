@@ -17,17 +17,16 @@ return [
     'broadcasting' => [
 
         'echo' => [
-            'broadcaster' => 'pusher',
-            'key' => env('VITE_PUSHER_APP_KEY'),
-            'cluster' => env('VITE_PUSHER_APP_CLUSTER'),
-            'wsHost' => env('VITE_PUSHER_HOST') ? env('VITE_PUSHER_HOST') : 'ws-'.env('VITE_PUSHER_APP_CLUSTER').'.pusher.com',
-            'wsPort' => env('VITE_PUSHER_PORT') ?? 80,
-            'wssPort' => env('VITE_PUSHER_PORT') ?? 443,
-            'forceTLS' => (env('VITE_PUSHER_SCHEME') ?? 'https') === 'https',
+            'broadcaster' => 'reverb',
+            'key' => env('VITE_REVERB_APP_KEY'),
+            'cluster' => env('VITE_REVERB_APP_CLUSTER'),
+            'wsHost' => env('VITE_REVERB_HOST'),
+            'wsPort' => env('VITE_REVERB_PORT'),
+            'wssPort' => env('VITE_REVERB_PORT'),
             'authEndpoint' => '/broadcasting/auth',
             'disableStats' => true,
             'encrypted' => true,
-            'enabledTransports' => ['ws', 'wss'],
+            'forceTLS' => false,
         ],
 
     ],
