@@ -41,7 +41,7 @@ class Payment extends Model
     {
         $result = Http::asForm()->post('https://matara.pro/nedarimplus/Reports/Manage3.aspx', [
             'Action' => 'RefundTransaction',
-            'MosadNumber' => config('app.nedarim.mosad'),
+            'MosadId' => config('app.nedarim.mosad'),
             'ApiPassword' => config('app.nedarim.password'),
             'TransactionId' => $this->transaction_id,
             'RefundAmount' => $amount,
@@ -59,6 +59,25 @@ class Payment extends Model
                     'billing_next_date' => $changeNextTime ? $this->student->billing_next_date->subMonth() : $this->student->billing_next_date,
                 ]);
             }
+        }
+
+        return $result;
+    }
+
+    public function cancel(string $comments = 'ביטול')
+    {
+        $result = Http::asForm()->post('https://matara.pro/nedarimplus/Reports/Manage3.aspx', [
+            'Action' => 'DeletedAllowedTransaction',
+            'MosadId' => config('app.nedarim.mosad'),
+            'ApiPassword' => config('app.nedarim.password'),
+            'TransactionId' => $this->transaction_id,
+        ])->json();
+
+        if($result['Result'] === 'OK') {
+            $this->update([
+                'status' => 'cancelled',
+                'status_message' => $this->status_message . ' | ' . $comments,
+            ]);
         }
 
         return $result;

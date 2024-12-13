@@ -290,9 +290,49 @@ class Subscription extends ManageRelatedRecords
                 Tables\Actions\ViewAction::make()
                     ->modalHeading('פרטי חיוב')
                     ->iconButton(),
+
+                Tables\Actions\Action::make('cancel')
+                    ->label('ביטול עסקה')
+                    ->color('danger')
+                    ->button()
+                    ->size('xs')
+                    ->visible(fn (Payment $record) => $record->status === 'OK'
+                        && $record->created_at->isToday()
+                        && auth()->user()->can('refund_payments')
+                    )
+                    ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
+                        $result = $record->cancel($data['comments'] ?? '');
+
+                        if($result['Result'] === 'OK') {
+                            $action->successNotificationTitle('העסקה בוטלה בהצלחה');
+                            $action->success();
+
+                            return;
+                        }
+
+                        $action->failureNotificationTitle('הביטול נכשל (' . $result['Message'] . ')');
+                        $action->failure();
+                    })
+                    ->form([
+                        Forms\Components\Textarea::make('comments')
+                            ->label('הערות')
+                            ->rule('max:255')
+                            ->rows(3),
+                        Forms\Components\TextInput::make('password')
+                            ->label('סיסמה')
+                            ->helperText('הכנס את סיסמת המשתמש כדי לאשר את הפעולה')
+                            ->password()
+                            ->markAsRequired()
+                            ->rule('required')
+                            ->currentPassword(),
+                    ])
+                    ->requiresConfirmation(),
+
                 Tables\Actions\Action::make('refund')
                     ->label('החזר עסקה')
                     ->color('danger')
+                    ->button()
+                    ->size('xs')
                     ->visible(fn (Payment $record) => $record->status === 'OK' && auth()->user()->can('refund_payments'))
                     ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
                         $result = $record->refund(...\Arr::except($data, 'password'));
