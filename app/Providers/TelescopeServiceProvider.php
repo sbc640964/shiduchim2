@@ -29,7 +29,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             $entry->type === 'request' &&
                 $tags[] = 'status:'.$entry->content['response_status'];
 
-            $entry->content['controller_action'] === "App\\Http\\Controllers\\DiaryCallsController@webhook" &&
+            $entry->content['controller_action'] ?? null === "App\\Http\\Controllers\\DiaryCallsController@webhook" &&
                 $tags[] = 'GIS';
 
             return $tags;
