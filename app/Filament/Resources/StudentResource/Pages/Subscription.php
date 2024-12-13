@@ -6,12 +6,14 @@ use App\Filament\Resources\PersonResource\Pages\CreditCards;
 use App\Filament\Resources\StudentResource;
 use App\Filament\Resources\StudentResource\Widgets\SubscriptionInfo;
 use App\Models\CreditCard;
+use App\Models\Payment;
 use App\Models\Person;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Support\Enums\MaxWidth;
@@ -58,7 +60,7 @@ class Subscription extends ManageRelatedRecords
                 ->keyLabel('סוג ערך')
                 ->valueLabel('ערך')
                 ->columnSpanFull()
-                ->label('תגובת החיוב בנדרים פלוס')
+                ->label('תגובת החיוב בנדרים פלוס'),
         ]);
     }
 
@@ -226,6 +228,12 @@ class Subscription extends ManageRelatedRecords
             ->emptyStateIcon('heroicon-o-credit-card')
             ->recordTitleAttribute('last4')
             ->columns([
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('תאריך')
+                    ->dateTime('d/m/Y')
+                    ->sortable()
+                    ->width(100)
+                    ->tooltip(fn ($record) => $record->created_at->format('H:i')),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->width(100)
@@ -282,6 +290,47 @@ class Subscription extends ManageRelatedRecords
                 Tables\Actions\ViewAction::make()
                     ->modalHeading('פרטי חיוב')
                     ->iconButton(),
+                Tables\Actions\Action::make('refund')
+                    ->label('החזר עסקה')
+                    ->color('danger')
+                    ->visible(fn (Payment $record) => $record->status === 'OK' && auth()->user()->can('refund_payments'))
+                    ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
+                        $result = $record->refund(...\Arr::except($data, 'password'));
+
+                        if($result['Result'] === 'OK') {
+                            $action->successNotificationTitle('ההחזרה בוצעה בהצלחה');
+                            $action->success();
+
+                            return;
+                        }
+
+                        $action->failureNotificationTitle('ההחזרה נכשלה (' . $result['Message'] . ')');
+                        $action->failure();
+                    })
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label('סכום')
+                            ->numeric()
+                            ->helperText('לא ניתן לזכות פעמיים את אותה עסקה')
+                            ->default(fn ($record) => $record->amount)
+                            ->required(),
+                        Forms\Components\Checkbox::make('changeTimes')
+                            ->label('החזר את התשלום למונה התשלומים'),
+                        Forms\Components\Checkbox::make('changeNextTime')
+                            ->label('החזר את התשלום הבא אחורה'),
+                        Forms\Components\Textarea::make('comments')
+                            ->label('הערות')
+                            ->rule('max:255')
+                            ->rows(3),
+                        Forms\Components\TextInput::make('password')
+                            ->label('סיסמה')
+                            ->helperText('הכנס את סיסמת המשתמש כדי לאשר את הפעולה')
+                            ->password()
+                            ->markAsRequired()
+                            ->rule('required')
+                            ->currentPassword(),
+                    ])
+                    ->requiresConfirmation(),
 
             ])
             ->bulkActions([
