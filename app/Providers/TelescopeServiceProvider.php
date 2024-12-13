@@ -24,13 +24,12 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 
 
         Telescope::tag(function (IncomingEntry $entry) {
-
             $tags = [];
 
             $entry->type === 'request' &&
                 $tags[] = 'status:'.$entry->content['response_status'];
 
-            $entry->content['controller_action'] ?? null === WebhookGisController::class &&
+            ($entry->content['controller_action'] ?? null) === WebhookGisController::class &&
                 $tags[] = 'GIS';
 
             return $tags;
