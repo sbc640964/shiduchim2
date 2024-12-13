@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\WebhookGisController;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
@@ -29,7 +30,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             $entry->type === 'request' &&
                 $tags[] = 'status:'.$entry->content['response_status'];
 
-            $entry->content['controller_action'] ?? null === "App\\Http\\Controllers\\DiaryCallsController@webhook" &&
+            $entry->content['controller_action'] ?? null === WebhookGisController::class &&
                 $tags[] = 'GIS';
 
             return $tags;
