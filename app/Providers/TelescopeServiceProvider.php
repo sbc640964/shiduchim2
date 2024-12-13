@@ -21,6 +21,20 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
 
         $isLocal = $this->app->environment('local');
 
+
+        Telescope::tag(function (IncomingEntry $entry) {
+
+            $tags = [];
+
+            $entry->type === 'request' &&
+                $tags[] = 'status:'.$entry->content['response_status'];
+
+            $entry->content['controller_action'] === "App\\Http\\Controllers\\DiaryCallsController@webhook" &&
+                $tags[] = 'GIS';
+
+            return $tags;
+        });
+
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
             return $isLocal ||
                    $entry->isReportableException() ||
