@@ -318,7 +318,7 @@ class Subscription extends ManageRelatedRecords
                             ->label('הערות')
                             ->rule('max:255')
                             ->rows(3),
-                        Forms\Components\TextInput::make('password')
+                        Forms\Components\TextInput::make('confirm_password')
                             ->label('סיסמה')
                             ->helperText('הכנס את סיסמת המשתמש כדי לאשר את הפעולה')
                             ->password()
@@ -335,7 +335,7 @@ class Subscription extends ManageRelatedRecords
                     ->size('xs')
                     ->visible(fn (Payment $record) => $record->status === 'OK' && auth()->user()->can('refund_payments'))
                     ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
-                        $result = $record->refund(...\Arr::except($data, 'password'));
+                        $result = $record->refund(...\Arr::except($data, 'confirm_password'));
 
                         if($result['Result'] === 'OK') {
                             $action->successNotificationTitle('ההחזרה בוצעה בהצלחה');
@@ -362,7 +362,7 @@ class Subscription extends ManageRelatedRecords
                             ->label('הערות')
                             ->rule('max:255')
                             ->rows(3),
-                        Forms\Components\TextInput::make('password')
+                        Forms\Components\TextInput::make('confirm_password')
                             ->label('סיסמה')
                             ->helperText('הכנס את סיסמת המשתמש כדי לאשר את הפעולה')
                             ->password()
