@@ -99,6 +99,7 @@ class Inbox extends Page
         $this->discussion = $discussion;
 
         $this->currentDiscussion = Discussion::query()
+            ->readAt()
             ->where('id', $discussion)
             ->whereHas('usersAssigned', fn ($query) => $query->where('user_id', auth()->id()))
             ->with('user')
@@ -131,6 +132,8 @@ class Inbox extends Page
             'content' => $this->answerData['content'],
             'user_id' => auth()->id(),
         ]);
+
+        $newMessage->usersAsRead()->attach(auth()->id(), ['read_at' => now()]);
 
         $this->answerData = [
             'content' => null,

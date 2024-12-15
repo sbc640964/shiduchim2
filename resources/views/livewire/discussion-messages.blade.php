@@ -45,10 +45,10 @@
                 </div>
             @endif
 
-            @foreach($this->messages->prepend($this->discussion) as $message)
+            @foreach($this->messages as $message)
                 <div wire:key="{{$message->id}}">
                     <div
-                        @if(!$message->read_at)
+                        @if(! $message->read_at)
                             x-intersect.full.once="$wire.markAsRead({{ $message->id }})"
                         @endif
                         @class([
@@ -63,6 +63,9 @@
                         <div>
                             <p class="text-sm font-semibold text-gray-700 ps-1">{{ $message->user->name }}</p>
                             <p class="ps-1 pb-1 text-xs text-gray-500">{{ $message->created_at->diffForHumans() }}</p>
+                            <span>
+                                {{ $message->read_at ? 'נקרא' : 'לא נקרא' }}
+                            </span>
                             <div @class([
                                 "p-3 rounded-xl",
                                 "bg-blue-100" => $message->user_id === auth()->id(),

@@ -4,44 +4,56 @@ namespace App\Livewire;
 
 use App\Models\Discussion;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 class DiscussionMessages extends Component
 {
-    public Discussion $discussion;
-
     public int $discussionId;
 
-    public Collection $messages;
-
-    public ?int $lastReadMessageId = null;
-
-    public function mount()
+    #[Computed]
+    public function messages(): Collection
     {
-        $this->fill([
-            'messages' => $this->discussion->children()
-                ->with('user')
-                ->readAt()
-                ->oldest()
-                ->take(100)
-                ->get(),
-        ]);
-
-        $this->updateLastReadMessageId();
+        return $this->discussion->children()
+            ->with('user')
+            ->readAt()
+            ->oldest()
+            ->take(100)
+            ->get()
+            ->prepend(
+                $this->discussion
+            );
     }
 
-    public function updateLastReadMessageId(): void
+    #[Computed]
+    public function lastReadMessageId(): ?int
     {
-        $this->lastReadMessageId = $this->messages->reverse()->firstWhere('read_at', '!=', null)?->id ?? null;
+        return $this->messages->reverse()->firstWhere('read_at', '!=', null)?->id ?? null;
+    }
+
+    #[Computed]
+    public function discussion(): Discussion
+    {
+        return Discussion::readAt()
+            ->with('user')
+            ->find($this->discussionId);
+    }
+
+    public function mount(Discussion $discussion): void
+    {
+        $this->discussionId = $discussion->id;
+    }
+
+    public function updateLastReadMessageId(): ?int
+    {
+        return $this->messages->reverse()->firstWhere('read_at', '!=', null)?->id ?? null;
     }
 
     #[On('message.created')]
-    public function prependMessage($id): void
+    public function prependMessage(): void
     {
-        $this->messages->push(Discussion::with('user')->readAt()->find($id));
-        $this->updateLastReadMessageId();
         $this->dispatch('win-message-created');
     }
 
@@ -54,14 +66,13 @@ class DiscussionMessages extends Component
 
         $this->discussionId = $discussion->id;
 
-        $this->discussion = $discussion;
-        $this->mount();
+        $this->dispatch('$refresh');
     }
 
-    #[On('echo-private:chat.room.{discussion.id},MessageCreatedEvent')]
+    #[On('echo-private:chat.room.{discussionId},MessageCreatedEvent')]
     public function prependMessageFromBroadcast(array $payload): void
     {
-        $this->prependMessage($payload['message']['id']);
+        $this->prependMessage();
     }
 
 
@@ -72,7 +83,10 @@ class DiscussionMessages extends Component
 
     public function markAsRead($id): void
     {
-        $model = $this->messages->firstWhere('id', $id);
+        /** @var Discussion $model */
+        $model = $this->discussion->id === (int) $id
+            ? $this->discussion
+            : $this->messages->firstWhere('id', $id);
 
         $model?->markAsRead();
     }
