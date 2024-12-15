@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\Discussion;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 

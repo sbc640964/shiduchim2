@@ -20,7 +20,6 @@
         class="relative p-4 flex-grow min-h-0 max-h-full overflow-auto transition-opacity duration-300"
         :class="{'opacity-0': !showX, 'opacity-100': showX}"
         x-data="{
-            lastReadMessageId: @entangle('lastReadMessageId').live,
             messages: @entangle('messages').defer,
             showX: false,
             scroll: (behavior) => {
