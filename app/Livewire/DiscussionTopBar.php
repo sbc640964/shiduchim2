@@ -46,7 +46,7 @@ class DiscussionTopBar extends Component
 
     public function render()
     {
-        return view('livewire.discussion-topbar');
+        return view('livewire.discussion-top-bar');
     }
 
     public function markAsRead($id): void

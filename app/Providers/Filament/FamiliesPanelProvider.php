@@ -128,7 +128,7 @@ class FamiliesPanelProvider extends PanelProvider
                 fn (): string => Blade::render('@livewire(\'time-box\')'),
             )
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
-                fn (): string => Blade::render('@livewire(\'discussion-topbar\')'),
+                fn (): string => Blade::render('@livewire(\'discussion-top-bar\')'),
             )
             ->userMenuItems([
                 MenuItem::make()
