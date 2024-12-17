@@ -1,5 +1,5 @@
-<div class="flex-grow min-h-0 max-h-full flex flex-col">
-    <div class="bg-white border-b">
+<div class="relative bg-chat flex-grow min-h-0 max-h-full flex flex-col">
+    <div class="z-[2] bg-white border-b">
         <div class="p-4 flex flex-col gap-2">
             <h3 class="font-semibold text-xl">
                 {{ $this->discussion->title }}
@@ -17,7 +17,7 @@
         </div>
     </div>
     <div
-        class="relative p-4 flex-grow min-h-0 max-h-full overflow-auto transition-opacity duration-300"
+        class="relative z-[2] p-4 flex-grow min-h-0 max-h-full overflow-auto transition-opacity duration-300"
         :class="{'opacity-0': !showX, 'opacity-100': showX}"
         x-data="{
             messages: @entangle('messages').defer,

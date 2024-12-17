@@ -1,15 +1,6 @@
 <x-filament-panels::page>
     <div class="relative grid rounded-lg shadow overflow-hidden border bg-white grid-cols-3 h-[calc(100vh-200px)]">
-        <div class="z-10 absolute top-0 left-0 w-full h-full"  style="
-            background-color: #ffffff;
-            opacity: 0.1;
-            background-image:  linear-gradient(135deg, #d0d0d0 25%, transparent 25%), linear-gradient(225deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(315deg, #d0d0d0 25%, #ffffff 25%);
-            background-position:  5px 0, 5px 0, 0 0, 0 0;
-            background-size: 5px 5px;
-            background-repeat: repeat;"
-        >
-        </div>
-        <div class="z-20 bg-white h-full border-e">
+        <div class="bg-white h-full border-e">
             <ul>
                 @foreach($this->getDiscussions() as $discussionItem)
                     <li
@@ -48,7 +39,7 @@
                 @endforeach
             </ul>
         </div>
-        <div class="col-span-2 max-h-[calc(100vh-200px)] flex flex-col z-20">
+        <div class="col-span-2 max-h-[calc(100vh-200px)] flex flex-col">
             @if($this->currentDiscussion)
                 <livewire:discussion-messages
                     :discussion="$this->currentDiscussion"
@@ -60,9 +51,15 @@
                     x-data="{
             shift: false,
             typingTimeout: null,
+            pause: false,
             submitMessage() {
                 this.handleTypingFinished();
+                if (this.pause) return;
+                this.pause = true;
                 $wire.sendMessage();
+                setTimeout(() => {
+                this.pause = false;
+                }, 1000);
             },
             handleTypingFinished() {
                 Echo.private('chat.room.' + {{ $this->discussion }})
@@ -96,5 +93,15 @@
                 </div>
         </div>
             @endif
+
+{{--        <div class="absolute top-0 left-0 w-full h-full"  style="--}}
+{{--            background-color: #ffffff;--}}
+{{--            opacity: 0.1;--}}
+{{--            background-image:  linear-gradient(135deg, #d0d0d0 25%, transparent 25%), linear-gradient(225deg, #d0d0d0 25%, transparent 25%), linear-gradient(45deg, #d0d0d0 25%, transparent 25%), linear-gradient(315deg, #d0d0d0 25%, #ffffff 25%);--}}
+{{--            background-position:  5px 0, 5px 0, 0 0, 0 0;--}}
+{{--            background-size: 5px 5px;--}}
+{{--            background-repeat: repeat;"--}}
+{{--        >--}}
+{{--        </div>--}}
     </div>
 </x-filament-panels::page>
