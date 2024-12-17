@@ -51,9 +51,15 @@
                     x-data="{
             shift: false,
             typingTimeout: null,
+            pause: false,
             submitMessage() {
                 this.handleTypingFinished();
+                if (this.pause) return;
+                this.pause = true;
                 $wire.sendMessage();
+                setTimeout(() => {
+                this.pause = false;
+                }, 1000);
             },
             handleTypingFinished() {
                 Echo.private('chat.room.' + {{ $this->discussion }})

@@ -6,6 +6,7 @@ use App\Events\MessageCreatedEvent;
 use App\Models\Discussion;
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Components;
@@ -30,9 +31,27 @@ class Inbox extends Page
     #[Url]
     public ?int $page = 1;
 
+    public function getListeners()
+    {
+        return array_merge([
+
+        ], auth()->user()->chatRooms->mapWithKeys(
+            fn(Discussion $room) => ["echo-private:chat.room.$room->id,MessageCreatedEvent" => '$refresh']
+        )->toArray());
+    }
+
     public ?array $answerData = [
         'content' => null,
+        'rich_content' => null,
+        'mode' => 'normal'
     ];
+
+    public function mount(): void
+    {
+        $this->currentDiscussion = $this->discussion
+            ? $this->getDiscussion($this->discussion)
+            : null;
+    }
 
     public ?Discussion $currentDiscussion = null;
 
@@ -98,14 +117,19 @@ class Inbox extends Page
     {
         $this->discussion = $discussion;
 
-        $this->currentDiscussion = Discussion::query()
+        $this->currentDiscussion = $this->getDiscussion($discussion);
+
+        $this->dispatch('discussion.selected', $this->currentDiscussion);
+    }
+
+    function getDiscussion(int $discussion): Discussion
+    {
+        return Discussion::query()
             ->readAt()
             ->where('id', $discussion)
             ->whereHas('usersAssigned', fn ($query) => $query->where('user_id', auth()->id()))
             ->with('user')
-            ->first();
-
-        $this->dispatch('discussion.selected', $this->currentDiscussion);
+            ->firstOrFail();
     }
 
     public function getDiscussions(): LengthAwarePaginator|array
@@ -128,8 +152,12 @@ class Inbox extends Page
 
     public function sendMessage(): void
     {
+        $this->answerForm->validate();
+
         $newMessage = $this->currentDiscussion->children()->create([
-            'content' => $this->answerData['content'],
+            'content' => $this->answerData['mode'] === 'rich'
+                ? $this->answerData['rich_content']
+                : $this->answerData['content'],
             'user_id' => auth()->id(),
         ]);
 
@@ -137,6 +165,8 @@ class Inbox extends Page
 
         $this->answerData = [
             'content' => null,
+            'rich_content' => null,
+            'mode' => 'normal'
         ];
 
         Notification::make()
@@ -145,7 +175,9 @@ class Inbox extends Page
             ->send();
 
         $this->dispatch('message.created', $newMessage->getKey());
-        broadcast(new MessageCreatedEvent($this->currentDiscussion, $newMessage))->toOthers();
+        broadcast(
+            new MessageCreatedEvent($this->currentDiscussion, $newMessage, 'new')
+        );
 
     }
 
@@ -154,10 +186,31 @@ class Inbox extends Page
         return $form
             ->statePath('answerData')
             ->schema([
-            \Filament\Forms\Components\RichEditor::make('content')
+            \Filament\Forms\Components\RichEditor::make('rich_content')
                 ->label('תוכן ההודעה')
+                ->visible(fn () => $this->answerData['mode'] === 'rich')
                 ->required()
+                ->autofocus()
+                ->hintAction($this->toggleModeContentAction())
+                ->placeholder('הקלד כאן את תוכן ההודעה'),
+            \Filament\Forms\Components\Textarea::make('content')
+                ->label('תוכן ההודעה')
+                ->hintAction($this->toggleModeContentAction())
+                ->visible(fn () => $this->answerData['mode'] === 'normal')
+                ->required()
+                ->extraAlpineAttributes(['x-on:keyDown.prevent.enter' => 'submitMessage'])
+                ->autosize()
+                ->rows(1)
+                ->autofocus()
                 ->placeholder('הקלד כאן את תוכן ההודעה'),
         ]);
+    }
+
+    public function toggleModeContentAction()
+    {
+        return \Filament\Forms\Components\Actions\Action::make('normal')
+            ->label(fn () => $this->answerData['mode'] === 'normal' ? 'עבור לעורך עשיר' : 'עבור לעורך פשוט')
+            ->visible(auth()->user()->can('write_rich_messages'))
+            ->action(fn () => $this->answerData['mode'] = $this->answerData['mode'] === 'normal' ? 'rich' : 'normal');
     }
 }

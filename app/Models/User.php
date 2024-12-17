@@ -104,4 +104,9 @@ class User extends Authenticatable implements FilamentUser
             default: 'robohash',
         );
     }
+
+    public function chatRooms()
+    {
+        return $this->belongsToMany(Discussion::class, 'discussion_user');
+    }
 }

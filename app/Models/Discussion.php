@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\MessageCreatedEvent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -105,5 +106,9 @@ class Discussion extends Model
         }
 
         $this->usersAsRead()->attach($user->id, ['read_at' => now()]);
+
+        broadcast(
+            new MessageCreatedEvent($this->parent, $this, 'read-user')
+        );
     }
 }

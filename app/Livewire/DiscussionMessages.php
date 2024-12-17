@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Events\MessageCreatedEvent;
 use App\Models\Discussion;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -11,6 +12,15 @@ use Livewire\Component;
 class DiscussionMessages extends Component
 {
     public int $discussionId;
+
+    public function getListeners()
+    {
+        return array_merge([
+            'discussion.selected' => 'selectDiscussion',
+        ], auth()->user()->chatRooms->mapWithKeys(
+            fn(Discussion $room) => ["echo-private:chat.room.$room->id,MessageCreatedEvent" => 'prependMessageFromBroadcast']
+        )->toArray());
+    }
 
     #[Computed]
     public function messages(): Collection
@@ -50,13 +60,11 @@ class DiscussionMessages extends Component
         return $this->messages->reverse()->firstWhere('read_at', '!=', null)?->id ?? null;
     }
 
-    #[On('message.created')]
     public function prependMessage(): void
     {
         $this->dispatch('win-message-created');
     }
 
-    #[On('discussion.selected')]
     public function selectDiscussion(Discussion $discussion): void
     {
         if($this->discussion->id === $discussion->id) {
@@ -68,7 +76,6 @@ class DiscussionMessages extends Component
         $this->dispatch('$refresh');
     }
 
-    #[On('echo-private:chat.room.{discussionId},MessageCreatedEvent')]
     public function prependMessageFromBroadcast(array $payload): void
     {
         $this->prependMessage();
