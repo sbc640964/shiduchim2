@@ -38,4 +38,9 @@ class CallDiary extends Model
     {
         return $this->belongsTo(Phone::class);
     }
+
+    public function call(): BelongsTo
+    {
+        return $this->belongsTo(Call::class, 'call_id', 'unique_id');
+    }
 }

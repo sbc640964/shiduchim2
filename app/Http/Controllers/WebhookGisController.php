@@ -159,7 +159,13 @@ class WebhookGisController extends Controller
             return $call;
         }
 
-        return Call::query()
+        if($isOutgoing) {
+            $call = Call::query()
+                ->where('data_raw->events[0]->ID', $data['original_call_id'])
+                ->first();
+        }
+
+        return $call ?? Call::query()
             ->whereNull('finished_at')
             ->where(fn (Builder $query) => $query->where('extension', $extension)
                 ->where('phone', $phoneNumber)
