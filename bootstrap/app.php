@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->call(new RunPayments)->dailyAt('05:00')->name('run-payments');
-        $schedule->command('telescope:prune')->daily();
+        $schedule->command('telescope:prune --hours=72')->daily();
         $schedule->call(function () {
             Call::query()
                 ->whereNull('finished_at')
