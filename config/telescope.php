@@ -99,6 +99,7 @@ return [
         'livewire*',
         'nova-api*',
         'pulse*',
+        'broadcasting/auth'
     ],
 
     'ignore_commands' => [
