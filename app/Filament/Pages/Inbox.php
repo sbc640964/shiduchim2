@@ -120,9 +120,12 @@ class Inbox extends Page
 
     public function selectDiscussion(int $discussion): void
     {
+        if($discussion === $this->discussion) {
+            return;
+        }
         $this->discussion = $discussion;
-
         $this->dispatch('prepare-discussion-selected', $this->discussion);
+
     }
 
     public function getDiscussions(): LengthAwarePaginator|array
