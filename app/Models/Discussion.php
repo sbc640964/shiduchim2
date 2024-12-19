@@ -52,6 +52,13 @@ class Discussion extends Model
             ->withPivot('read_at');
     }
 
+    public function otherUsersAsRead(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'discussion_read_user')
+            ->withPivot('read_at')
+            ->where('id', '!=', auth()->id());
+    }
+
     public function scopeReadAt(Builder $query, ?User $user = null): Builder
     {
         $user = $user ?? auth()->user();

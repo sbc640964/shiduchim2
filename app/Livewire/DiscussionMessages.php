@@ -40,7 +40,7 @@ class DiscussionMessages extends Component
     public function messages(): Collection
     {
         return $this->discussion->children()
-            ->with('user')
+            ->with('user', 'otherUsersAsRead')
             ->readAt()
             ->oldest()
 //            ->take(100)

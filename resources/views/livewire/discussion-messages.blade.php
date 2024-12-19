@@ -67,6 +67,10 @@
             @endif
 
             @foreach($this->messages as $message)
+                @php
+                    /** @var \App\Models\Discussion $message */
+                @endphp
+
                 <div wire:key="{{$message->id}}">
                     <div
                         @if(! $message->read_at)
@@ -96,10 +100,23 @@
                                 "bg-blue-100" => $message->user_id === auth()->id(),
                                 "bg-gray-100" => $message->user_id !== auth()->id(),
                                 ])>
-                                <div class="font-semibold whitespace-pre-line">
-                                    {!! $message->content !!}
-                                </div>
+                                <div class="font-semibold whitespace-pre-line">{!! trim($message->content) !!}</div>
                             </div>
+                            @if($message->user_id === auth()->id())
+                                <div
+                                    x-tooltip="tooltip"
+                                    x-data="{ tooltip: '{{$message->otherUsersAsRead->pluck('name')->join(', ')}}' }"
+                                    class="text-xs ps-2 text-gray-400 flex items-center gap-1 pt-1">
+                                    @if($message->otherUsersAsRead->isEmpty())
+                                        לא נקרא
+                                    @elseif($message->otherUsersAsRead->count() === ($message->parent ?? $message)->usersAssigned->count() - 1)
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 12L7.25 17C7.25 17 8.66939 15.3778 9.875 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8 12L13.25 17L22 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M16 7L12.5 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                        כולם
+                                    @else
+                                        {{ $message->otherUsersAsRead->count() }} / {{ ($message->parent ?? $message)->usersAssigned->count() - 1 }} נמענים
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                     @if($this->lastReadMessageId === $message->id && $message->id !== $this->messages->last()->id)
