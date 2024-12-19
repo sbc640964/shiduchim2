@@ -95,12 +95,11 @@ return [
         // 'api/*'
     ],
 
-    'ignore_paths' => [
-        'livewire*',
+    'ignore_paths' => array_merge([
         'nova-api*',
         'pulse*',
-        'broadcasting/auth'
-    ],
+        'broadcasting/auth',
+    ],  explode(',', env('TELESCOPE_IGNORE_PATHS', ''))),
 
     'ignore_commands' => [
         //        'horizon:*'
