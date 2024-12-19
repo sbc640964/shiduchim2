@@ -2,13 +2,13 @@
     <div class="relative grid rounded-lg shadow overflow-hidden border bg-white grid-cols-3 h-[calc(100vh-200px)]">
         <div class="bg-white h-full border-e">
             <ul>
-                @foreach($this->getDiscussions() as $discussionItem)
+                @foreach($this->list as $discussionItem)
                     <li
                         wire:click="selectDiscussion({{ $discussionItem->id }})"
                         @class([
                             "cursor-pointer border-b last:border-b-0 border-gray-200",
-                            'bg-blue-100/80' => $this->currentDiscussion && $this->currentDiscussion->id === $discussionItem->id,
-                            'hover:bg-gray-100' => $this->currentDiscussion && $this->currentDiscussion->id !== $discussionItem->id,
+                            'bg-blue-100/80' => $this->discussion === $discussionItem->id,
+                            'hover:bg-gray-100' => $this->discussion !== $discussionItem->id,
                         ])
                     >
                         <div class="p-4">
@@ -20,7 +20,7 @@
                                     <div class="-mx-2 flex divide-x divide-x-reverse">
                                         <span class="px-2 text-xs text-gray-500">נפתח: {{ $discussionItem->created_at->diffForHumans() }}</span>
                                         <span class="px-2 text-xs text-gray-500">על ידי: {{ $discussionItem->user->name }}</span>
-                                        <span class="px-2 text-xs text-gray-500">תגובות: {{ $discussionItem->children->count() }}</span>
+                                        <span class="px-2 text-xs text-gray-500">תגובות: {{ $discussionItem->children_count }}</span>
                                         @if($discussionItem->lastChildren)
                                             <span class="px-2 text-xs text-gray-500">תגובה אחרונה: {{ $discussionItem->lastChildren->user->name }}</span>
                                         @endif
@@ -40,19 +40,25 @@
             </ul>
         </div>
         <div class="col-span-2 max-h-[calc(100vh-200px)] flex flex-col">
-            @if($this->currentDiscussion)
+            @if($this->discussion)
                 <livewire:discussion-messages
-                    :discussion="$this->currentDiscussion"
+                    :discussion-id="$this->discussion"
                 />
             @endif
-            @if($this->currentDiscussion)
+            @if($this->discussion)
                 <div
                     class="bg-white border-t p-8"
                     x-data="{
             shift: false,
             typingTimeout: null,
             pause: false,
-            submitMessage() {
+            submitMessage(event) {
+                if(event && event.type === 'keydown') {
+                    if(event.shiftKey) {
+                        return;
+                    }
+                    event.preventDefault();
+                }
                 this.handleTypingFinished();
                 if (this.pause) return;
                 this.pause = true;

@@ -33,7 +33,7 @@ class Discussion extends Model
 
     public function lastChildren(): HasOne
     {
-        return $this->children()->latest()->one();
+        return $this->hasOne(Discussion::class, 'parent_id')->ofMany('created_at', 'max');
     }
 
     public function user(): BelongsTo

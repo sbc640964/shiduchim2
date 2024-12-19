@@ -4,9 +4,11 @@ namespace App\Livewire;
 
 use App\Models\Discussion;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
+#[Lazy]
 class DiscussionTopBar extends Component
 {
     public function getListeners()
@@ -29,7 +31,7 @@ class DiscussionTopBar extends Component
 
     public function getCountUnreadMessages(): ?int
     {
-        $count = $this->getUnreadMessages()->count();
+        $count = $this->getUnreadMessages->count();
         return $count > 0 ? $count : null;
     }
 
@@ -57,6 +59,6 @@ class DiscussionTopBar extends Component
 
     public function openViewRoom($id): void
     {
-        $this->redirect(\App\Filament\Pages\Inbox::getUrl(['discussion' => $id]));
+        $this->redirect(\App\Filament\Pages\Inbox::getUrl(['discussion' => $id]), navigate: true);
     }
 }
