@@ -6,43 +6,62 @@ use App\Events\MessageCreatedEvent;
 use App\Models\Discussion;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
+#[Lazy]
 class DiscussionMessages extends Component
 {
+    #[Reactive]
     public int $discussionId;
 
     public function getListeners()
     {
         return array_merge([
-            'discussion.selected' => 'selectDiscussion',
+            'prepare-discussion-selected' => 'selectDiscussion',
+            'message.created' => 'updateLastReadMessageId',
         ], auth()->user()->chatRooms->mapWithKeys(
             fn(Discussion $room) => ["echo-private:chat.room.$room->id,MessageCreatedEvent" => 'prependMessageFromBroadcast']
         )->toArray());
     }
 
-    #[Computed]
+    function placeholder(): string
+    {
+        return <<<'Blade'
+            <div class="flex-grow flex justify-center items-center">
+                <x-filament::loading-indicator class="w-8 h-8 " />
+            </div>
+        Blade;
+    }
+
+    #[Computed(persist: true)]
     public function messages(): Collection
     {
         return $this->discussion->children()
             ->with('user')
             ->readAt()
             ->oldest()
-            ->take(100)
+//            ->take(100)
             ->get()
             ->prepend(
                 $this->discussion
             );
     }
 
-    #[Computed]
+    #[Computed(persist: true)]
     public function lastReadMessageId(): ?int
     {
-        return $this->messages->reverse()->firstWhere('read_at', '!=', null)?->id ?? null;
+        return $this->discussion->children()
+            ->with('user')
+            ->readAt()
+            ->latest()
+            ->havingNull('read_at')
+            ->first()?->id ?? null;
     }
 
-    #[Computed]
+    #[Computed(persist: true )]
     public function discussion(): Discussion
     {
         return Discussion::readAt()
@@ -50,35 +69,36 @@ class DiscussionMessages extends Component
             ->find($this->discussionId);
     }
 
-    public function mount(Discussion $discussion): void
+    public function updateLastReadMessageId(): void
     {
-        $this->discussionId = $discussion->id;
+        unset($this->lastReadMessageId);
     }
 
-    public function updateLastReadMessageId(): ?int
+    public function prependMessage($room): void
     {
-        return $this->messages->reverse()->firstWhere('read_at', '!=', null)?->id ?? null;
+        $this->dispatch('win-message-created',
+            room: $room,
+        );
     }
 
-    public function prependMessage(): void
+    public function selectDiscussion(int $discussion): void
     {
-        $this->dispatch('win-message-created');
-    }
-
-    public function selectDiscussion(Discussion $discussion): void
-    {
-        if($this->discussion->id === $discussion->id) {
+        if($this->discussion->id === $discussion) {
             return;
         }
 
-        $this->discussionId = $discussion->id;
+        $this->discussionId = $discussion;
 
-        $this->dispatch('$refresh');
+        $this->updateLastReadMessageId();
+        unset($this->messages, $this->discussion);
+        $this->dispatch('discussion-selected', $discussion);
     }
 
     public function prependMessageFromBroadcast(array $payload): void
     {
-        $this->prependMessage();
+        $this->prependMessage($payload['discussion']['id']);
+
+        unset($this->messages);
     }
 
 

@@ -13,6 +13,8 @@ use Filament\Forms\Components;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\Lazy;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
 use Livewire\Attributes\Url;
@@ -31,13 +33,25 @@ class Inbox extends Page
     #[Url]
     public ?int $page = 1;
 
+
+    #[Computed]
+    public function list(): LengthAwarePaginator|array
+    {
+        return $this->getDiscussions();
+    }
+
     public function getListeners()
     {
         return array_merge([
 
         ], auth()->user()->chatRooms->mapWithKeys(
-            fn(Discussion $room) => ["echo-private:chat.room.$room->id,MessageCreatedEvent" => '$refresh']
+            fn(Discussion $room) => ["echo-private:chat.room.$room->id,MessageCreatedEvent" => 'refreshList']
         )->toArray());
+    }
+
+    public function refreshList(?array $data = null): void
+    {
+        unset($this->list);
     }
 
     public ?array $answerData = [
@@ -45,15 +59,6 @@ class Inbox extends Page
         'rich_content' => null,
         'mode' => 'normal'
     ];
-
-    public function mount(): void
-    {
-        $this->currentDiscussion = $this->discussion
-            ? $this->getDiscussion($this->discussion)
-            : null;
-    }
-
-    public ?Discussion $currentDiscussion = null;
 
     protected function getHeaderActions(): array
     {
@@ -117,19 +122,7 @@ class Inbox extends Page
     {
         $this->discussion = $discussion;
 
-        $this->currentDiscussion = $this->getDiscussion($discussion);
-
-        $this->dispatch('discussion.selected', $this->currentDiscussion);
-    }
-
-    function getDiscussion(int $discussion): Discussion
-    {
-        return Discussion::query()
-            ->readAt()
-            ->where('id', $discussion)
-            ->whereHas('usersAssigned', fn ($query) => $query->where('user_id', auth()->id()))
-            ->with('user')
-            ->firstOrFail();
+        $this->dispatch('prepare-discussion-selected', $this->discussion);
     }
 
     public function getDiscussions(): LengthAwarePaginator|array
@@ -138,6 +131,7 @@ class Inbox extends Page
             ->whereNull('parent_id')
             ->whereHas('usersAssigned', fn ($query) => $query->where('user_id', auth()->id()))
             ->with(['user', 'lastChildren' => fn ($query) => $query->with('user')->readAt()])
+            ->withCount('children')
             ->select('discussions.*')
             ->readAt()
             ->paginate(25, page: $this->page);
@@ -154,7 +148,13 @@ class Inbox extends Page
     {
         $this->answerForm->validate();
 
-        $newMessage = $this->currentDiscussion->children()->create([
+        $discussion = Discussion::find($this->discussion);
+
+        if(!$discussion) {
+            return;
+        }
+
+        $newMessage = $discussion->children()->create([
             'content' => $this->answerData['mode'] === 'rich'
                 ? $this->answerData['rich_content']
                 : $this->answerData['content'],
@@ -163,22 +163,25 @@ class Inbox extends Page
 
         $newMessage->usersAsRead()->attach(auth()->id(), ['read_at' => now()]);
 
-        $this->answerData = [
-            'content' => null,
-            'rich_content' => null,
-            'mode' => 'normal'
-        ];
-
         Notification::make()
             ->title('ההודעה נשלחה בהצלחה')
             ->success()
             ->send();
 
-        $this->dispatch('message.created', $newMessage->getKey());
-        broadcast(
-            new MessageCreatedEvent($this->currentDiscussion, $newMessage, 'new')
+        $this->dispatch('message.created',
+            room: $discussion->id,
+            message: $newMessage->getKey()
         );
 
+        broadcast(
+            new MessageCreatedEvent($discussion, $newMessage, 'new')
+        );
+
+        $this->answerData = [
+            'content' => null,
+            'rich_content' => null,
+            'mode' => 'normal'
+        ];
     }
 
     public function answerForm(\Filament\Forms\Form $form): Form
@@ -198,7 +201,7 @@ class Inbox extends Page
                 ->hintAction($this->toggleModeContentAction())
                 ->visible(fn () => $this->answerData['mode'] === 'normal')
                 ->required()
-                ->extraAlpineAttributes(['x-on:keyDown.prevent.enter' => 'submitMessage'])
+                ->extraAlpineAttributes(['x-on:keyDown.enter' => 'submitMessage'])
                 ->autosize()
                 ->rows(1)
                 ->autofocus()

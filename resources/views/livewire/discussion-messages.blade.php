@@ -20,22 +20,44 @@
         class="relative z-[2] p-4 flex-grow min-h-0 max-h-full overflow-auto transition-opacity duration-300"
         :class="{'opacity-0': !showX, 'opacity-100': showX}"
         x-data="{
-            messages: @entangle('messages').defer,
+            discussion: @entangle('discussionId').live,
             showX: false,
+            showAlertHasNewMessages: false,
             scroll: (behavior) => {
                 $el.scrollTo({
                     top: $el.scrollHeight,
                     behavior: behavior || 'auto'
                 });
+            },
+            selectedChanged(time = 0) {
+                if(time > 0) {setTimeout(() => this.scroll(), time)} else {this.scroll()}
+                setTimeout(() => {
+                    this.showX = true;
+                }, time + 100)
+            },
+            initComponent() {
+               this.selectedChanged();
             }
         }"
-        x-init="
-              setTimeout(() => {
-                scroll();
-                showX = true;
-              }, 100)
+        x-init="initComponent()"
+        x-on:scroll="
+            if($el.scrollTop >= ($el.scrollHeight - $el.offsetHeight - 10)) {
+                showAlertHasNewMessages = false;
+            }
         "
-        x-on:win-message-created.window="setTimeout(() => scroll('smooth'), 100)"
+
+        x-on:discussion-selected.window="selectedChanged(100)"
+        x-on:prepare-discussion-selected.window="showX = false; showAlertHasNewMessages = false;"
+
+        x-on:win-message-created.window="setTimeout(() => {
+            const msgsElms = $el.querySelectorAll('&>div');
+            const lastMessageHeight = msgsElms[msgsElms.length - 1].clientHeight;
+            if($event.detail.room === discussion && $el.scrollTop >= ($el.scrollHeight - $el.offsetHeight - lastMessageHeight - 200)) {
+                scroll('smooth');
+            } else {
+                showAlertHasNewMessages = true;
+            }
+        }, 100)"
 
     >
             @if($this->messages->isEmpty())
@@ -54,25 +76,29 @@
                             "flex gap-3 p-3",
                             "flex-row-reverse" => $message->user_id === auth()->id(),
                         ])>
+                        @if($message->user_id !== auth()->id())
                         <x-filament::avatar
                             class="border mt-10"
                             :src="$message->user->avater_uri"
                             size="lg"
                         />
-                        <div>
-                            <p class="text-sm font-semibold text-gray-700 ps-1">{{ $message->user->name }}</p>
-                            <p class="ps-1 pb-1 text-xs text-gray-500">{{ $message->created_at->diffForHumans() }}</p>
-                            <span>
-                                {{ $message->read_at ? 'נקרא' : 'לא נקרא' }}
+                        @endif
+                        <div class="flex flex-col">
+
+                            @if($message->user_id !== auth()->id()) <span class="text-sm font-semibold text-gray-700 ps-1">{{ $message->user->name }}</span> @endif
+                            <span
+                                @class(["ps-1 pb-1 text-xs text-gray-500"])
+                            >
+                                {{ $message->created_at->diffForHumans() }}
                             </span>
                             <div @class([
                                 "p-3 rounded-xl",
                                 "bg-blue-100" => $message->user_id === auth()->id(),
                                 "bg-gray-100" => $message->user_id !== auth()->id(),
                                 ])>
-                                <h3 class="font-semibold">
+                                <div class="font-semibold whitespace-pre-line">
                                     {!! $message->content !!}
-                                </h3>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -88,6 +114,16 @@
                 </div>
 
             @endforeach
+                <div x-show="showAlertHasNewMessages" class="w-full sticky bottom-4 left-0 z-[3] flex justify-center items-center">
+                    <button
+                        @click="scroll('smooth')"
+                        class="flex items-center justify-center gap-2 p-2 bg-blue-500 text-white rounded-lg shadow-lg"
+                    >
+                        <x-heroicon-c-chevron-double-down class="w-4 h-4" />
+                        <span>הודעות חדשות</span>
+                        <x-heroicon-c-chevron-double-down class="w-4 h-4" />
+                    </button>
+                </div>
     </div>
 </div>
 
