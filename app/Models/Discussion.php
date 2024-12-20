@@ -115,7 +115,7 @@ class Discussion extends Model
         $this->usersAsRead()->attach($user->id, ['read_at' => now()]);
 
         broadcast(
-            new MessageCreatedEvent($this->parent, $this, 'read-user')
+            new MessageCreatedEvent($this, 'read-user')
         );
     }
 }

@@ -177,7 +177,7 @@ class Inbox extends Page
         );
 
         broadcast(
-            new MessageCreatedEvent($discussion, $newMessage, 'new')
+            new MessageCreatedEvent($newMessage, 'new')
         );
 
         $this->answerData = [
