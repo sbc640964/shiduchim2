@@ -36,6 +36,9 @@ class MessageCreatedEvent implements ShouldBroadcastNow
             'message' => [
                 'id' => $this->message->id,
             ],
+            'user' => [
+                'id' => $this->message->user->id,
+            ],
             'event' => $this->event,
         ];
     }

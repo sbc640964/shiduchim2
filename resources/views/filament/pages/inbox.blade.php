@@ -4,6 +4,7 @@
             <ul>
                 @foreach($this->list as $discussionItem)
                     <li
+                        wire:key="{{ $discussionItem->id }}"
                         wire:click="selectDiscussion({{ $discussionItem->id }})"
                         @class([
                             "cursor-pointer border-b last:border-b-0 border-gray-200",
@@ -39,7 +40,7 @@
                 @endforeach
             </ul>
         </div>
-        <div class="col-span-2 max-h-[calc(100vh-200px)] flex flex-col">
+        <div class="col-span-2 max-h-[calc(100vh-200px)] flex flex-col relative">
             @if($this->discussion)
                 <livewire:discussion-messages
                     :discussion-id="$this->discussion"
@@ -47,48 +48,72 @@
             @endif
             @if($this->discussion)
                 <div
+                    x-init="initListeners()"
                     class="bg-white border-t p-8"
                     x-data="{
+            usersTyping: [],
             shift: false,
             typingTimeout: null,
             pause: false,
-            submitMessage(event) {
-                if(event && event.type === 'keydown') {
-                    if(event.shiftKey) {
-                        return;
-                    }
-                    event.preventDefault();
-                }
+            submitMessage() {
                 this.handleTypingFinished();
+                this.typingTimeout = null;
                 if (this.pause) return;
                 this.pause = true;
                 $wire.sendMessage();
                 setTimeout(() => {
-                this.pause = false;
+                    this.pause = false;
                 }, 1000);
             },
-            handleTypingFinished() {
+            initListeners() {
                 Echo.private('chat.room.' + {{ $this->discussion }})
-                    .whisper('not-typing', {
-                        id: {{ auth()->id() }}
+                    .listenForWhisper('typing', (e) => {
+                        if (e.id !== {{ auth()->id() }}) {
+                            if (! this.usersTyping.includes(e.id+'|'+e.name)) {
+                                this.usersTyping.push(e.id+'|'+e.name);
+                            }
+                        }
+                    })
+                    .listenForWhisper('not-typing', (e) => {
+                        if (e.id !== {{ auth()->id() }}) {
+                            this.usersTyping = this.usersTyping.filter((name) => ! name.startsWith(e.id+'|'));
+                        }
                     });
-            }
-        }"
-                    x-on:keydown="
-                clearTimeout(typingTimeout);
-
-                if(! typingTimeout) {
+                },
+                handleTypingFinished() {
                     Echo.private('chat.room.' + {{ $this->discussion }})
-                        .whisper('typing', {
+                        .whisper('not-typing', {
                             id: {{ auth()->id() }}
-                        });
-               }
+                    });
+                }
+           }"
+                    x-on:keydown="
 
-                typingTimeout = setTimeout(handleTypingFinished, 3000);
-            "
+                        if(event.key === 'Enter' && ! event.shiftKey) {
+                            $event.preventDefault();
+                            submitMessage();
+                        }
+
+                        typingTimeout && clearTimeout(typingTimeout);
+
+                        if(! typingTimeout) {
+                            Echo.private('chat.room.' + {{ $this->discussion }})
+                                .whisper('typing', {
+                                    id: {{ auth()->id() }},
+                                    name: '{{ auth()->user()->name }}'
+                                });
+                        }
+                        typingTimeout = setTimeout(() => {handleTypingFinished(); typingTimeout = null}, 3000);
+                    "
                 >
                     <form x-on:submit.prevent="submitMessage()">
                         {{ $this->answerForm }}
+
+                        <div
+                            class="text-xs text-gray-500 mt-1.5 ms-1 absolute"
+                            x-show="usersTyping.length > 0"
+                            x-text="usersTyping.map(name => name.split('|')[1]).join(' ו') + (usersTyping.length > 1 ? ' כותבים' : ' כותב') + '...'">
+                        </div>
 
                         <div class="pt-4 flex justify-end">
                             <x-filament::button type="submit">

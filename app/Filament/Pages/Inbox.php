@@ -204,7 +204,6 @@ class Inbox extends Page
                 ->hintAction($this->toggleModeContentAction())
                 ->visible(fn () => $this->answerData['mode'] === 'normal')
                 ->required()
-                ->extraAlpineAttributes(['x-on:keyDown.enter' => 'submitMessage'])
                 ->autosize()
                 ->rows(1)
                 ->autofocus()
