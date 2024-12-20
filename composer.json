@@ -8,6 +8,7 @@
         "php": "^8.2",
         "awcodes/filament-gravatar": "^2.0",
         "bezhansalleh/filament-shield": "^3.3",
+        "davidhsianturi/blade-bootstrap-icons": "^1.5",
         "elipzis/laravel-cacheable-model": "^0.4.0",
         "filament/filament": "v3.2.115",
         "filament/spatie-laravel-tags-plugin": "^3.1",
