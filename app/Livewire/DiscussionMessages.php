@@ -17,6 +17,8 @@ class DiscussionMessages extends Component
     #[Reactive]
     public int $discussionId;
 
+    public array $usersTyping = [];
+
     public function getListeners()
     {
         return array_merge([
@@ -74,10 +76,11 @@ class DiscussionMessages extends Component
         unset($this->lastReadMessageId);
     }
 
-    public function prependMessage($room): void
+    public function prependMessage($room, $userId = null): void
     {
         $this->dispatch('win-message-created',
             room: $room,
+            userId: $userId,
         );
     }
 
@@ -96,7 +99,16 @@ class DiscussionMessages extends Component
 
     public function prependMessageFromBroadcast(array $payload): void
     {
-        $this->prependMessage($payload['discussion']['id']);
+        $this->prependMessage($payload['discussion']['id'], $payload['user']['id'] ?? null);
+
+        unset($this->messages);
+    }
+
+    public function updateMessage($id, $content): void
+    {
+        $this->discussion->children()->find($id)->update([
+            'content' => $content,
+        ]);
 
         unset($this->messages);
     }
@@ -115,5 +127,13 @@ class DiscussionMessages extends Component
             : $this->messages->firstWhere('id', $id);
 
         $model?->markAsRead();
+    }
+
+    public function userTyping(int $id, bool $bool): void
+    {
+        if(! $bool) {
+            $this->usersTyping = array_filter($this->usersTyping, fn($userName, $userId) => $userId !== $id);
+        }
+        $this->usersTyping[$id] = $bool;
     }
 }

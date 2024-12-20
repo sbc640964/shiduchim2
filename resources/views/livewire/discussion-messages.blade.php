@@ -22,6 +22,9 @@
         x-data="{
             discussion: @entangle('discussionId').live,
             showX: false,
+            windowFocus: true,
+            editItems: {},
+            editItemIds: [],
             showAlertHasNewMessages: false,
             scroll: (behavior) => {
                 $el.scrollTo({
@@ -37,9 +40,52 @@
             },
             initComponent() {
                this.selectedChanged();
+            },
+            placeCaretAtEnd(el) {
+                el.focus();
+                if (typeof window.getSelection != 'undefined'
+                    && typeof document.createRange != 'undefined') {
+                    var range = document.createRange();
+                    range.selectNodeContents(el);
+                    range.collapse(false);
+                    var sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                } else if (typeof document.body.createTextRange != 'undefined') {
+                    var textRange = document.body.createTextRange();
+                    textRange.moveToElementText(el);
+                    textRange.collapse(false);
+                    textRange.select();
+                }
+            },
+            setMarksToMessagesThatInViewport() {
+                const msgsElms = $el.querySelectorAll('&>div');
+                msgsElms.forEach((msgElm) => {
+                    const rect = msgElm.getBoundingClientRect();
+                    if(rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                        const id = msgElm.getAttribute('wire:key');
+                        $wire.markAsRead(id);
+                    }
+                });
+            },
+            selectedItemToEdit(id) {
+                const el = $el.querySelector('#msg-' + id);
+
+                if(this.editItemIds.includes(id)) {
+                    el.innerHTML = this.editItems[id];
+                    delete this.editItems[id];
+                } else {
+                    this.editItems = {...this.editItems, [id]: el.innerHTML};
+                    $nextTick(() => {
+                        this.placeCaretAtEnd(el);
+                    });
+                }
             }
         }"
+        x-effect="editItemIds = Object.keys(editItems).map(Number)"
         x-init="initComponent()"
+        x-on:focus.window="windowFocus = true; setMarksToMessagesThatInViewport()"
+        x-on:blur.window="windowFocus = false"
         x-on:scroll="
             if($el.scrollTop >= ($el.scrollHeight - $el.offsetHeight - 10)) {
                 showAlertHasNewMessages = false;
@@ -52,9 +98,10 @@
         x-on:win-message-created.window="setTimeout(() => {
             const msgsElms = $el.querySelectorAll('&>div');
             const lastMessageHeight = msgsElms[msgsElms.length - 1].clientHeight;
-            if($event.detail.room === discussion && $el.scrollTop >= ($el.scrollHeight - $el.offsetHeight - lastMessageHeight - 200)) {
+            console.log($event.detail)
+            if(($event.detail.room === discussion && $el.scrollTop >= ($el.scrollHeight - $el.offsetHeight - lastMessageHeight - 200)) || $event.detail.userId === {{ auth()->id() }}) {
                 scroll('smooth');
-            } else {
+            } else if($event.detail.room === discussion) {
                 showAlertHasNewMessages = true;
             }
         }, 100)"
@@ -74,7 +121,7 @@
                 <div wire:key="{{$message->id}}">
                     <div
                         @if(! $message->read_at)
-                            x-intersect.full.once="$wire.markAsRead({{ $message->id }})"
+                            x-intersect.full.once="windowFocus && $wire.markAsRead({{ $message->id }})"
                         @endif
                         @class([
                             "flex gap-3 p-3",
@@ -95,13 +142,58 @@
                             >
                                 {{ $message->created_at->diffForHumans() }}
                             </span>
-                            <div @class([
-                                "p-3 rounded-xl",
+                                <div @class([
+                                "p-3 rounded-xl relative group/item-message",
                                 "bg-blue-100" => $message->user_id === auth()->id(),
                                 "bg-gray-100" => $message->user_id !== auth()->id(),
-                                ])>
-                                <div class="font-semibold whitespace-pre-line">{!! trim($message->content) !!}</div>
+
+                                ])
+                                x-bind:class="{
+                                    'w-96 bg-white border border-blue-600 rounded-bl-sm': editItemIds.includes( {{ $message->id }} ),
+                                }"
+                            >
+                                <div x-bind:class="{ 'opacity-0': ! editItemIds.includes( {{ $message->id }} )}" class="absolute bg-white rounded-lg p-2 shadow -top-10 end-1 group-hover/item-message:opacity-100">
+                                    <x-filament::icon-button
+                                        :color="\Filament\Support\Colors\Color::Blue"
+                                        x-show="!editItemIds.includes({{ $message->id }})"
+                                        @click="selectedItemToEdit({{ $message->id }})"
+                                        class="text-gray-400"
+                                        size="sm"
+                                        icon="heroicon-o-pencil"
+                                    />
+                                </div>
+                                <div id="{{ 'msg-'.$message->id }}" class="whitespace-pre-line outline-none" x-bind:contenteditable="editItemIds.includes( {{ $message->id }})">{!! trim($message->content) !!}</div>
                             </div>
+                                <template  x-if="editItemIds.includes( {{ $message->id }} )">
+                                    <div
+
+                                        class="flex justify-between w-full mt-2"
+                                    >
+                                        <div></div>
+                                        <div class="flex gap-2">
+                                            <x-filament::icon-button
+                                                :color="\Filament\Support\Colors\Color::Blue"
+                                                @click="selectedItemToEdit({{ $message->id }})"
+                                                size="sm"
+                                                icon="heroicon-o-x-mark"
+                                                loading-indicator
+                                            >
+                                                ביטול
+                                            </x-filament::icon-button>
+                                            <x-filament::icon-button
+                                                wire:target="updateMessage"
+                                                @click="$wire.updateMessage({{ $message->id }}, $root.querySelector('#msg-{{ $message->id }}').innerHTML); selectedItemToEdit({{ $message->id }})"
+                                                :color="\Filament\Support\Colors\Color::Blue"
+                                                size="sm"
+                                                icon="heroicon-o-check"
+                                                target="updateMessage"
+                                            >
+                                                שמירה
+                                            </x-filament::icon-button>
+                                        </div>
+                                    </div>
+                                </template>
+
                             @if($message->user_id === auth()->id())
                                 <div
                                     x-tooltip="tooltip"
