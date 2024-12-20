@@ -15,15 +15,23 @@ class MessageCreatedEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Discussion $discussion, public Discussion $message, public string $event)
+    public function __construct(
+        public Discussion $message,
+        public string $event
+    )
     {
+    }
+
+    public function getDiscussionParent()
+    {
+        return $this->message->parent ?? $this->message;
     }
 
     public function broadcastWith(): array
     {
         return [
             'discussion' => [
-                'id' => $this->discussion->id,
+                'id' => $this->getDiscussionParent()->id,
             ],
             'message' => [
                 'id' => $this->message->id,
@@ -35,7 +43,7 @@ class MessageCreatedEvent implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('chat.room.' . $this->discussion->id),
+            new PrivateChannel('chat.room.' . $this->getDiscussionParent()->id),
         ];
     }
 }
