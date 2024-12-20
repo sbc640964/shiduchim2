@@ -55,7 +55,10 @@
             shift: false,
             typingTimeout: null,
             pause: false,
-            submitMessage() {
+            submitMessage(event) {
+                if(event && event.type === 'keydown' && event.key === 'Enter' && event.shiftKey) {
+                    return;
+                }
                 this.handleTypingFinished();
                 this.typingTimeout = null;
                 if (this.pause) return;
@@ -91,8 +94,8 @@
 
                         if(event.key === 'Enter') {
                             if(event.shiftKey) {
-                               event.preventDefault();
                             } else {
+                                event.preventDefault();
                                 submitMessage();
                                 return;
                             }
