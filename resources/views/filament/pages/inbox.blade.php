@@ -89,9 +89,13 @@
            }"
                     x-on:keydown="
 
-                        if(event.key === 'Enter' && ! event.shiftKey) {
-                            $event.preventDefault();
-                            submitMessage();
+                        if(event.key === 'Enter') {
+                            if(event.shiftKey) {
+                               event.preventDefault();
+                            } else {
+                                submitMessage();
+                                return;
+                            }
                         }
 
                         typingTimeout && clearTimeout(typingTimeout);
