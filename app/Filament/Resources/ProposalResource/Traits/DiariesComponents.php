@@ -206,7 +206,7 @@ trait DiariesComponents
                     if (($status['next_date_delta'] ?? null) === 'none') {
                         $set('next_date', null);
                     } elseif ($status) {
-                        $nextDate = now()->add($status['next_date_delta'] ?? 'days', $status['next_date_delta_value'] ?? 1);
+                        $nextDate = now()->add($status['next_date_delta'] ?? 'days', (int) $status['next_date_delta_value'] ?? 1);
 
                         if ($nextDate->isFriday() || $nextDate->isSaturday()) {
                             $nextDate = $nextDate->next(now()::SUNDAY);
