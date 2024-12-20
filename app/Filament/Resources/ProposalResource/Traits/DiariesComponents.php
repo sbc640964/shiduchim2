@@ -599,29 +599,29 @@ trait DiariesComponents
                 Tables\Columns\IconColumn::make('id')
                     ->label('')
                     ->alignCenter()
-                    ->color(fn (Diary $diary) => match ($diary->model_id) {
-                        $diary->proposal->guy->id => Color::Blue,
-                        $diary->proposal->girl->id => Color::Pink,
+                    ->color(fn (Diary $record) => match ($record->model_id) {
+                        $this->getOwnerRecord()->guy->id => Color::Blue,
+                        $this->getOwnerRecord()->girl->id => Color::Pink,
                         default => Color::Fuchsia,
                     })
-                    ->extraAttributes(fn (Diary $diary) => ['class' => 'icon-circle '.(
-                        $diary->proposal->guy->id === $diary->model_id
+                    ->extraAttributes(fn (Diary $record) => ['class' => 'icon-circle '.(
+                        $record->proposal->guy->id === $record->model_id
                             ? 'icon-circle--blue'
-                            : ($diary->model_id ? 'icon-circle--pink' : 'icon-circle--fuchsia')
+                            : ($record->model_id ? 'icon-circle--pink' : 'icon-circle--fuchsia')
                     )])
                     ->size('sm')
-                    ->tooltip(fn (Diary $diary) => match ($diary->model_id) {
-                        $diary->proposal->guy->id => 'בחור',
-                        $diary->proposal->girl->id => 'בחורה',
+                    ->tooltip(fn (Diary $record) => match ($record->model_id) {
+                        $this->getOwnerRecord()->guy->id => 'בחור',
+                        $this->getOwnerRecord()->girl->id => 'בחורה',
                         default => 'כללי'
                     })
                     ->icon(fn (Diary $diary) => $diary->model_type === Person::class ? 'heroicon-s-user' : 'heroicon-s-star'),
                 Tables\Columns\TextColumn::make('label_type')
                     ->badge()
                     ->label('סוג')
-                    ->color(fn (Diary $diary) => $diary->getDiaryTypeColor())
-                    ->icon(fn (Diary $diary) => $diary->getDiaryTypeIcon())
-                    ->description(fn (Diary $diary) => $diary->type === 'call' ? match ($diary->data['call_type'] ?? null) {
+                    ->color(fn (Diary $record) => $record->getDiaryTypeColor())
+                    ->icon(fn (Diary $record) => $record->getDiaryTypeIcon())
+                    ->description(fn (Diary $record) => $record->type === 'call' ? match ($record->data['call_type'] ?? null) {
                         'inquiry_about' => 'בירור',
                         'proposal' => 'הצעה',
                         'heating' => 'חימום',
@@ -639,19 +639,19 @@ trait DiariesComponents
                 Tables\Columns\TextColumn::make('call.phoneModel.model')
                     ->label('')
                     ->size('sm')
-                    ->description(fn (Diary $diary) => $diary->call?->phoneModel?->number)
+                    ->description(fn (Diary $record) => $record->call?->phoneModel?->number)
                     ->formatStateUsing(fn ($state) => !$state ? null : ($state::class === Person::class ? $state->full_name : $state->name." (בית)")),
                 Tables\Columns\TextColumn::make('data.date')
                     ->label('תאריך')
                     ->formatStateUsing(fn ($state) => Carbon::make($state)->hebcal()->hebrewDate(withQuotes: true))
                     ->sortable(query: fn (Builder $query, $direction) => $query->orderBy('data->date', $direction))
-                    ->tooltip(fn (Diary $diary) => Carbon::make($diary->data['date'])->format('d/m/Y H:i'))
+                    ->tooltip(fn (Diary $record) => Carbon::make($record->data['date'])->format('d/m/Y H:i'))
                     ->size('xs')
                     ->color('gray')
                     ->weight('semibold'),
 
                 Tables\Columns\TextColumn::make('data.description')
-                    ->description(fn (Diary $diary) => match ($diary->type) {
+                    ->description(fn (Diary $record) => match ($record->type) {
                         'call' => 'סיכום שיחה',
                         'document' => 'תיאור המסמך',
                         'email' => 'תיאור הדוא"ל',
@@ -685,7 +685,7 @@ trait DiariesComponents
                 ->icon('heroicon-o-speaker-wave')
                 ->modalWidth('sm')
                 ->modalHeading('הקלטת שיחה')
-                ->visible(fn (Diary $diary) => $diary->type === 'call' && ! empty($diary->data['file']))
+                ->visible(fn (Diary $record) => $record->type === 'call' && ! empty($record->data['file']))
                 ->color('gray')
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('סגור')
@@ -694,9 +694,9 @@ trait DiariesComponents
                     Split::make([
                         TextEntry::make('call.duration')
                             ->label('משך הקלטה')
-                            ->formatStateUsing(fn (Diary $diary) => $diary->data['duration']
-                                ? gmdate($diary->data['duration'] > 3600 ? 'H:i:s' : 'i:s', $diary->data['duration'])
-                                    .'/'.gmdate($diary->call?->duration > 3600 ? 'H:i:s' : 'i:s', $diary->call?->duration)
+                            ->formatStateUsing(fn (Diary $record) => $record->data['duration']
+                                ? gmdate($record->data['duration'] > 3600 ? 'H:i:s' : 'i:s', $record->data['duration'])
+                                    .'/'.gmdate($record->call?->duration > 3600 ? 'H:i:s' : 'i:s', $record->call?->duration)
                                 : null)
                             ->inlineLabel(),
                     ]),
@@ -706,13 +706,13 @@ trait DiariesComponents
                 ])),
             Tables\Actions\ViewAction::make()
                 ->modalHeading('פרטי תיעוד')
-                ->extraModalFooterActions( fn (Diary $diary) => [
+                ->extraModalFooterActions( fn (Diary $record) => [
                     Tables\Actions\EditAction::make('type')
-                        ->record($diary)
+                        ->record($record)
                         ->modalHeading('עריכת תיעוד')
                         ->slideOver()
-                        ->action(fn (Diary $diary, array $data) => $diary->update([
-                            'data' => array_merge($diary->data, $data['data'] ?? []),
+                        ->action(fn (Diary $record, array $data) => $record->update([
+                            'data' => array_merge($record->data, $data['data'] ?? []),
                         ]))
                         ->form(fn (Forms\Form $form) => static::getEditDiaryForm($form))
                 ])

@@ -124,7 +124,7 @@ class Proposal extends Model
 
     public function diaries(): HasMany
     {
-        return $this->hasMany(Diary::class);
+        return $this->hasMany(Diary::class)->chaperone();
     }
 
     public function guy(): BelongsTo
