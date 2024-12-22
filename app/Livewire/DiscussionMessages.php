@@ -3,10 +3,12 @@
 namespace App\Livewire;
 
 use App\Events\MessageCreatedEvent;
+use App\Filament\Pages\Inbox;
 use App\Models\Discussion;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms;
@@ -52,6 +54,7 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
     public function discussionMessages(): Collection
     {
         return $this->discussion->children()
+            ->withTrashed()
             ->with('user', 'otherUsersAsRead')
             ->readAt()
             ->oldest()
@@ -78,7 +81,7 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
     {
         return Discussion::readAt()
             ->with('user')
-            ->find($this->discussionId);
+            ->findOrFail($this->discussionId);
     }
 
     public function updateLastReadMessageId(): void
@@ -116,11 +119,21 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
 
     public function updateMessage($id, $content): void
     {
-        $this->discussion->children()
+        $message = $this->discussion->children()
             ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
-                ->findOrFail($id)->update([
-                'content' => $content,
-            ]);
+                ->find($id);
+
+        if(! $message) {
+            return;
+        }
+
+        $message->update([
+            'content' => $content,
+        ]);
+
+        broadcast(
+            new MessageCreatedEvent($message, 'update')
+        )->toOthers();
 
         unset($this->discussionMessages);
     }
@@ -149,6 +162,42 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
         $this->usersTyping[$id] = $bool;
     }
 
+    public function deleteMessage(): Action
+    {
+        return Action::make('deleteMessage')
+            ->label('מחק הודעה')
+            ->tooltip('מחיקת הודעה')
+            ->iconButton()
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('מחיקת הודעה')
+            ->modalDescription('האם אתה בטוח שברצונך למחוק את ההודעה?')
+            ->action(function ($arguments, Action $action) {
+
+                $message = $this->discussion->children()
+                    ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
+                    ->find($arguments['id']);
+
+                if($message) {
+                    $action->arguments(['message' => $message]);
+                    $message->delete();
+                    $action->successNotificationTitle('הודעה נמחקה');
+                    $action->success();
+                } else {
+                    $action->failureNotificationTitle('הודעה לא נמצאה');
+                    $action->failure();
+                }
+            })
+            ->after(function ($arguments) {
+                unset($this->discussionMessages);
+
+                broadcast(
+                    new MessageCreatedEvent($arguments['message'], 'delete')
+                )->toOthers();
+            });
+    }
+
     public function editRoomAction(): Action
     {
         return EditAction::make('editRoom')
@@ -166,6 +215,16 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
             ->after(function () {
                 unset($this->discussion);
             })
+            ->extraModalFooterActions([
+                DeleteAction::make('deleteRoom')
+                    ->label('מחק חדר')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('מחיקת חדר')
+                    ->modalDescription('האם אתה בטוח שברצונך למחוק את החדר?')
+                    ->successRedirectUrl(Inbox::getUrl()),
+            ])
             ->form([
                 TextInput::make('title')
                     ->label('כותרת')
