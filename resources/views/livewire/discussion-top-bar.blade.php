@@ -1,4 +1,22 @@
-<div>
+<div
+    x-data="{
+        playSound: async function (event) {
+            console.log(event.detail)
+            if (event.detail.userId !== {{ auth()->id() }} && event.detail.eventType === 'new') {
+                const audio = await new Audio('{{ asset('audio/new-notification-7-210334.mp3') }}')
+                audio.play();
+            }
+        },
+    }"
+    x-init="Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            console.log('Notifications enabled');
+        } else {
+            console.warn('Notifications not enabled');
+        }
+    })"
+    x-on:win-message-created.window="playSound"
+>
     <x-filament::dropdown width="lg" teleport="true">
         <x-slot name="trigger">
             <x-filament::icon-button
