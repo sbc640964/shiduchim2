@@ -105,7 +105,7 @@
             const msgsElms = $el.querySelectorAll('&>div');
             const lastMessageHeight = msgsElms[msgsElms.length - 1].clientHeight;
 
-            if($enevt.detail.event !== 'new') return;
+            if($event.detail.eventType !== 'new') return;
 
             if(($event.detail.room === discussion && $el.scrollTop >= ($el.scrollHeight - $el.offsetHeight - lastMessageHeight - 200)) || $event.detail.userId === {{ auth()->id() }}) {
                 scroll('smooth');

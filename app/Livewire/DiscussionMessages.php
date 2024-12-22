@@ -89,11 +89,12 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
         unset($this->lastReadMessageId);
     }
 
-    public function prependMessage($room, $userId = null): void
+    public function prependMessage($room, $userId = null, $event = 'new'): void
     {
         $this->dispatch('win-message-created',
             room: $room,
             userId: $userId,
+            eventType: $event,
         );
     }
 
@@ -112,7 +113,7 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
 
     public function prependMessageFromBroadcast(array $payload): void
     {
-        $this->prependMessage($payload['discussion']['id'], $payload['user']['id'] ?? null);
+        $this->prependMessage($payload['discussion']['id'], $payload['user']['id'] ?? null, $payload['event']);
 
         unset($this->discussionMessages);
     }
