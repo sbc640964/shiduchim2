@@ -106,9 +106,11 @@ class DiscussionMessages extends Component
 
     public function updateMessage($id, $content): void
     {
-        $this->discussion->children()->find($id)->update([
-            'content' => $content,
-        ]);
+        $this->discussion->children()
+            ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
+                ->findOrFail($id)->update([
+                'content' => $content,
+            ]);
 
         unset($this->messages);
     }
