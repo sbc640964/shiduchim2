@@ -1,5 +1,5 @@
 <div class="relative bg-chat flex-grow min-h-0 max-h-full flex flex-col">
-    <div class="z-[2] bg-white border-b">
+    <div class="z-[2] bg-white border-b flex justify-between items-center">
         <div class="p-4 flex flex-col gap-2">
             <h3 class="font-semibold text-xl">
                 {{ $this->discussion->title }}
@@ -14,6 +14,10 @@
                     @endforeach
                 </div>
             </div>
+        </div>
+
+        <div class="pe-10">
+            {{ $this->editRoomAction }}
         </div>
     </div>
     <div
@@ -107,13 +111,13 @@
         }, 100)"
 
     >
-            @if($this->messages->isEmpty())
+            @if($this->discussionMessages->isEmpty())
                 <div class="flex items-center justify-center h-full">
                     <p class="text-gray-500">אין הודעות</p>
                 </div>
             @endif
 
-            @foreach($this->messages as $message)
+            @foreach($this->discussionMessages as $message)
                 @php
                     /** @var \App\Models\Discussion $message */
 
@@ -219,7 +223,7 @@
                             @endif
                         </div>
                     </div>
-                    @if($this->lastReadMessageId === $message->id && $message->id !== $this->messages->last()->id)
+                    @if($this->lastReadMessageId === $message->id && $message->id !== $this->discussionMessages->last()->id)
                         <div class="flex justify-center items-center">
                             <span class="h-px bg-success-500 w-full"></span>
                             <x-filament::badge class="flex-shrink-0 mx-2" size="sm" :color="\Filament\Support\Colors\Color::Green">
@@ -242,5 +246,7 @@
                     </button>
                 </div>
     </div>
+
+    <x-filament-actions::modals />
 </div>
 

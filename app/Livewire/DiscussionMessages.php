@@ -4,6 +4,13 @@ namespace App\Livewire;
 
 use App\Events\MessageCreatedEvent;
 use App\Models\Discussion;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms;
+use Filament\Forms\Concerns\InteractsWithForms;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
@@ -12,8 +19,11 @@ use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 #[Lazy]
-class DiscussionMessages extends Component
+class DiscussionMessages extends Component implements Forms\Contracts\HasForms, HasActions
 {
+    use InteractsWithForms;
+    use InteractsWithActions;
+
     #[Reactive]
     public int $discussionId;
 
@@ -39,7 +49,7 @@ class DiscussionMessages extends Component
     }
 
     #[Computed(persist: true)]
-    public function messages(): Collection
+    public function discussionMessages(): Collection
     {
         return $this->discussion->children()
             ->with('user', 'otherUsersAsRead')
@@ -93,7 +103,7 @@ class DiscussionMessages extends Component
         $this->discussionId = $discussion;
 
         $this->updateLastReadMessageId();
-        unset($this->messages, $this->discussion);
+        unset($this->discussionMessages, $this->discussion);
         $this->dispatch('discussion-selected', $discussion);
     }
 
@@ -101,7 +111,7 @@ class DiscussionMessages extends Component
     {
         $this->prependMessage($payload['discussion']['id'], $payload['user']['id'] ?? null);
 
-        unset($this->messages);
+        unset($this->discussionMessages);
     }
 
     public function updateMessage($id, $content): void
@@ -112,7 +122,7 @@ class DiscussionMessages extends Component
                 'content' => $content,
             ]);
 
-        unset($this->messages);
+        unset($this->discussionMessages);
     }
 
 
@@ -126,7 +136,7 @@ class DiscussionMessages extends Component
         /** @var Discussion $model */
         $model = $this->discussion->id === (int) $id
             ? $this->discussion
-            : $this->messages->firstWhere('id', $id);
+            : $this->discussionMessages->firstWhere('id', $id);
 
         $model?->markAsRead();
     }
@@ -137,5 +147,43 @@ class DiscussionMessages extends Component
             $this->usersTyping = array_filter($this->usersTyping, fn($userName, $userId) => $userId !== $id);
         }
         $this->usersTyping[$id] = $bool;
+    }
+
+    public function editRoomAction(): Action
+    {
+        return EditAction::make('editRoom')
+            ->label('ערוך חדר')
+            ->tooltip('עריכת חדר')
+            ->record($this->discussion)
+            ->iconButton()
+            ->icon('heroicon-o-pencil')
+            ->color('gray')
+            ->modalHeading('עריכת חדר')
+            ->visible(fn() =>
+                auth()->user()->can('change_other_messages')
+                || $this->discussion->user_id === auth()->id()
+            )
+            ->after(function () {
+                unset($this->discussion);
+            })
+            ->form([
+                TextInput::make('title')
+                    ->label('כותרת')
+                    ->placeholder('כותרת'),
+                Forms\Components\Select::make('usersAssigned')
+                    ->label('נמענים')
+                    ->live()
+                    ->preload()
+                    ->rule(fn ($state) => function ($value, $attribute, $fail) use ($state) {
+                        if(! in_array(auth()->id(), $state) ) {
+                            $fail('אתה חייב להיות נמען בחדר');
+                        }
+                    })
+                    ->relationship('usersAssigned', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->required()
+                    ->placeholder('בחר נמען'),
+            ]);
     }
 }
