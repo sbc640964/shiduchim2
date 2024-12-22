@@ -24,10 +24,6 @@ class Discussion extends Model
         'image_hero',
     ];
 
-    protected $casts = [
-        'is_popup' => 'boolean',
-    ];
-
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Discussion::class, 'parent_id');
