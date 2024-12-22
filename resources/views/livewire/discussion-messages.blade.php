@@ -116,6 +116,8 @@
             @foreach($this->messages as $message)
                 @php
                     /** @var \App\Models\Discussion $message */
+
+                    $isMyMessage = $message->user_id === auth()->id();
                 @endphp
 
                 <div wire:key="{{$message->id}}">
@@ -125,9 +127,9 @@
                         @endif
                         @class([
                             "flex gap-3 p-3",
-                            "flex-row-reverse" => $message->user_id === auth()->id(),
+                            "flex-row-reverse" => $isMyMessage,
                         ])>
-                        @if($message->user_id !== auth()->id())
+                        @if(! $isMyMessage)
                         <x-filament::avatar
                             class="border mt-10"
                             :src="$message->user->avater_uri"
@@ -136,7 +138,9 @@
                         @endif
                         <div class="flex flex-col">
 
-                            @if($message->user_id !== auth()->id()) <span class="text-sm font-semibold text-gray-700 ps-1">{{ $message->user->name }}</span> @endif
+                            @if( ! $isMyMessage)
+                                <span class="text-sm font-semibold text-gray-700 ps-1">{{ $message->user->name }}</span>
+                            @endif
                             <span
                                 @class(["ps-1 pb-1 text-xs text-gray-500"])
                             >
@@ -144,57 +148,61 @@
                             </span>
                                 <div @class([
                                 "p-3 rounded-xl relative group/item-message",
-                                "bg-blue-100" => $message->user_id === auth()->id(),
-                                "bg-gray-100" => $message->user_id !== auth()->id(),
+                                "bg-blue-100" => $isMyMessage,
+                                "bg-gray-100" => ! $isMyMessage,
 
                                 ])
                                 x-bind:class="{
                                     'w-96 bg-white border border-blue-600 rounded-bl-sm': editItemIds.includes( {{ $message->id }} ),
                                 }"
                             >
-                                <div x-bind:class="{ 'opacity-0': ! editItemIds.includes( {{ $message->id }} )}" class="absolute bg-white rounded-lg p-2 shadow -top-10 end-1 group-hover/item-message:opacity-100">
-                                    <x-filament::icon-button
-                                        :color="\Filament\Support\Colors\Color::Blue"
-                                        x-show="!editItemIds.includes({{ $message->id }})"
-                                        @click="selectedItemToEdit({{ $message->id }})"
-                                        class="text-gray-400"
-                                        size="sm"
-                                        icon="heroicon-o-pencil"
-                                    />
-                                </div>
+                                    @if($isMyMessage)
+                                        <div x-bind:class="{ 'opacity-0': ! editItemIds.includes( {{ $message->id }} )}" class="absolute bg-white rounded-lg p-2 shadow -top-10 end-1 group-hover/item-message:opacity-100">
+                                            <x-filament::icon-button
+                                                :color="\Filament\Support\Colors\Color::Blue"
+                                                x-show="!editItemIds.includes({{ $message->id }})"
+                                                @click="selectedItemToEdit({{ $message->id }})"
+                                                class="text-gray-400"
+                                                size="sm"
+                                                icon="heroicon-o-pencil"
+                                            />
+                                        </div>
+                                    @endif
+
                                 <div id="{{ 'msg-'.$message->id }}" class="whitespace-pre-line outline-none" x-bind:contenteditable="editItemIds.includes( {{ $message->id }})">{!! trim($message->content) !!}</div>
                             </div>
-                                <template  x-if="editItemIds.includes( {{ $message->id }} )">
-                                    <div
-
-                                        class="flex justify-between w-full mt-2"
-                                    >
-                                        <div></div>
-                                        <div class="flex gap-2">
-                                            <x-filament::icon-button
-                                                :color="\Filament\Support\Colors\Color::Blue"
-                                                @click="selectedItemToEdit({{ $message->id }})"
-                                                size="sm"
-                                                icon="heroicon-o-x-mark"
-                                                loading-indicator
-                                            >
-                                                ביטול
-                                            </x-filament::icon-button>
-                                            <x-filament::icon-button
-                                                wire:target="updateMessage"
-                                                @click="$wire.updateMessage({{ $message->id }}, $root.querySelector('#msg-{{ $message->id }}').innerHTML); selectedItemToEdit({{ $message->id }})"
-                                                :color="\Filament\Support\Colors\Color::Blue"
-                                                size="sm"
-                                                icon="heroicon-o-check"
-                                                target="updateMessage"
-                                            >
-                                                שמירה
-                                            </x-filament::icon-button>
+                                @if($isMyMessage)
+                                    <template  x-if="editItemIds.includes( {{ $message->id }} )">
+                                        <div
+                                            class="flex justify-between w-full mt-2"
+                                        >
+                                            <div></div>
+                                            <div class="flex gap-2">
+                                                <x-filament::icon-button
+                                                    :color="\Filament\Support\Colors\Color::Blue"
+                                                    @click="selectedItemToEdit({{ $message->id }})"
+                                                    size="sm"
+                                                    icon="heroicon-o-x-mark"
+                                                    loading-indicator
+                                                >
+                                                    ביטול
+                                                </x-filament::icon-button>
+                                                <x-filament::icon-button
+                                                    wire:target="updateMessage"
+                                                    @click="$wire.updateMessage({{ $message->id }}, $root.querySelector('#msg-{{ $message->id }}').innerHTML); selectedItemToEdit({{ $message->id }})"
+                                                    :color="\Filament\Support\Colors\Color::Blue"
+                                                    size="sm"
+                                                    icon="heroicon-o-check"
+                                                    target="updateMessage"
+                                                >
+                                                    שמירה
+                                                </x-filament::icon-button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </template>
+                                    </template>
+                                @endif
 
-                            @if($message->user_id === auth()->id())
+                            @if($isMyMessage)
                                 <div
                                     x-tooltip="tooltip"
                                     x-data="{ tooltip: '{{$message->otherUsersAsRead->pluck('name')->join(', ')}}' }"
