@@ -3,7 +3,16 @@
 namespace App\Livewire;
 
 use App\Events\MessageCreatedEvent;
+use App\Filament\Pages\Inbox;
 use App\Models\Discussion;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms;
+use Filament\Forms\Concerns\InteractsWithForms;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
@@ -12,8 +21,11 @@ use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 #[Lazy]
-class DiscussionMessages extends Component
+class DiscussionMessages extends Component implements Forms\Contracts\HasForms, HasActions
 {
+    use InteractsWithForms;
+    use InteractsWithActions;
+
     #[Reactive]
     public int $discussionId;
 
@@ -39,9 +51,10 @@ class DiscussionMessages extends Component
     }
 
     #[Computed(persist: true)]
-    public function messages(): Collection
+    public function discussionMessages(): Collection
     {
         return $this->discussion->children()
+            ->withTrashed()
             ->with('user', 'otherUsersAsRead')
             ->readAt()
             ->oldest()
@@ -68,7 +81,7 @@ class DiscussionMessages extends Component
     {
         return Discussion::readAt()
             ->with('user')
-            ->find($this->discussionId);
+            ->findOrFail($this->discussionId);
     }
 
     public function updateLastReadMessageId(): void
@@ -93,7 +106,7 @@ class DiscussionMessages extends Component
         $this->discussionId = $discussion;
 
         $this->updateLastReadMessageId();
-        unset($this->messages, $this->discussion);
+        unset($this->discussionMessages, $this->discussion);
         $this->dispatch('discussion-selected', $discussion);
     }
 
@@ -101,18 +114,28 @@ class DiscussionMessages extends Component
     {
         $this->prependMessage($payload['discussion']['id'], $payload['user']['id'] ?? null);
 
-        unset($this->messages);
+        unset($this->discussionMessages);
     }
 
     public function updateMessage($id, $content): void
     {
-        $this->discussion->children()
+        $message = $this->discussion->children()
             ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
-                ->findOrFail($id)->update([
-                'content' => $content,
-            ]);
+                ->find($id);
 
-        unset($this->messages);
+        if(! $message) {
+            return;
+        }
+
+        $message->update([
+            'content' => $content,
+        ]);
+
+        broadcast(
+            new MessageCreatedEvent($message, 'update')
+        )->toOthers();
+
+        unset($this->discussionMessages);
     }
 
 
@@ -126,7 +149,7 @@ class DiscussionMessages extends Component
         /** @var Discussion $model */
         $model = $this->discussion->id === (int) $id
             ? $this->discussion
-            : $this->messages->firstWhere('id', $id);
+            : $this->discussionMessages->firstWhere('id', $id);
 
         $model?->markAsRead();
     }
@@ -137,5 +160,89 @@ class DiscussionMessages extends Component
             $this->usersTyping = array_filter($this->usersTyping, fn($userName, $userId) => $userId !== $id);
         }
         $this->usersTyping[$id] = $bool;
+    }
+
+    public function deleteMessage(): Action
+    {
+        return Action::make('deleteMessage')
+            ->label('מחק הודעה')
+            ->tooltip('מחיקת הודעה')
+            ->iconButton()
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('מחיקת הודעה')
+            ->modalDescription('האם אתה בטוח שברצונך למחוק את ההודעה?')
+            ->action(function ($arguments, Action $action) {
+
+                $message = $this->discussion->children()
+                    ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
+                    ->find($arguments['id']);
+
+                if($message) {
+                    $action->arguments(['message' => $message]);
+                    $message->delete();
+                    $action->successNotificationTitle('הודעה נמחקה');
+                    $action->success();
+                } else {
+                    $action->failureNotificationTitle('הודעה לא נמצאה');
+                    $action->failure();
+                }
+            })
+            ->after(function ($arguments) {
+                unset($this->discussionMessages);
+
+                broadcast(
+                    new MessageCreatedEvent($arguments['message'], 'delete')
+                )->toOthers();
+            });
+    }
+
+    public function editRoomAction(): Action
+    {
+        return EditAction::make('editRoom')
+            ->label('ערוך חדר')
+            ->tooltip('עריכת חדר')
+            ->record($this->discussion)
+            ->iconButton()
+            ->icon('heroicon-o-pencil')
+            ->color('gray')
+            ->modalHeading('עריכת חדר')
+            ->visible(fn() =>
+                auth()->user()->can('change_other_messages')
+                || $this->discussion->user_id === auth()->id()
+            )
+            ->after(function () {
+                unset($this->discussion);
+            })
+            ->extraModalFooterActions([
+                DeleteAction::make('deleteRoom')
+                    ->label('מחק חדר')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('מחיקת חדר')
+                    ->modalDescription('האם אתה בטוח שברצונך למחוק את החדר?')
+                    ->successRedirectUrl(Inbox::getUrl()),
+            ])
+            ->form([
+                TextInput::make('title')
+                    ->label('כותרת')
+                    ->placeholder('כותרת'),
+                Forms\Components\Select::make('usersAssigned')
+                    ->label('נמענים')
+                    ->live()
+                    ->preload()
+                    ->rule(fn ($state) => function ($value, $attribute, $fail) use ($state) {
+                        if(! in_array(auth()->id(), $state) ) {
+                            $fail('אתה חייב להיות נמען בחדר');
+                        }
+                    })
+                    ->relationship('usersAssigned', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->required()
+                    ->placeholder('בחר נמען'),
+            ]);
     }
 }

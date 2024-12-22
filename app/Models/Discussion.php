@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Discussion extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'title',
         'parent_id',
@@ -19,6 +22,10 @@ class Discussion extends Model
         'content',
         'is_popup',
         'image_hero',
+    ];
+
+    protected $casts = [
+        'is_popup' => 'boolean',
     ];
 
     public function parent(): BelongsTo
