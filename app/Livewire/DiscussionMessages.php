@@ -117,11 +117,21 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
         unset($this->discussionMessages);
     }
 
+    public function getMessageToUpdateOrDelete($id): ?Discussion
+    {
+        return $this->discussion->id == $id && (auth()->user()->can('change_other_messages') || $this->discussion->user_id === auth()->id())
+            ? $this->discussion
+            : ($this->discussion->id == $id
+                ? null
+                : $this->discussion->children()
+                    ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
+                    ->find($id)
+            );
+    }
+
     public function updateMessage($id, $content): void
     {
-        $message = $this->discussion->children()
-            ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
-                ->find($id);
+        $message = $this->getMessageToUpdateOrDelete($id);
 
         if(! $message) {
             return;
@@ -175,9 +185,7 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
             ->modalDescription('האם אתה בטוח שברצונך למחוק את ההודעה?')
             ->action(function ($arguments, Action $action) {
 
-                $message = $this->discussion->children()
-                    ->when(! auth()->user()->can('change_other_messages'), fn ($q) => $q->whereUserId(auth()->id()))
-                    ->find($arguments['id']);
+                $message = $this->getMessageToUpdateOrDelete($arguments['id']);
 
                 if($message) {
                     $action->arguments(['message' => $message]);
@@ -192,7 +200,7 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
             ->after(function ($arguments) {
                 unset($this->discussionMessages);
 
-                broadcast(
+                filled($arguments['message']) && broadcast(
                     new MessageCreatedEvent($arguments['message'], 'delete')
                 )->toOthers();
             });

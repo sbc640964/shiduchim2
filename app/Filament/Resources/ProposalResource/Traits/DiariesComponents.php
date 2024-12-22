@@ -432,7 +432,7 @@ trait DiariesComponents
         $person = $activeCall?->phoneModel?->model;
 
         if ($person instanceof Family) {
-            if (request()->pageIs('admin/people/*')) {
+            if (request()->is('admin/people/*')) {
                 $personId = str(Str::before(request()->header('referer'), '?'))
                     ->after('admin/people/')
                     ->before('?')
