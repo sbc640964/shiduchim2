@@ -600,4 +600,25 @@ class Proposal extends Model
             'hidden_at' => null,
         ]);
     }
+
+    /**
+     * @param string $side - guy|girl
+     * @return int
+     */
+    function countSideCalls(string $side): int
+    {
+        $side = $this->getSpoken($side);
+
+        $phones = collect([
+            $side->contacts->pluck("phones")->flatten(1),
+            $side->parentsFamily->phones,
+            $side->father->phones,
+            $side->mother->phones,
+        ])->flatten(1)->pluck('id')->toArray();
+
+        return $this->diaries->loadMissing('call')
+            ->where('type', 'call')
+            ->filter(fn (Diary $diary) => in_array($diary->call->phone_id, $phones, true))
+            ->count();
+    }
 }
