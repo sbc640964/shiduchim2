@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Gemini\Laravel\Facades\Gemini;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -176,5 +177,17 @@ HTML
                 ]);
             }
         }
+    }
+
+    function startChat()
+    {
+        if(! $this->audio_url){
+            return;
+        }
+
+        $data = [
+
+        ];
+
     }
 }
