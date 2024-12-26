@@ -197,7 +197,7 @@ HTML
         if($this->audio_url && $this->diaries->count()){
             $file = base64_encode(
                 file_get_contents(
-                    "https://api.phonecall.co/pbx/proxyapi.php?key=2DFqeXqrzLmCtBYx&tenant=ylyl&reqtype=INFO&info=playrecording&id=1676aa132d2f46"
+                    urldecode($this->audio_url)
                 )
             );
 
