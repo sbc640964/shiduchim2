@@ -35,7 +35,7 @@ class Call extends Model
         'unique_id',
         'duration',
         'user_id',
-        'call_text'
+        'text_call'
     ];
 
     /**
@@ -187,7 +187,7 @@ HTML
         $text = $this->getCallText();
 
         if($text){
-            $this->call_text = $text;
+            $this->text_call = $text;
             $this->save();
         }
     }
