@@ -203,7 +203,7 @@ class CallsDiariesResource extends Resource
                             ->autoplay()
                             ->hiddenLabel(),
 
-                        InfolistComponents\TextEntry::make('call_text')
+                        InfolistComponents\TextEntry::make('text_call')
                             ->label('טקסט שיחה')
                             ->hintAction(InfolistComponents\Actions\Action::make('refresh_call_text')
                                 ->icon('heroicon-o-arrow-path')
