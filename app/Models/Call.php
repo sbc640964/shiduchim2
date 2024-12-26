@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Carbon\Carbon;
-use Gemini\Laravel\Facades\Gemini;
+use Derrickob\GeminiApi\Data\Content;
+use Derrickob\GeminiApi\Data\GenerationConfig;
+use Derrickob\GeminiApi\Gemini;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,7 +34,8 @@ class Call extends Model
         'data_raw',
         'unique_id',
         'duration',
-        'user_id'
+        'user_id',
+        'call_text'
     ];
 
     /**
@@ -179,15 +182,68 @@ HTML
         }
     }
 
-    function startChat()
+    function updateTextCall()
     {
-        if(! $this->audio_url){
-            return;
+        $text = $this->getCallText();
+
+        if($text){
+            $this->call_text = $text;
+            $this->save();
+        }
+    }
+
+    function getCallText(): ?string
+    {
+        if($this->audio_url && $this->diaries->count()){
+            $file = base64_encode(
+                file_get_contents(
+                    "https://api.phonecall.co/pbx/proxyapi.php?key=2DFqeXqrzLmCtBYx&tenant=ylyl&reqtype=INFO&info=playrecording&id=1676aa132d2f46"
+                )
+            );
+
+            $client = new Gemini([
+                "apiKey" => config('gemini.api_key')
+            ]);
+
+            $response = $client->models()->generateContent([
+                "model" => "models/gemini-2.0-flash-exp",
+                "systemInstruction" =>
+                    "אני מצרף לך קובץ שמע של שיחה ששדכן מתקשר להורה להציע שידוכ/ים לבנו או בתו, תמלל את השיחה'",
+                "generationConfig" => new GenerationConfig(
+                    responseMimeType: "text/plain",
+                    maxOutputTokens: 8192,
+                    temperature: 1,
+                    topP: 0.95,
+                    topK: 40
+                ),
+                "contents" => [
+                    Content::createBlobContent(
+                        mimeType: "audio/mp3",
+                        data: $file,
+                        role: "user"
+                    ),
+                    Content::createTextContent(
+                        \Arr::join([
+                                "השדכן: $this->user->name",
+                                "ההורה: ".$this->phoneModel->model->full_name,
+                                "ההצעות אליהם נידון בשיחה: ".$this->diaries->map(function (Diary $diary) {
+                                    return $diary->proposal->people->map->full_name->join(' עם ');
+                                })->join(' ו')
+                            ]
+                            ,' '),
+                        role: "user"
+                    )
+                ]
+            ]);
+
+            return $response->text();
         }
 
-        $data = [
+        return null;
+    }
 
-        ];
-
+    function refreshCallText(): void
+    {
+        $this->updateTextCall();
     }
 }

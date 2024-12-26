@@ -22,6 +22,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components as InfolistComponents;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
@@ -201,6 +202,18 @@ class CallsDiariesResource extends Resource
                             ->state(fn (Call $call) => urldecode((string) $call->audio_url))
                             ->autoplay()
                             ->hiddenLabel(),
+
+                        InfolistComponents\TextEntry::make('call_text')
+                            ->label('טקסט שיחה')
+                            ->hintAction(InfolistComponents\Actions\Action::make('refresh_call_text')
+                                ->icon('heroicon-o-arrow-path')
+                                ->iconButton()
+                                ->tooltip('נתח מחדש את הטקסט של השיחה')
+                                ->color('gray')
+                                ->action(fn (Call $call) => $call->refreshCallText())
+                                ->visible(auth()->user()->can('ai_beta'))
+                            )
+                            ->markdown()
                     ])),
                 Tables\Actions\Action::make('go-to-proposals')
                     ->size(ActionSize::ExtraSmall)
