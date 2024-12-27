@@ -276,13 +276,15 @@ HTML
         return $this->renderCallText();
     }
 
-    function renderCallText() {
+    function renderCallText(): string
+    {
 
-        if(!$this->text_call){
+        $text = $this-$this->attributes['text_call'];
+
+        if(! $text){
             return 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?';
         }
 
-        $text = $this->text_call;
         $text = json_decode($text, true);
 
         $markdown = '';
