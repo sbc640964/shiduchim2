@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Str;
 
 class Call extends Model
 {
@@ -279,9 +280,9 @@ HTML
     function renderCallText(): string
     {
 
-        $text = $this-$this->attributes['text_call'];
+        $text = $this->attributes['text_call'];
 
-        if(! $text){
+        if(!$text || !Str::isJson($text)){
             return 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?';
         }
 
