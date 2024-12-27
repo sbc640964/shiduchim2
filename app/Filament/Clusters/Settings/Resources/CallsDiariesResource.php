@@ -184,7 +184,7 @@ class CallsDiariesResource extends Resource
                 Tables\Actions\Action::make('speaker-recording')
                     ->iconButton()
                     ->icon('heroicon-o-speaker-wave')
-                    ->modalWidth('sm')
+                    ->modalWidth('lg')
                     ->modalHeading('הקלטת שיחה')
                     ->visible(fn (Call $call) => $call->audio_url !== null)
                     ->color('gray')
@@ -213,7 +213,7 @@ class CallsDiariesResource extends Resource
                                 ->action(fn (Call $call) => $call->refreshCallText())
                                 ->visible(auth()->user()->can('ai_beta'))
                             )
-                            ->markdown()
+                            ->html()
                     ])),
                 Tables\Actions\Action::make('go-to-proposals')
                     ->size(ActionSize::ExtraSmall)

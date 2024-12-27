@@ -12,6 +12,7 @@ export default {
         './vendor/filament/**/*.blade.php',
         './vendor/filament/*.blade.php',
         './vendor/kenepa/banner/resources/**/*.php',
+        './app/models/**/*.php',
     ],
     plugins: [
         require('tailwind-scrollbar'),
