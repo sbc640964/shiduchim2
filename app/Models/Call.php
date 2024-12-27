@@ -291,9 +291,9 @@ HTML
         $markdown = '';
 
         foreach ($text as $line) {
-            $markdown .= "### {$line['spoken']}\n";
-            $markdown .= "#### {$line['time']} - {$line['duration']}\n";
-            $markdown .= "{$line['text']}\n\n";
+            $markdown .= "### $line->spoken\n";
+            $markdown .= "#### $line->time - $line->duration\n";
+            $markdown .= "$line->text\n\n";
         }
 
         return $markdown;
