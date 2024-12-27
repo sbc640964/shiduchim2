@@ -277,7 +277,7 @@ HTML
         return $this->renderCallText();
     }
 
-    function renderCallText(): string
+    function renderCallText($withTimes = true): string
     {
 
         $text = $this->attributes['text_call'];
@@ -291,9 +291,10 @@ HTML
         $markdown = '';
 
         foreach ($text as $line) {
-            $markdown .= "### $line->spoken\n";
-            $markdown .= "#### $line->time - $line->duration\n";
-            $markdown .= "$line->text\n\n";
+            $markdown .= "#### **$line->spoken** ";
+            $withTimes &&
+                $markdown .= '<span  style="color: #5d5d5d; font-size: xx-small; ">$line->time - $line->duration</span>\n';
+            $markdown .= ">$line->text\n\n";
         }
 
         return $markdown;
