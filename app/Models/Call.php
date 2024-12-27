@@ -293,7 +293,7 @@ HTML
         foreach ($text as $line) {
             $markdown .= "#### **$line->spoken** ";
             $withTimes &&
-                $markdown .= '<span  style="color: #5d5d5d; font-size: xx-small; ">$line->time - $line->duration</span>\n';
+                $markdown .= "<span  style=\"color: #5d5d5d; font-size: xx-small; \">$line->time - $line->duration</span>\n";
             $markdown .= ">$line->text\n\n";
         }
 
