@@ -286,7 +286,7 @@ HTML
             return 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?';
         }
 
-        json_decode(json_decode($text, true));
+        $text = json_decode(json_decode($text, true));
 
         $markdown = '';
 
