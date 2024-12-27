@@ -252,7 +252,9 @@ HTML
                                 "השדכן: $this->user->name",
                                 "ההורה: ".$this->phoneModel->model->full_name,
                                 "ההצעות אליהם נידון בשיחה: ".$this->diaries->map(function (Diary $diary) {
-                                    return $diary->proposal->people->map->full_name->join(' עם ');
+                                    return $diary->proposal->people->map(function (Person $person) {
+                                        return $person->full_name .' בן של ' . $person->father->full_name . 'ו ' . $person->mother->full_name . " (בת של {$person->mother->father->full_name}) ";
+                                    })->join(' עם');
                                 })->join(' ו')
                             ]
                             ,' '),
