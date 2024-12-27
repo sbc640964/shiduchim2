@@ -295,7 +295,7 @@ HTML
         $text = $this->attributes['text_call'];
 
         if(!$text || !Str::isJson($text)){
-            return 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?';
+            return null;
         }
 
         return json_decode(json_decode($text, true));
@@ -305,6 +305,10 @@ HTML
     {
 
         $text = $this->getCallTextToJson();
+
+        if(!$text){
+            return 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?' ;
+        }
 
         $blade = <<<'Blade'
         <div class="flex flex-col gap-2 text-xs">
