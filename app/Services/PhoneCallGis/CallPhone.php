@@ -33,6 +33,15 @@ class CallPhone
         });
     }
 
+    public function getExtensionState(int $ext): array
+    {
+        return $this->get([
+            'reqtype' => 'INFO',
+            'ext' => $ext,
+            'info' => 'extstate'
+        ])->collect();
+    }
+
     public function call($number)
     {
         return $this->get([

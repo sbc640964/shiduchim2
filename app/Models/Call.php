@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use App\Services\PhoneCallGis\CallPhone;
 use Derrickob\GeminiApi\Data\Content;
 use Derrickob\GeminiApi\Data\GenerationConfig;
 use Derrickob\GeminiApi\Data\Schema;
@@ -16,8 +16,6 @@ use Str;
 
 class Call extends Model
 {
-    use HasFactory;
-
     /**
      * The attributes that are mass assignable.
      *
@@ -56,6 +54,32 @@ class Call extends Model
         'data_raw' => 'array',
         'text_call' => 'json',
     ];
+
+    public static function checkAndFinishOldCalls(): void
+    {
+        static::query()
+            ->whereNull('finished_at')
+            ->where('created_at', '<', now()->subMinutes(2))->map->checkAndFinish();
+    }
+
+    public function checkAndFinish(): void
+    {
+        if($this->finished_at || ! $this->extension) {
+            return;
+        }
+
+        $state = (new CallPhone)->getExtensionState($this->extension);
+
+        if($state->get('UniqueID') === $this->unique_id
+            || $state->get('LinkedID') === $this->unique_id
+        ) {
+            return;
+        }
+
+        $this->update([
+            'finished_at' => now(),
+        ]);
+    }
 
     public function diary(): BelongsTo
     {
@@ -239,7 +263,7 @@ HTML
                     maxOutputTokens: 8192,
                     temperature: 1,
                     topP: 0.95,
-                    topK: 40
+                    topK: 40,
                 ),
                 "contents" => [
                     Content::createBlobContent(

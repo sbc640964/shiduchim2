@@ -21,11 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->call(new RunPayments)->dailyAt('05:00')->name('run-payments');
         $schedule->command('telescope:prune --hours=72')->daily();
         $schedule->call(function () {
-            Call::query()
-                ->whereNull('finished_at')
-                ->where('created_at', '<', now()->subMinutes(2))->update([
-                    'finished_at' => now(),
-                ]);
+            Call::checkAndFinishOldCalls();
         })->everyTwoMinutes();
     })
     ->withExceptions(function (Exceptions $exceptions) {
