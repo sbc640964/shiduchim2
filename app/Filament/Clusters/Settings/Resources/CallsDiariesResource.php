@@ -57,6 +57,9 @@ class CallsDiariesResource extends Resource
         return parent::getEloquentQuery()
             ->with(['phoneModel' => fn ($query) => $query
                 ->with(['model' => fn (MorphTo $query) => $query
+                    ->morphWith([
+                        Family::class => ['people' => fn ($query) => $query->withCount('proposalContacts')],
+                    ])
                     ->morphWithCount([
                         Person::class => ['proposalContacts'],
                     ]),
@@ -217,14 +220,14 @@ class CallsDiariesResource extends Resource
                     ])),
                 Tables\Actions\Action::make('go-to-proposals')
                     ->size(ActionSize::ExtraSmall)
-                    ->visible(fn (Call $record) => $record->phoneModel?->model?->full_name !== null && $record->phoneModel->model->proposal_contacts_count > 0)
+                    ->visible(fn (Call $record) => $record->getProposalContactsCount() > 0)
                     ->label('עבור להצעות')
-                    ->badge(fn (Call $record) => $record->phoneModel->model->proposal_contacts_count)
-                    ->url(fn (Call $record) => PersonResource::getUrl('proposals', ['record' => $record->phoneModel->model->id]))
+                    ->badge(fn (Call $record) => $record->getProposalContactsCount())
+                    ->url(fn (Call $record) => PersonResource::getUrl('proposals', ['record' => $record->getPersonContactId()]))
                     ->button(),
                 Tables\Actions\Action::make('add_proposal_diary')
                     ->size(ActionSize::ExtraSmall)
-                    ->visible(fn (Call $record) => $record->phoneModel?->model->proposal_contacts_count > 0)
+                    ->visible(fn (Call $record) => $record->getProposalContactsCount() > 0)
                     ->label('הוסף יומן')
                     ->color(Color::Cyan)
                     ->action(function (Call $record, array $data) {
@@ -241,15 +244,15 @@ class CallsDiariesResource extends Resource
                                 Select::make('proposal')
                                     ->label('הצעה')
                                     ->options(fn (Call $record) => Proposal::query()
-                                        ->whereHas('contacts', fn (Builder $query) => $query->where('person_id', $record->phoneModel->model->id))
+                                        ->whereHas('contacts', fn (Builder $query) => $query->where('person_id', $record->getPersonContactId()))
                                         ->get()
                                         ->mapWithKeys(fn (Proposal $proposal) => [$proposal->id => $proposal->families_names])
                                     )
                                     ->afterStateUpdated(function ($state, Call $record, Set $set, $livewire) {
                                         if($state
-                                            && $side = $record->phoneModel->model
+                                            && $side = $record->getPersonContact()
                                                 ?->proposalContacts()
-                                                ->firstWhere('proposals.id', $state)
+                                                ?->firstWhere('proposals.id', $state)
                                                 ?->pivot
                                                 ->side
                                         ) {

@@ -330,6 +330,12 @@ HTML
         return json_decode(json_decode($text, true));
     }
 
+    function getProposalContactsCount(): int
+    {
+        return $this->phoneModel?->model?->proposal_contacts_count
+            ?? $this->phoneModel?->model?->people?->first()?->proposal_contacts_count ?? 0;
+    }
+
     function renderCallText($withTimes = true): string
     {
 
@@ -359,5 +365,26 @@ HTML
 Blade;
 
         return \Blade::render($blade, ['text' => $text, 'withTimes' => $withTimes]);
+    }
+
+    public function getPersonContact()
+    {
+        if(!$this->phoneModel->model){
+            return null;
+        }
+
+        return match ($this->phoneModel->model::class) {
+            Person::class => $this->phoneModel->model,
+            Family::class => $this->phoneModel->model->people->first(),
+            default => null,
+        };
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getPersonContactId(): mixed
+    {
+        return $this->getPersonContact()?->id ?? null;
     }
 }
