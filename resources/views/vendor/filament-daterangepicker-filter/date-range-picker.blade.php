@@ -1,6 +1,5 @@
 @php
-    $name = uniqid();
-
+    $name = $getId();
     $isPrefixInline = $isPrefixInline();
     $isSuffixInline = $isSuffixInline();
     $prefixActions = $getPrefixActions();
@@ -16,25 +15,36 @@
     :component="$getFieldWrapperView()"
     :field="$field"
 >
-    <div wire:ignore>
-        <div
-            style="direction: rtl"
-            x-ref="container"
-            x-data="dateRangeComponent({
+    <div
+        x-ignore
+        @if (\Filament\Support\Facades\FilamentView::hasSpaMode())
+            ax-load="visible || event (ax-modal-opened)"
+        @else
+            ax-load
+        @endif
+
+        ax-load-src="{{ \Filament\Support\Facades\FilamentAsset::getAlpineComponentSrc('dateRangeComponent', 'malzariey/filament-daterangepicker-filter') }}"
+        x-ref="container"
+        x-data="dateRangeComponent({
                 state: @entangle($statePath),
                 name: @js($name),
                 alwaysShowCalendars: @js($isAlwaysShowCalendar()),
-                autoApply: @js($getAutoApplyOption()),
-                linkedCalendars: @js($getLinkedCalendarsOption()),
+                autoApply: @js($getAutoApply()),
+                linkedCalendars: @js($getLinkedCalendars()),
+                singleCalendar: @js($getSingleCalendar()),
                 autoUpdateInput: false,
                 startDate: @js($getStartDate()),
                 endDate: @js($getEndDate()),
                 maxDate: @js($getMaxDate()),
                 minDate: @js($getMinDate()),
-                timePicker: @js($getTimePickerOption()),
-                timePickerIncrement: @js($getTimePickerIncrementOption()),
+                timePicker: @js($getTimePicker()),
+                timePicker24: @js($getTimePicker24()),
+                timePickerSecond: @js($getTimePickerSecond()),
+                timePickerIncrement: @js($getTimePickerIncrement()),
                 displayFormat: @js($getDisplayFormat()),
                 disableCustomRange: @js($getDisableCustomRange()),
+                opens: '{{$getOpens()}}',
+                drops: '{{$getDrops()}}',
                 applyLabel: '{!! __('filament-daterangepicker-filter::message.apply') !!}',
                 cancelLabel: '{!! __('filament-daterangepicker-filter::message.cancel') !!}',
                 fromLabel: '{!! __('filament-daterangepicker-filter::message.from') !!}',
@@ -61,68 +71,78 @@
                 saturday: '{!! __('filament-daterangepicker-filter::message.sa') !!}',
                 firstDay: @js($getFirstDayOfWeek()),
                 ranges: @js($getRanges()),
+                maxSpan: @js($getMaxSpan()),
+                disableRange : @js($getDisableRanges()),
                 separator: @js($getSeparator()),
                 useRangeLabels: @js($getUseRangeLabels()),
+                disabledDates: @js($getDisabledDates()),
                 handleValueChangeUsing: (value, name) => {
                     if (name == '{{ $name }}') {
                         @this.set('{!! $statePath !!}', value);
                     }
                 },
+                showWeekNumbers: @js($getShowWeekNumbers()),
+                showISOWeekNumbers: @js($getShowISOWeekNumbers()),
+                weekLabel: '{!! __('filament-daterangepicker-filter::message.weekLabel') !!}',
+                showDropdowns: @js($getShowDropdowns()),
+                minYear: @js($getMinYear()),
+                maxYear: @js($getMaxYear()),
             })"
-            id="date-range-picker-{{ $name }}"
-            wire:key="date-range-picker-{{ $name }}"
-            x-on:keydown.esc="isOpen() && $event.stopPropagation()"
-            {{ $attributes->merge($getExtraAttributes())->class(['filament-forms-date-time-picker-component relative']) }}
-            {{ $getExtraAlpineAttributeBag() }}
-        >
-            <x-filament::input.wrapper
-                :disabled="$isDisabled"
-                :inline-prefix="$isPrefixInline"
-                :inline-suffix="$isSuffixInline"
-                :prefix="$prefixLabel"
-                :prefix-actions="$prefixActions"
-                :prefix-icon="$prefixIcon"
-                :suffix="$suffixLabel"
-                :suffix-actions="$suffixActions"
-                :suffix-icon="$suffixIcon"
-                :valid="!$errors->has($statePath)"
-                class="fi-fo-text-input"
-                :attributes="\Filament\Support\prepare_inherited_attributes($getExtraAttributeBag())->class([
+        id="date-range-picker-{{ $name }}"
+        wire:key="date-range-picker-{{ $name }}"
+        x-on:keydown.esc="isOpen() && $event.stopPropagation()"
+
+        {{ $attributes->merge($getExtraAttributes() , escape: false)->class(['filament-forms-date-time-picker-component relative']) }}
+        {{ $getExtraAlpineAttributeBag() }}
+    >
+        <x-filament::input.wrapper
+            :disabled="$isDisabled"
+            :inline-prefix="$isPrefixInline"
+            :inline-suffix="$isSuffixInline"
+            :prefix="$prefixLabel"
+            :prefix-actions="$prefixActions"
+            :prefix-icon="$prefixIcon"
+            :suffix="$suffixLabel"
+            :suffix-actions="$suffixActions"
+            :suffix-icon="$suffixIcon"
+            :valid="!$errors->has($statePath)"
+            class="fi-fo-text-input"
+            :attributes="\Filament\Support\prepare_inherited_attributes($getExtraAttributeBag())->class([
                     'overflow-hidden',
                 ])"
+        >
+            <button
+                x-ref="button"
+                aria-label="{{ $getPlaceholder() }}"
+                dusk="filament.forms.{{ $statePath }}.open"
+                type="button"
+                tabindex="-1"
+                class="w-full"
             >
-                <button
-                    x-ref="button"
-                    aria-label="{{ $getPlaceholder() }}"
-                    dusk="filament.forms.{{ $statePath }}.open"
-                    type="button"
-                    tabindex="-1"
-                    class="w-full"
+                <div
+                    class="relative inline-block w-full bg-white dark:bg-white/5"
+                    id="{{ $name }}.container"
+                    wire:key="{{ $name }}.container"
                 >
-                    <div
-                        class="relative inline-block w-full bg-white dark:bg-white/5"
-                        id="{{ $name }}.container"
-                        wire:key="{{ $name }}.container"
-                    >
-                        <x-filament::input
-                            x-ref="daterange"
-                            wire:key="{{ $this->id() }}.{{ $statePath }}.{{ $field::class }}.display-text"
-                            :attributes="\Filament\Support\prepare_inherited_attributes(
+                    <x-filament::input
+                        x-ref="daterange"
+                        wire:key="{{ $this->id() }}.{{ $statePath }}.{{ $field::class }}.display-text"
+                        :attributes="\Filament\Support\prepare_inherited_attributes(
                                 $getExtraInputAttributeBag(),
                             )->merge([
                                 'id' => $getId(),
                                 'name' => $name,
                                 'disabled' => $isDisabled(),
                                 'placeholder' => $getPlaceholder(),
+                                'autofocus' => $isAutofocused(),
                                 'required' => $isRequired(),
                                 'readonly' => true,
                                 'type' => 'text',
-                                $applyStateBindingModifiers('wire:model') => $statePath,
                             ], escape: false)"
-                        />
-                    </div>
-                </button>
-            </x-filament::input.wrapper>
-        </div>
+                    />
+                </div>
+            </button>
+        </x-filament::input.wrapper>
     </div>
+
 </x-dynamic-component>
