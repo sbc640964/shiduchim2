@@ -26,11 +26,12 @@
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.0",
         "maatwebsite/excel": "^3.1",
-        "malzariey/filament-daterangepicker-filter": "^2.3",
+        "malzariey/filament-daterangepicker-filter": "^3.1",
         "saade/blade-iconsax": "^1.1",
         "saade/filament-fullcalendar": "^3.2",
         "staudenmeir/eloquent-has-many-deep": "^1.7",
         "staudenmeir/eloquent-json-relations": "^1.1",
+        "staudenmeir/laravel-merged-relations": "^1.9",
         "stechstudio/filament-impersonate": "^3.6.1",
         "tomatophp/filament-alerts": "^2.2"
     },

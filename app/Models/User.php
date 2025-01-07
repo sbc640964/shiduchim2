@@ -109,4 +109,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsToMany(Discussion::class, 'discussion_user');
     }
+
+    public function subscribers()
+    {
+        return $this->hasMany(Person::class, 'billing_matchmaker');
+    }
 }
