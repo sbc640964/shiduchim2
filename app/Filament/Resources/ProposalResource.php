@@ -495,10 +495,7 @@ class ProposalResource extends Resource
                 ])
                 ->label($label)
                 ->url('#')
-                ->searchable(query: function (Builder $query, string $search) {
-                    $query->where('p-0005.first_name', 'like', "%$search%")
-                        ->orWhere('p-0005.last_name', 'like', "%$search%");
-                }),
+                ->searchable(['first_name', 'last_name']),
             Columns\TextColumn::make("$side.age")
                 ->label('גיל'),
             Columns\TextColumn::make("last{$ucFirst}Diary.data.description")
