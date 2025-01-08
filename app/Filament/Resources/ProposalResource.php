@@ -335,7 +335,7 @@ class ProposalResource extends Resource
     {
         return [
             Columns\TextColumn::make('created_at')
-                ->sortable()
+                ->sortable(['proposals.created_at'])
                 ->toggleable()
                 ->toggledHiddenByDefault()
                 ->size('xs')
