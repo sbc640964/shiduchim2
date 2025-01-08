@@ -572,6 +572,11 @@ class Proposal extends Model
 
     public function deleteDependencies(): void
     {
+        $diariesIds = $this->diaries()->pluck('id');
+
+        $diariesIds->isNotEmpty() && Person::query()->whereIn('last_diary_id', $diariesIds)
+            ->update(['last_diary_id' => null]);
+
         $this->diaries()->delete();
         $this->people()->detach();
     }
