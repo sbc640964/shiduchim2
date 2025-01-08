@@ -84,8 +84,10 @@ class ReportsProposalsTableWidget extends BaseWidget
     private function query()
     {
         $subscription = $this->getFilter('person');
+        $matchmaker = $this->getFilter('matchmaker');
 
         return Proposal::query()
+            ->where('created_by', $matchmaker)
             ->with('girl', 'guy')
             ->whereHas('people', fn ($query) => $query->whereIn('id', $subscription));
     }
