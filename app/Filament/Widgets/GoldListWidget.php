@@ -51,8 +51,8 @@ class GoldListWidget extends BaseWidget
                     ->sortable(),
                 Columns\TextColumn::make('full_name')
                     ->label('שם מלא')
-                    ->searchable()
-                    ->sortable(['first_name', 'last_name']),
+                    ->searchable(['last_name', 'first_name'])
+                    ->sortable(['last_name', 'first_name']),
 
             ]);
     }
