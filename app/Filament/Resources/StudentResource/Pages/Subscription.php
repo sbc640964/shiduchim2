@@ -255,7 +255,7 @@ class Subscription extends ManageRelatedRecords
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($livewire) => $livewire->getRecord()->payments()->getQuery())
+            ->modifyQueryUsing(fn ($livewire) => $livewire->getRecord()->payments()->getQuery()->select('payments.*'))
             ->emptyStateHeading('עדיין אין פעולות חיוב')
             ->emptyStateDescription('בעת פעולת חיוב במנוי תוכל לראות אותה כאן ')
             ->emptyStateIcon('heroicon-o-credit-card')
