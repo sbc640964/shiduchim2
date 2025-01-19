@@ -5,17 +5,18 @@ namespace App\Actions;
 use App\Models\CreditCard;
 use App\Models\Payment;
 use App\Models\Person;
+use App\Models\Subscriber;
 use Illuminate\Support\Facades\Http;
 
 class RunPayments
 {
     public function __invoke(): void
     {
-        Person::whereIn('billing_status', ['active', 'starting'])
-            ->where('billing_balance_times', '>', 0)
-            ->whereDate('billing_next_date', '<=', now())
-            ->each(function (Person $person) {
-                $this->chargePerson($person);
+        Subscriber::query()
+            ->whereStatus('active')
+            ->whereDate('next_payment_date', '<=', now())
+            ->each(function (Subscriber $subscriber) {
+                $subscriber->charge();
             });
     }
 

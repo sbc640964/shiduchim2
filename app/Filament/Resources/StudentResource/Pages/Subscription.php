@@ -8,7 +8,9 @@ use App\Filament\Resources\StudentResource\Widgets\SubscriptionInfo;
 use App\Models\CreditCard;
 use App\Models\Payment;
 use App\Models\Person;
+use App\Models\Subscriber;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -19,9 +21,12 @@ use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Support\RawJs;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Filament\Widgets\AccountWidget;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class Subscription extends ManageRelatedRecords
 {
@@ -55,50 +60,62 @@ class Subscription extends ManageRelatedRecords
 
     public function infolist(Infolist $infolist): Infolist
     {
-        return $infolist->schema([
-            KeyValueEntry::make('data')
-                ->keyLabel('סוג ערך')
-                ->valueLabel('ערך')
-                ->columnSpanFull()
-                ->label('תגובת החיוב בנדרים פלוס'),
-        ]);
+        return $infolist
+            ->schema([
+                KeyValueEntry::make('data')
+                    ->keyLabel('סוג ערך')
+                    ->valueLabel('ערך')
+                    ->columnSpanFull()
+                    ->label('תגובת החיוב בנדרים פלוס'),
+            ]);
     }
 
-    static function formFields(): array
+    static function formFields(?Subscriber $formRecord = null): array
     {
         return [
-            Forms\Components\DatePicker::make('billing_start_date')
-                ->label('תאריך פניה ראשונית')
-                ->native(false)
-                ->default(now())
-                ->required(),
-
-            Forms\Components\Select::make('referer')
+            Forms\Components\Select::make('referrer_id')
+                ->model(Subscriber::class)
+                ->relationship('referrer', modifyQueryUsing: fn (Builder $query, ?string $search) =>
+                    $query->limit(60)
+                        ->orderBy('first_name')
+                        ->orderBy('last_name')
+                        ->searchName($search)
+                        ->with(['father', 'spouse', 'mother', 'family.city', 'city'])
+                )
+                ->saveRelationshipsUsing(fn () => null)
                 ->label('מפנה')
-                ->getOptionLabelUsing(fn($value) => Person::find($value)?->select_option_html)
-                ->searchable()
-                ->allowHtml()
-                ->getSearchResultsUsing(fn($search) => Person::query()
-                    ->when($search, fn($query, $search) => $query->searchName($search))
-                    ->with('father', 'spouse')
-                    ->limit(10)
+                ->optionsLimit(60)
+                ->getOptionLabelFromRecordUsing(fn(Person $record) => $record->getSelectOptionHtmlAttribute(withAddress: true))
+                ->getSearchResultsUsing(fn (string $search) => Person::searchName($search)->limit(60)
                     ->get()
-                    ->mapWithKeys(fn($person) => [$person->id => $person->select_option_html])
-                    ->toArray()
-                ),
+                    ->mapWithKeys(fn(Person $person) => [$person->getKey() => $person->getSelectOptionHtmlAttribute(withAddress: true)])
+                )
+                ->searchable()
+                ->allowHtml(),
 
-            Forms\Components\Select::make('person_id')
+            Forms\Components\Select::make('payer_id')
+                ->model(Subscriber::class)
+                ->relationship('payer', modifyQueryUsing: fn (Builder $query, ?string $search) =>
+                    $query->limit(60)
+                        ->orderBy('first_name')
+                        ->orderBy('last_name')
+                        ->searchName($search)
+                        ->with(['father', 'spouse', 'mother', 'family.city', 'city'])
+                )
+                ->saveRelationshipsUsing(fn () => null)
+                ->default(fn($livewire) => $livewire->getRecord()->father_id)
+                ->helperText('ברירת מחדל יופיע האבא של הבחור/ה')
                 ->label('משלם')
                 ->searchable()
                 ->allowHtml()
-                ->getOptionLabelUsing(fn($value) => Person::find($value)?->select_option_html)
-                ->getSearchResultsUsing(fn($search) => Person::query()
-                    ->when($search, fn($query, $search) => $query->searchName($search))
-                    ->with('father', 'spouse')
-                    ->limit(10)
+                ->getOptionLabelFromRecordUsing(fn(Person $record) => $record->getSelectOptionHtmlAttribute(withAddress: true))
+                ->getSearchResultsUsing(fn (string $search) => Person::searchName($search)
+                    ->limit(60)
+                    ->with(['father', 'spouse', 'mother', 'family.city', 'city'])
+                    ->orderBy('first_name')
+                    ->orderBy('last_name')
                     ->get()
-                    ->mapWithKeys(fn($person) => [$person->id => $person->select_option_html])
-                    ->toArray()
+                    ->mapWithKeys(fn(Person $person) => [$person->getKey() => $person->getSelectOptionHtmlAttribute(withAddress: true)])
                 )
                 ->live()
                 ->required(),
@@ -114,17 +131,20 @@ class Subscription extends ManageRelatedRecords
 
             Forms\Components\Select::make('credit_card_id')
                 ->label('כרטיס אשראי')
+                ->preload()
+                ->options(fn (Forms\Get $get) => $get('payer_id')
+                    ? CreditCard::where('person_id', $get('payer_id'))->get()->mapWithKeys(fn(CreditCard $card) => [$card->getKey() => $card->last4])
+                    : []
+                )
+                ->searchable()
                 ->hidden(fn(Forms\Get $get) => $get('method') !== 'credit_card')
-                ->disabled(fn(Forms\Get $get) => !$get('person_id'))
-                ->placeholder('השאר ריק למזומן')
-                ->selectablePlaceholder('השאר ריק למזומן')
+                ->disabled(fn(Forms\Get $get) => !$get('payer_id'))
                 ->native(false)
-                ->options(fn (Forms\Get $get) => CreditCard::where('person_id', $get('person_id'))->get()->pluck('last4', 'id')->toArray())
                 ->createOptionForm(function (Forms\Get $get,  Form $form) {
                     return $form
                         ->schema([
                             Forms\Components\Hidden::make('person_id')
-                                ->default($get('person_id'))
+                                ->default($get('payer_id'))
                                 ->required(),
                             ...CreditCards::formFields(),
                         ]);
@@ -145,58 +165,70 @@ class Subscription extends ManageRelatedRecords
                 ->stripCharacters(',')
                 ->required(),
 
-            Forms\Components\Select::make('matchmaker')
+            Forms\Components\Select::make('user_id')
+                ->model(Subscriber::class)
+                ->relationship('matchmaker', 'name')
+                ->saveRelationshipsUsing(fn () => null)
                 ->label('שדכן')
                 ->placeholder('בחר שדכן')
                 ->searchable()
+                ->preload()
                 ->live()
-                ->options(User::pluck('name', 'id')->toArray())
                 ->nullable(),
 
-            Forms\Components\Select::make('day')
-                ->visible(fn(Forms\Get $get) => $get('matchmaker'))
+            Forms\Components\Select::make('work_day')
+                ->visible(fn(Forms\Get $get) => $get('user_id'))
                 ->label('יום פעילות לשדכן')
-                ->options(function (Forms\Get $get) {
-//                    if(!$get('person_id')) {
-//                        return [];
-//                    }
-
-//                    $hasDays = Person::whereId($get('person_id'))
-//                        ->where('billing_status', 'active')
-//                        ->whereNotNull('billing_matchmaker_day')
-//                        ->pluck('billing_matchmaker_day');
-
-                    return [
-                        '1' => 'ראשון',
-                        '2' => 'שני',
-                        '3' => 'שלישי',
-                        '4' => 'רביעי',
-                        '5' => 'חמישי',
-                        '6' => 'שישי',
-                        '7' => 'מוצ"ש',
-                    ];
-                })
+                ->options([
+                    '1' => 'ראשון',
+                    '2' => 'שני',
+                    '3' => 'שלישי',
+                    '4' => 'רביעי',
+                    '5' => 'חמישי',
+                    '6' => 'שישי',
+                    '7' => 'מוצ"ש',
+                ])
                 ->nullable(),
 
-            Forms\Components\TextInput::make('times')
+            Forms\Components\TextInput::make('payments')
                 ->label("מס תשלומים")
                 ->numeric()
                 ->live()
-                ->placeholder('אל תתחיל לגבות')
-                ->nullable(),
+                ->required(),
 
-            Forms\Components\DatePicker::make('next_date')
+            Forms\Components\DatePicker::make('start_date')
                 ->label('תאריך תשלום ראשון')
                 ->native(false)
-                ->hidden(fn(Forms\Get $get) => !$get('times'))
+                ->displayFormat('d/m/Y')
+                ->afterOrEqual(Carbon::today())
+                ->default(Carbon::today())
+                ->disabled(fn(?Subscriber $record) => $record && $record->transactions->count() > 0)
+                ->when(
+                    fn (Forms\Components\DatePicker $component) => $formRecord && $formRecord->transactions->count() === 0,
+                    fn (Forms\Components\DatePicker $component) => $component->afterOrEqual(Carbon::today())
+                )
+                ->validationMessages([
+                    'after_or_equal' => 'תאריך תשלום ראשון חייב להיות לאחר התאריך הנוכחי או בו',
+                ])
+                ->hidden(fn(Forms\Get $get) => !$get('payments') || !$get('user_id'))
                 ->placeholder('הגבייה לא תתחיל עד שתבחר תאריך')
+                ->live()
+                ->helperText(function (Forms\Get $get, $state) {
+                    if(blank($state)) {
+                        return null;
+                    }
+
+                    $lastPayment = Carbon::make($state)->addMonths($get('payments') - 1);
+
+                    return "תשלום אחרון בתאריך " . $lastPayment->format('d/m/Y') . " | סיום מנוי ב " . $lastPayment->addMonth()->format('d/m/Y');
+                })
                 ->nullable(),
-            Forms\Components\Toggle::make('billing_published')
+            Forms\Components\Toggle::make('is_published')
                 ->label('פרסם לכל השדכנים')
-                ->visible(fn(Forms\Get $get) => !$get('matchmaker'))
+                ->visible(fn(Forms\Get $get) => !$get('user_id'))
                 ->default(true)
                 ->nullable(),
-            Forms\Components\Textarea::make('billing_notes')
+            Forms\Components\Textarea::make('notes')
                 ->label('הערות')
                 ->rule('max:255')
                 ->rows(3)
@@ -206,7 +238,7 @@ class Subscription extends ManageRelatedRecords
 
     protected function getHeaderWidgets(): array
     {
-        if (! $this->getRecord()->billing_status) {
+        if (! $this->getRecord()->lastSubscription) {
             return [];
         }
 
@@ -223,8 +255,9 @@ class Subscription extends ManageRelatedRecords
     public function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading($this->getRecord()->billing_status ? 'עדיין אין פעולות חיוב' :'לא מוגדר מנוי פעיל')
-            ->emptyStateDescription($this->getRecord()->billing_status ? 'בעת פעולת חיוב במנוי תוכל לראות אותה כאן ' : 'הוסף מנוי חדש על ידי לחיצה על הכפתור למעלה')
+            ->modifyQueryUsing(fn ($livewire) => $livewire->getRecord()->payments()->getQuery())
+            ->emptyStateHeading('עדיין אין פעולות חיוב')
+            ->emptyStateDescription('בעת פעולת חיוב במנוי תוכל לראות אותה כאן ')
             ->emptyStateIcon('heroicon-o-credit-card')
             ->recordTitleAttribute('last4')
             ->columns([
@@ -241,6 +274,9 @@ class Subscription extends ManageRelatedRecords
                     ->color(fn($state) => $state === 'OK' ? 'success' : 'danger')
                     ->formatStateUsing(fn($state) => $state === 'OK' ? 'הצליח' : 'נכשל')
                     ->label('סטטוס'),
+                Tables\Columns\TextColumn::make('description')
+                    ->tooltip(fn (Payment $record) => str($record->description)->endsWith('*') ? 'חיוב ידני' : false)
+                    ->label('תיאור'),
                 Tables\Columns\TextColumn::make('creditCard.person.full_name')
                     ->label('משלם'),
                 Tables\Columns\TextColumn::make('last4')
@@ -252,36 +288,68 @@ class Subscription extends ManageRelatedRecords
                 Tables\Columns\TextColumn::make('transaction_id')
                     ->label('מספר עסקה'),
             ])
+            ->heading('פעולות חיוב')
+            ->hiddenFilterIndicators()
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('subscriber_id')
+                    ->default($this->getRecord()->lastSubscription?->id ?? null)
+                    ->options($this->getRecord()->subscriptions
+                        ->mapWithKeys(fn(Subscriber $subscriber) => [$subscriber->id => $subscriber->getToOptionsSelect()])
+                    )
+                    ->label('מנוי'),
+
+                Tables\Filters\SelectFilter::make('subscribers.status')
+                    ->options([
+                        'OK' => 'הצליח',
+                        'FAILED' => 'נכשל',
+                    ])
+                    ->label('סטטוס'),
             ])
+            ->filtersLayout(FiltersLayout::AboveContent)
             ->headerActions([
+                Tables\Actions\Action::make('charge')
+                ->label('חייב ח"פ')
+                ->requiresConfirmation()
+                ->form([
+                    Forms\Components\Toggle::make('join')
+                        ->label('צרף את התשלום כחלק מהו"ק')
+                        ->helperText('אם התשלום יצורף המנוי תשלומי היתרה ותאריך הבא יעודכנו')
+                        ->rule('max:255')
+                        ->required(),
+                ])
+                ->action(fn (array $data) => $this->getRecord()->lastSubscription->charge(true, $data['join']))
+
+                ,
                 Tables\Actions\CreateAction::make()
                     ->label('הגדר מנוי')
                     ->createAnother(false)
                     ->slideOver()
                     ->modalWidth(MaxWidth::Small)
                     ->modalHeading('הגדר מנוי')
-                    ->hidden(!! $this->getRecord()->billing_status)
+                    ->hidden(!! $this->getRecord()->lastSubscription?->isCurrent())
                     ->using(function ($data, $action, self $livewire) {//
 
                         /** @var Person $record */
                         $record = $livewire->getRecord();
-                        $record->update([
-                            'billing_payer_id' => $data['person_id'],
-                            'billing_status' => 'pending',
-                            'billing_amount' => $data['amount'],
-                            'billing_balance_times' => $data['times'],
-                            'billing_matchmaker' => $data['matchmaker'],
-                            'billing_method' => $data['method'] ?? null,
-                            'billing_next_date' => $data['next_date'] ?? null,
-                            'billing_credit_card_id' => $data['credit_card_id'] ?? null,
-                            'billing_matchmaker_day' => $data['day'] ?? null,
-                            'billing_published' => $data['billing_published'] ?? false,
-                            'billing_notes' => $data['billing_notes'] ?? null,
-                            'billing_start_date' => $data['billing_start_date'],
-                            'billing_referrer_id' => $data['referer'] ?? null,
-                        ]);
+
+                        $status = 'pending';
+
+                        if(filled($data['matchmaker_id'] ?? null)
+                            && filled($data['payments'])
+                            && filled($data['start_date'])
+                            && filled($data['amount'])
+                            && filled($data['work_day'])
+                        ) {
+                            $status = 'active';
+                        }
+
+                        $record->subscriptions()->create(array_merge($data, [
+                            'status' => $status,
+                            'balance_payments' => $data['payments'],
+                            'end_date' => $data['start_date'] ?? null
+                                ? Carbon::make($data['start_date'])->addMonths((int) $data['payments'])
+                                : null,
+                        ]));
 
                         return $record;
                     }),
@@ -289,8 +357,8 @@ class Subscription extends ManageRelatedRecords
             ->actions([
                 Tables\Actions\ViewAction::make()
                     ->modalHeading('פרטי חיוב')
+                    ->record($this->getRecord())
                     ->iconButton(),
-
                 Tables\Actions\Action::make('cancel')
                     ->label('ביטול עסקה')
                     ->color('danger')
@@ -334,7 +402,7 @@ class Subscription extends ManageRelatedRecords
                     ->button()
                     ->size('xs')
                     ->visible(fn (Payment $record) => $record->status === 'OK' && auth()->user()->can('refund_payments'))
-                    ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
+                    ->action(function (Subscriber $record, array $data, Tables\Actions\Action $action) {
                         $result = $record->refund(...\Arr::except($data, 'confirm_password'));
 
                         if($result['Result'] === 'OK') {

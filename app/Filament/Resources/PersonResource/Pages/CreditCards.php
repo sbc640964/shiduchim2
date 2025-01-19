@@ -140,9 +140,9 @@ class CreditCards extends ManageRelatedRecords
             ]);
     }
 
-    static public function createNewCreditCard($record, array $data, $action = null): ?CreditCard
+    static public function createNewCreditCard(Person $record, array $data, $action = null): ?CreditCard
     {
-        $card = RunPayments::createDirectDebit($record, $data);
+        $card = $record->createCreditCard($data);
 
         if ($card instanceof CreditCard) {
             if ($action) {

@@ -8,10 +8,12 @@ use App\Filament\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
 use App\Filament\Pages\ReportsPage\Widgets\StatsReportOverview;
 use App\Filament\Resources\ProposalResource\Widgets\DiaryListWidget;
 use App\Models\Person;
+use App\Models\Subscriber;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
@@ -82,17 +84,50 @@ class Reports extends \Filament\Pages\Dashboard
                             ->icon('heroicon-o-calendar')
                             ->placeholder('בחר תאריכים'),
                         Forms\Components\Select::make('person')
-                            ->label('מנוי')
+                            ->label('תלמיד')
                             ->afterStateUpdated(function (Forms\Set $set) {
                                 $this->proposal = null;
                             })
                             ->options(fn (Forms\Get $get) =>
                                 Person::query()
                                     ->take(10)
-                                    ->where('billing_matchmaker', $get('matchmaker'))
+                                    ->whereHas('subscriptions', function (Builder $query) use ($get) {
+                                        $query
+                                            ->where(function (Builder $query) use ($get) {
+                                                //where if start_date and end_date are between the selected dates
+                                                $dates = collect(explode(' - ', $get('dates_range')))
+                                                    ->map(fn ($date) => now()->createFromFormat('d/m/Y', $date))
+                                                    ->toArray();
+                                                $query
+                                                    ->whereBetween('start_date', $dates)
+                                                    ->orWhereBetween('end_date', $dates);
+                                            })
+                                            ->where('user_id', $get('matchmaker'));
+                                    })
                                     ->get()
                                     ->mapWithKeys(fn (Person $person) => [$person->id => $person->full_name])
                             )
+                            ->searchable()
+                            ->placeholder('כולם'),
+
+                        Forms\Components\Select::make('subscription')
+                            ->label('מנוי')
+                            ->visible(fn (Forms\Get $get) => $get('person'))
+                            ->afterStateUpdated(function (Forms\Set $set) {
+                                $this->proposal = null;
+                            })
+                            ->options(function (Forms\Get $get) {
+                                $dates = collect(explode(' - ', $get('dates_range')))
+                                    ->map(fn ($date) => now()->createFromFormat('d/m/Y', $date))
+                                    ->toArray();
+
+                                return Subscriber::query()
+                                    ->where('person_id', $get('person'))
+                                    ->where(function ($query) use ($dates) {
+                                        $query->whereBetween('start_date', $dates)
+                                            ->orWhereBetween('end_date', $dates);
+                                    })->get()->mapWithKeys(fn($subscriber) => [$subscriber->id => $subscriber->getToOptionsSelect()]);
+                            })
                             ->searchable()
                             ->placeholder('כולם'),
                     ])

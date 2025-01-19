@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Nedarim;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Http;
@@ -19,6 +20,7 @@ class Payment extends Model
         "payment_method",
         "last4",
         "transaction_id",
+        'subscriber_id',
         "data",
     ];
 
@@ -37,15 +39,14 @@ class Payment extends Model
         return $this->belongsTo(CreditCard::class);
     }
 
+    public function subscriber(): BelongsTo
+    {
+        return $this->belongsTo(Subscriber::class);
+    }
+
     public function refund($amount, $changeTimes, $changeNextTime, $comments)
     {
-        $result = Http::asForm()->post('https://matara.pro/nedarimplus/Reports/Manage3.aspx', [
-            'Action' => 'RefundTransaction',
-            'MosadId' => config('app.nedarim.mosad'),
-            'ApiPassword' => config('app.nedarim.password'),
-            'TransactionId' => $this->transaction_id,
-            'RefundAmount' => $amount,
-        ])->json();
+        $result = Nedarim::refundTransaction($this->transaction_id, $amount);
 
         if($result['Result'] === 'OK') {
             $this->update([
@@ -54,9 +55,9 @@ class Payment extends Model
             ]);
 
             if($changeTimes || $changeNextTime) {
-                $this->student->update([
-                    'billing_balance_times' => $changeTimes ? $this->student->billing_balance_times - 1 : $this->student->billing_balance_times,
-                    'billing_next_date' => $changeNextTime ? $this->student->billing_next_date->subMonth() : $this->student->billing_next_date,
+                $this->subscriber->update([
+                    'balance_payments' => $changeTimes ? $this->subscriber->balance_payments - 1 : $this->subscriber->balance_payments,
+                    'next_payment_date' => $changeNextTime ? $this->subscriber->next_payment_date->subMonth() : $this->subscriber->next_payment_date,
                 ]);
             }
         }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Filament\Resources\PersonResource;
 use App\Models\Pivot\PersonFamily;
+use App\Services\Nedarim;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -132,7 +134,13 @@ class Person extends Model
 
     public function subscriptions(): HasMany
     {
-        return $this->hasMany(Payment::class, 'student_id');
+        return $this->hasMany(Subscriber::class, 'person_id');
+    }
+
+    public function lastSubscription(): HasOne
+    {
+        return $this->hasOne(Subscriber::class, 'person_id')
+            ->latestOfMany();
     }
 
     public function liveWith(): BelongsTo
@@ -336,15 +344,20 @@ class Person extends Model
         return $this->gender === 'G' ? $this->childrenM : $this->childrenF;
     }
 
-    public function getSelectOptionHtmlAttribute(?bool $withPivotSide = false): string
+    public function getSelectOptionHtmlAttribute(?bool $withPivotSide = false, ?bool $withAddress = false): string
     {
         $fatherName = $this->relationLoaded('father') ? $this->father?->first_name ?? '' : '';
         $fatherInLawName = $this->relationLoaded('fatherInLaw') ? $this->fatherInLaw?->reverse_full_name ?? '' : '';
 
-        $divider = $fatherInLawName && $fatherName ? ' | ' : '';
+        $fatherInLawName = $fatherInLawName ? "חתן ר' ".$fatherInLawName : null;
+        $fatherName = $fatherName ? "ב'ר ".$fatherName : null;
 
-        $fatherInLawName = $fatherInLawName ? "חתן ר' ".$fatherInLawName : '';
-        $fatherName = $fatherName ? "ב'ר ".$fatherName : '';
+        $parentsNames = collect([$fatherName, $fatherInLawName])->filter()->join(' | ');
+
+        $address = $withAddress ? (filled($parentsNames) ? ' | ' : ''). collect([
+            $this->address ?? $this->family?->address ?? null,
+            $this->city?->name ?? $this->family?->city?->name ?? null,
+        ])->filter(fn ($str) => filled(trim($str)))->join(', ') : '';
 
         return <<<HTML
             <div>
@@ -352,7 +365,7 @@ class Person extends Model
                     $this->full_name
                 </div>
                 <div class='text-xs text-gray-400'>
-                    $fatherName $divider $fatherInLawName
+                     $parentsNames $address,
                 </div>
             </div>
         HTML;
@@ -711,5 +724,32 @@ class Person extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    public function createCreditCard(array $data = [])
+    {
+        $result = Nedarim::createDirectDebit($this, $data);
+
+        return data_get($result, 'Status') !== 'OK'
+            ? $result
+            : $this->cards()->create([
+                'brand' => 'UNKNOWN',
+                'token' => $result['KevaId'],
+                'last4' => $result['LastNum'],
+                'is_active' => true,
+                'data' => $result,
+            ]);
+    }
+
+    public function payments(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Payment::class,
+            Subscriber::class,
+            'person_id',
+            'subscriber_id',
+            'id',
+            'id'
+        );
     }
 }

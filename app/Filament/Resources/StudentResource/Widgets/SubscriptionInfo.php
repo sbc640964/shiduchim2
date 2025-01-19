@@ -5,9 +5,12 @@ namespace App\Filament\Resources\StudentResource\Widgets;
 use App\Filament\Resources\StudentResource;
 use App\Filament\Resources\StudentResource\Pages\Subscription;
 use App\Models\Person;
+use App\Models\Subscriber;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -27,28 +30,44 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
 
     protected static string $view = 'filament.resources.student-resource.widgets.subscription-info';
 
+    public function getSubscription(): Subscriber
+    {
+        return $this->record->lastSubscription;
+    }
+
+    public function getRecord(): Person
+    {
+        return $this->record;
+    }
+
+    public function enableSubscription(): Action
+    {
+        return Action::make('enableSubscription')
+            ->label('')
+            ->requiresConfirmation()
+            ->modalHeading('הפעל מנוי')
+            ->modalDescription('האם אתה בטוח שברצונך להפעיל את המנוי?')
+            ->modalContent(str(str($this->getSubscription()->next_payment_date->isToday()
+                ? 'המנוי יופעל **היום** והתשלום יתבצע מיד'
+                : 'המנוי יופעל בתאריך ' . $this->getSubscription()->next_payment_date->format('d/m/Y') . ' והתשלום הראשון יתבצע באותו יום'
+            )->markdown())->toHtmlString())
+            ->color('success')
+            ->size('lg')
+            ->tooltip('הפעל מנוי')
+            ->icon('heroicon-s-play')
+            ->action(function (self $livewire) {
+                $livewire->record->lastSubscription->update(['status' => 'active']);
+            });
+    }
+
     public function editBilling(): Action
     {
         return Action::make('editBilling')
             ->label('ערוך פרטי חיוב')
             ->modalHeading('ערוך פרטי חיוב')
             ->slideOver()
-            ->fillForm(function () {
-                return [
-                    'person_id' => $this->record->billingCard?->person_id ?? $this->record->billing_payer_id,
-                    'method' => $this->record->billing_method,
-                    'credit_card_id' => $this->record->billing_credit_card_id,
-                    'matchmaker' => $this->record->billing_matchmaker,
-                    'times' => $this->record->billing_balance_times,
-                    'next_date' => $this->record->billing_next_date,
-                    'amount' => $this->record->billing_amount,
-                    'billing_notes' => $this->record->billing_notes,
-                    'billing_start_date' => $this->record->billing_start_date,
-                    'referer' => $this->record->billing_referrer_id,
-                    'billing_published' => $this->record->billing_published,
-                    'day' => $this->record->billing_matchmaker_day,
-                ];
-            })
+            ->record($this->getSubscription())
+            ->fillForm($this->getSubscription()->attributesToArray())
             ->modalSubmitActionLabel('עדכן')
             ->extraModalFooterActions([
                 Action::make('deleteBilling')
@@ -56,20 +75,8 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ->requiresConfirmation()
                     ->icon('heroicon-o-x-mark')
                     ->action(function (self $livewire) {
-                        $livewire->record->update([
-                            'billing_payer_id' => null,
-                            'billing_status' => null,
-                            'billing_amount' => null,
-                            'billing_balance_times' => null,
-                            'billing_matchmaker' => null,
-                            'billing_method' => null,
-                            'billing_next_date' => null,
-                            'billing_credit_card_id' => null,
-                            'billing_notes' => null,
-                            'billing_matchmaker_day' => null,
-                            'billing_published' => false,
-                            'billing_referrer_id' => null,
-                            'billing_start_date' => null,
+                        $livewire->getSubscription()->update([
+                            'status' => 'canceled',
                         ]);
 
                         redirect(StudentResource::getUrl('subscription', [
@@ -81,27 +88,20 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->modalWidth(MaxWidth::Small)
             ->action(function ($data, Action $action){
 
-                $this->record->update([
-                    'billing_payer_id' => $data['person_id'],
-                    'billing_amount' => $data['amount'],
-                    'billing_balance_times' => $data['times'],
-                    'billing_matchmaker' => $data['matchmaker'],
-                    'billing_method' => $data['method'] ?? null,
-                    'billing_next_date' => $data['next_date'] ?? null,
-                    'billing_credit_card_id' => $data['credit_card_id'] ?? null,
-                    'billing_notes' => $data['billing_notes'] ?? null,
-                    'billing_start_date' => $data['billing_start_date'] ?? null,
-                    'billing_published' => $data['billing_published'] ?? false,
-                    'billing_matchmaker_day' => $data['day'] ?? null,
-                    'billing_referrer_id' => $data['referer'] ?? null,
-                ]);
+                if(($data['user_id'] ?? 0) > 0 && data_get($data, 'start_date')) {
+                    $data['end_date'] = Carbon::make($data['start_date'])->addMonths($data['payments'] - 1);
+                }
+
+                $this->record
+                    ->lastSubscription
+                    ->update($data);
 
                 $action->successNotificationTitle('הפרטים נשמרו בהצלחה');
 
                 $action->success();
             })
-            ->form(function ($form) {
-                return $form->schema([
+            ->form(function (Form $form) {
+                return $form->schema(fn (Subscriber $record) => [
                     Actions::make([
                         FormAction::make('run')
                             ->color('success')
@@ -126,7 +126,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                                 ]));
                             }) ,
                     ]),
-                    ...Subscription::formFields(),
+                    ...Subscription::formFields($record),
                 ]);
             });
     }

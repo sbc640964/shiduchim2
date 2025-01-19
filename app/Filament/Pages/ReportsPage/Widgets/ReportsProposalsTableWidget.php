@@ -5,6 +5,7 @@ namespace App\Filament\Pages\ReportsPage\Widgets;
 use App\Filament\Widgets\FilterReportsTrait;
 use App\Models\Person;
 use App\Models\Proposal;
+use App\Models\Subscriber;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -12,6 +13,7 @@ use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Reactive;
+use function Pest\Laravel\get;
 
 class ReportsProposalsTableWidget extends BaseWidget
 {
@@ -42,7 +44,6 @@ class ReportsProposalsTableWidget extends BaseWidget
             ? Person::find($this->getFilter('person', true))
             : null;
 
-        $this->query()->get()->toArray();
         return $table
             ->heading($person ? ('הצעות עבור ' . $person->full_name) : 'הצעות')
             ->query($this->query())
@@ -83,12 +84,26 @@ class ReportsProposalsTableWidget extends BaseWidget
 
     private function query()
     {
-        $subscription = $this->getFilter('person');
+        $person = $this->getFilter('person');
         $matchmaker = $this->getFilter('matchmaker');
+        $subscription = $this->getFilter('subscription');
+        $dateRange = $this->getFilter('dates_range');
 
         return Proposal::query()
             ->where('created_by', $matchmaker)
             ->with('girl', 'guy')
-            ->whereHas('people', fn ($query) => $query->whereIn('id', $subscription));
+            ->where(function ($query) use ($dateRange) {
+                $query->whereBetween('created_at', $dateRange)
+                    ->orWhereBetween('updated_at', $dateRange);
+            })
+            ->where(function ($query) use ($subscription) {
+                if(!$subscription) return;
+
+                $dates = [$subscription->start_date, $subscription->end_date];
+
+                $query->whereBetween('created_at', $dates)
+                    ->orWhereBetween('updated_at', $dates);
+            })
+            ->whereHas('people', fn ($query) => $query->whereIn('id', $person));
     }
 }
