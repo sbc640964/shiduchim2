@@ -6,8 +6,10 @@ use App\Filament\Resources\GoldListResource\Pages;
 use App\Models\Subscriber;
 use App\Models\User;
 use Carbon\Carbon;
+use Faker\Provider\Text;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
@@ -33,14 +35,19 @@ class GoldListResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return auth()->user()->can('students_subscriptions') ? 'מנויים' : 'רשימת הזהב שלי';
+        return static::isManager() ? 'מנויים' : 'רשימת הזהב שלי';
+    }
+
+    public static function isManager()
+    {
+        return auth()->user()->can('students_subscriptions');
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             ->with('matchmaker', 'student.lastDiary', 'payer', 'student.father', 'student.mother', 'referrer')
-            ->when(!auth()->user()->can('students_subscriptions'), function (Builder $query) {
+            ->when(!static::isManager(), function (Builder $query) {
                 $query->where('user_id', auth()->user()->id);
             });
     }
@@ -72,7 +79,7 @@ class GoldListResource extends Resource
                             $record->student->mother ? ' ו' : '',
                             $record->student->mother?->first_name ?? ''
                         ], '')),
-                    ...(auth()->user()->can('students_subscriptions')
+                    ...(static::isManager()
                         ? static::getMangerColumns()
                         : static::getMatchmakerColumns()
                     ),
@@ -102,14 +109,25 @@ class GoldListResource extends Resource
                             ->preload()
                             ->hidden(fn (Forms\Get $get) => $get('no_select_matchmaker'))
                             ->searchable(),
+
                         Forms\Components\Select::make('status')
                             ->label('סטטוס')
+
                             ->options([
                                 'active' => 'פעיל',
                                 'hold' => 'מושהה',
                                 'pending' => 'ממתין',
                             ])
                             ->searchable(),
+                        Forms\Components\Select::make('lastTransactionStatus')
+                            ->label('סטטוס תשלום')
+                            ->visible(static::isManager())
+                            ->options([
+                                'OK' => 'הצליח',
+                                'pending' => 'ממתין',
+                                'Error' => 'נכשל',
+                                'refunded' => 'הוחזר',
+                            ]),
                         Forms\Components\Select::make('work_day')
                             ->label('יום')
                             ->options([
@@ -156,6 +174,15 @@ class GoldListResource extends Resource
                             };
                         }
 
+                        if ($data['lastTransactionStatus'] ?? null) {
+                            $indicators[] = 'סטטוס תשלום: ' . match ($data['lastTransactionStatus']) {
+                                'OK' => 'הצליח',
+                                'pending' => 'ממתין',
+                                'Error' => 'נכשל',
+                                'refunded' => 'הוחזר',
+                            };
+                        }
+
                         return $indicators;
                     })
                     ->query(function (Builder $query, array $data) {
@@ -172,7 +199,8 @@ class GoldListResource extends Resource
                                 $value === 'none'
                                     ? $query->whereNull('work_day')
                                     : $query->where('work_day', $value);
-                            });
+                            })
+                            ->when($data['lastTransactionStatus'] ?? null, fn (Builder $query, $value) => $query->whereRelation('lastTransaction', 'status', $value));
                     }),
             ])
             ->filtersLayout(Tables\Enums\FiltersLayout::AboveContent)
@@ -182,7 +210,7 @@ class GoldListResource extends Resource
                     ->iconButton()
                     ->icon('heroicon-o-eye')
                     ->url(fn (Subscriber $record) =>
-                        auth()->user()->can('students_subscriptions')
+                        static::isManager()
                             ? StudentResource::getUrl('subscription', ['record' => $record->student->id])
                             : StudentResource::getUrl('proposals', ['record' => $record->student->id])
                     ),
@@ -279,7 +307,6 @@ class GoldListResource extends Resource
                     ->date('d/m/Y'),
             ]),
 
-
             TextColumn::make('billingReferrer.full_name')
                 ->description('מפנה')
                 ->label('מפנה'),
@@ -288,24 +315,27 @@ class GoldListResource extends Resource
                 ->label('תקופת פרוייקט')
                 ->description('תקופת פרוייקט נוכחית')
                 ->formatStateUsing(function (Subscriber $record) {
+                    $start = $record->start_date;
+                    $end = $record->end_date;
+                    return $start && $end ? $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y') : null;
+                }),
 
-                    if(! $record->balance_payments) return 'לא פעיל';
-
-                    $dates = $record->transactions->pluck('created_at')
-                        ->push($record->next_payment_date);
-
-                    /** @var Carbon[] $lastSequence */
-                    $lastSequence = [];
-
-                    $dates->each(function ($date) use (&$lastSequence) {
-                        if(empty($lastSequence) || ($date->month - end($lastSequence)->month) !== 1)
-                        $lastSequence = [$date];
-                    });
-
-                    $start = ($lastSequence[0] ?? now())->format('m/y');
-                    $end = (end($lastSequence) ?? now())->copy()->addMonths($record->balance_payments - 1)->format('m/y');
-
-                    return "$start-$end";
+            TextColumn::make('lastTransaction.status')
+                ->label('סטטוס תשלום')
+                ->description('סטטוס תשלום אחרון')
+                ->badge()
+                ->color(fn($state) => match ($state) {
+                    'OK' => 'success',
+                    'Error' => 'danger',
+                    'refunded' => 'warning',
+                    default => 'gray',
+                })
+                ->formatStateUsing(fn ($state) => match ($state) {
+                    'OK' => 'הצליח',
+                    'pending' => 'ממתין',
+                    'Error' => 'נכשל',
+                    'refunded' => 'הוחזר',
+                    default => $state,
                 }),
         ];
     }

@@ -156,6 +156,11 @@ class Subscriber extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function lastTransaction()
+    {
+        return $this->transactions()->one()->latestOfMany();
+    }
+
     public function scopePublished($query)
     {
         return $query->where('is_published', true);
