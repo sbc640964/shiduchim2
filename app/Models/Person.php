@@ -752,4 +752,9 @@ class Person extends Model
             'id'
         );
     }
+
+    public function legacyPayments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'student_id');
+    }
 }

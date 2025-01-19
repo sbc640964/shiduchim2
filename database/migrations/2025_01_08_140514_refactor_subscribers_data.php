@@ -33,7 +33,7 @@ return new class extends Migration {
                     'amount' => $person->billing_amount,
                 ])
                     ->transactions()
-                    ->saveMany($person->subscriptions);
+                    ->saveMany($person->legacyPayments);
             });
     }
 
