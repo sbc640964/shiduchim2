@@ -32,7 +32,7 @@ return new class extends Migration {
                     'work_day' => $person->billing_matchmaker_day,
                     'amount' => $person->billing_amount,
                 ])
-                    ->payments()
+                    ->transactions()
                     ->saveMany($person->subscriptions);
             });
     }
