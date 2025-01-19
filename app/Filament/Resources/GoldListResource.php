@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Number;
+use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class GoldListResource extends Resource
 {
@@ -89,6 +91,12 @@ class GoldListResource extends Resource
                 ])->collapsible()
             ])
             ->filters([
+                DateRangeFilter::make('created_at')
+                    ->visible(static::isManager())
+                    ->indicateUsing(function (array $data) {
+                        return $data['created_at'] ? 'מתאריך: ' . $data['created_at'] : null;
+                    })
+                    ->label('תאריך רישום'),
                 Tables\Filters\Filter::make('filter')
                     ->form([
                         Forms\Components\ToggleButtons::make('no_select_matchmaker')
@@ -238,6 +246,11 @@ class GoldListResource extends Resource
     public static function getMangerColumns(): array
     {
         return [
+            TextColumn::make('created_at')
+                ->label('תאריך רישום')
+                ->date('d/m/Y')
+                ->description(fn (Subscriber $record) => 'רישום: ' .$record->created_at->diffForHumans())
+                ->sortable(),
             Tables\Columns\Layout\Stack::make([
                 TextColumn::make('status')
                     ->badge()
