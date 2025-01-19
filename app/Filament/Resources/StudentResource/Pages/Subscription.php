@@ -9,13 +9,10 @@ use App\Models\CreditCard;
 use App\Models\Payment;
 use App\Models\Person;
 use App\Models\Subscriber;
-use App\Models\User;
 use Carbon\Carbon;
-use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\KeyValueEntry;
-use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Support\Enums\MaxWidth;
@@ -23,10 +20,7 @@ use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 
 class Subscription extends ManageRelatedRecords
 {
@@ -255,7 +249,7 @@ class Subscription extends ManageRelatedRecords
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($livewire) => $livewire->getRecord()->payments()->getQuery())
+            ->modifyQueryUsing(fn ($livewire) => $livewire->getRecord()->payments()->getQuery()->select('payments.*'))
             ->emptyStateHeading('עדיין אין פעולות חיוב')
             ->emptyStateDescription('בעת פעולת חיוב במנוי תוכל לראות אותה כאן ')
             ->emptyStateIcon('heroicon-o-credit-card')
