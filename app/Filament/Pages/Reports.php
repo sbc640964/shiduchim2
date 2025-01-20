@@ -85,25 +85,27 @@ class Reports extends \Filament\Pages\Dashboard
                             ->placeholder('בחר תאריכים'),
                         Forms\Components\Select::make('person')
                             ->label('תלמיד')
+                            ->optionsLimit(200)
                             ->afterStateUpdated(function (Forms\Set $set) {
                                 $this->proposal = null;
                             })
                             ->options(fn (Forms\Get $get) =>
                                 Person::query()
-                                    ->take(10)
                                     ->whereHas('subscriptions', function (Builder $query) use ($get) {
+
+                                        $dates = collect(explode(' - ', $get('dates_range')))
+                                            ->map(fn ($date) => $date ? now()->createFromFormat('d/m/Y', $date) : null)
+                                            ->filter()
+                                            ->toArray();
+
                                         $query
-                                            ->where(function (Builder $query) use ($get) {
-                                                //where if start_date and end_date are between the selected dates
-                                                $dates = collect(explode(' - ', $get('dates_range')))
-                                                    ->map(fn ($date) => $date ? now()->createFromFormat('d/m/Y', $date) : null)
-                                                    ->filter()
-                                                    ->toArray();
-                                                count($dates) && $query
-                                                    ->whereBetween('start_date', $dates)
-                                                    ->orWhereBetween('end_date', $dates);
-                                            })
-                                            ->where('user_id', $get('matchmaker'));
+                                            ->where('user_id', $get('matchmaker'))
+                                            ->when(count($dates), function (Builder $query) use ($dates) {
+                                                $query->where(function ($query) use ($dates) {
+                                                    $query->whereBetween('start_date', $dates)
+                                                        ->orWhereBetween('end_date', $dates);
+                                                });
+                                            });
                                     })
                                     ->get()
                                     ->mapWithKeys(fn (Person $person) => [$person->id => $person->full_name])
@@ -116,6 +118,9 @@ class Reports extends \Filament\Pages\Dashboard
                             ->visible(fn (Forms\Get $get) => $get('person'))
                             ->afterStateUpdated(function (Forms\Set $set) {
                                 $this->proposal = null;
+                            })
+                            ->default(function (Forms\Get $get) {
+                                return Person::find($get('person'))->lastSubscription->id;
                             })
                             ->options(function (Forms\Get $get) {
                                 $dates = collect(explode(' - ', $get('dates_range')))
