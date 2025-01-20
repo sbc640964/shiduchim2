@@ -96,9 +96,10 @@ class Reports extends \Filament\Pages\Dashboard
                                             ->where(function (Builder $query) use ($get) {
                                                 //where if start_date and end_date are between the selected dates
                                                 $dates = collect(explode(' - ', $get('dates_range')))
-                                                    ->map(fn ($date) => now()->createFromFormat('d/m/Y', $date))
+                                                    ->map(fn ($date) => $date ? now()->createFromFormat('d/m/Y', $date) : null)
+                                                    ->filter()
                                                     ->toArray();
-                                                $query
+                                                count($dates) && $query
                                                     ->whereBetween('start_date', $dates)
                                                     ->orWhereBetween('end_date', $dates);
                                             })
@@ -118,14 +119,17 @@ class Reports extends \Filament\Pages\Dashboard
                             })
                             ->options(function (Forms\Get $get) {
                                 $dates = collect(explode(' - ', $get('dates_range')))
-                                    ->map(fn ($date) => now()->createFromFormat('d/m/Y', $date))
+                                    ->map(fn ($date) => $date ? now()->createFromFormat('d/m/Y', $date) : null)
+                                    ->filter()
                                     ->toArray();
 
                                 return Subscriber::query()
                                     ->where('person_id', $get('person'))
-                                    ->where(function ($query) use ($dates) {
-                                        $query->whereBetween('start_date', $dates)
-                                            ->orWhereBetween('end_date', $dates);
+                                    ->when(count($dates), function (Builder $query) use ($dates) {
+                                        $query->where(function ($query) use ($dates) {
+                                            $query->whereBetween('start_date', $dates)
+                                                ->orWhereBetween('end_date', $dates);
+                                        });
                                     })->get()->mapWithKeys(fn($subscriber) => [$subscriber->id => $subscriber->getToOptionsSelect()]);
                             })
                             ->searchable()
