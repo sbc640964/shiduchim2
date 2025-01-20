@@ -22,6 +22,43 @@ class ReportsProposalsTableWidget extends BaseWidget
     #[Reactive]
     public ?int $proposal = null;
 
+    public ?string $activeTab = 'new';
+
+
+    public function setActiveTab($tab): void
+    {
+        $this->activeTab = $tab;
+    }
+
+    public static function getTabsElement(): string
+    {
+        $html =
+<<<'Blade'
+<div>
+     <x-filament::tabs x-data="{activeTab: 'new'}">
+            <x-filament::tabs.item
+                alpine-active="activeTab === 'new'"
+                x-on:click="activeTab = 'new'"
+                wire:click="setActiveTab('new')"
+            >
+                הצעות חדשות
+            </x-filament::tabs.item>
+
+            <x-filament::tabs.item
+                alpine-active="activeTab === 'treated'"
+                x-on:click="activeTab = 'treated'"
+                wire:click="setActiveTab('treated')"
+            >
+                הצעות שטופלו
+            </x-filament::tabs.item>
+          </x-filament::tabs>
+    </div>
+Blade;
+
+        return \Blade::render($html);
+
+    }
+
     protected function paginateTableQuery(Builder $query): Paginator | CursorPaginator
     {
         return $query->paginate(
@@ -78,7 +115,8 @@ class ReportsProposalsTableWidget extends BaseWidget
                     ->color('gray')
                     ->counts(['diaries as calls_count' => fn ($query) => $query
                         ->whereHas('call')
-                        ->whereBetween('created_at', [$dateStart, $dateEnd])])
+                        ->when($dateStart, fn ($query) => $query->whereBetween('created_at', [$dateStart, $dateEnd]))
+                    ])
             ]);
     }
 
@@ -89,20 +127,18 @@ class ReportsProposalsTableWidget extends BaseWidget
         $subscription = $this->getFilter('subscription');
         $dateRange = $this->getFilter('dates_range');
 
+        $column = $this->activeTab === 'new' ? 'created_at' : 'updated_at';
+
         return Proposal::query()
             ->where('created_by', $matchmaker)
             ->with('girl', 'guy')
-            ->where(function ($query) use ($dateRange) {
-                $query->whereBetween('created_at', $dateRange)
-                    ->orWhereBetween('updated_at', $dateRange);
-            })
-            ->where(function ($query) use ($subscription) {
+            ->when($dateRange[0] ?? null, fn ($query) => $query->whereBetween($column, $dateRange))
+            ->where(function ($query) use ($subscription, $column) {
                 if(!$subscription) return;
 
                 $dates = [$subscription->start_date, $subscription->end_date];
 
-                $query->whereBetween('created_at', $dates)
-                    ->orWhereBetween('updated_at', $dates);
+                $query->whereBetween($column, $dates);
             })
             ->whereHas('people', fn ($query) => $query->whereIn('id', $person));
     }

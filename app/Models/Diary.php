@@ -43,6 +43,8 @@ class Diary extends Model
         'created_by' => 'integer',
     ];
 
+    protected $touches = ['proposal'];
+
     public function model(): MorphTo
     {
         return $this->morphTo();

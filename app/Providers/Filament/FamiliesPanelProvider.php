@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Clusters\Settings\Resources\CallsDiariesResource;
 use App\Filament\Clusters\Settings\Resources\TimeSheetsResource;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
 use App\Filament\Widgets\CalendarWidget;
 //use App\Http\Middleware\UpgradeToHttpsUnderNgrokMiddleware;
 use App\Filament\Widgets\GoldListWidget;
@@ -22,6 +23,7 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\VerticalAlignment;
+use Filament\Tables\View\TablesRenderHook;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -130,6 +132,9 @@ class FamiliesPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render('@livewire(\'discussion-top-bar\')'),
             )
+            ->renderHook(TablesRenderHook::TOOLBAR_START, function () {
+                return ReportsProposalsTableWidget::getTabsElement();
+            }, ReportsProposalsTableWidget::class )
             ->userMenuItems([
                 MenuItem::make()
                     ->label('יומן שעות')
