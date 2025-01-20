@@ -107,8 +107,8 @@ class Reports extends \Filament\Pages\Dashboard
                                             ->where('user_id', $get('matchmaker'))
                                             ->when(count($dates), function (Builder $query) use ($dates) {
                                                 $query->where(function ($query) use ($dates) {
-                                                    $query->whereBetween('start_date', $dates)
-                                                        ->orWhereBetween('end_date', $dates);
+                                                    $query->where('start_date', '<=', $dates[1])
+                                                        ->where('end_date', '>=', $dates[0]);
                                                 });
                                             });
                                     })
@@ -137,8 +137,8 @@ class Reports extends \Filament\Pages\Dashboard
                                     ->where('person_id', $get('person'))
                                     ->when(count($dates), function (Builder $query) use ($dates) {
                                         $query->where(function ($query) use ($dates) {
-                                            $query->whereBetween('start_date', $dates)
-                                                ->orWhereBetween('end_date', $dates);
+                                            $query->where('start_date', '<=', $dates[1])
+                                                ->where('end_date', '>=', $dates[0]);
                                         });
                                     })->get()->mapWithKeys(fn($subscriber) => [$subscriber->id => $subscriber->getToOptionsSelect()]);
                             })
