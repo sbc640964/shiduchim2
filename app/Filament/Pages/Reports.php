@@ -89,6 +89,7 @@ class Reports extends \Filament\Pages\Dashboard
                             ->afterStateUpdated(function (Forms\Set $set, $state) {
                                 if (! $state) {
                                     $set('subscription', null);
+                                    return;
                                 }
                                 $set('subscription', Person::find($state)->lastSubscription->id);
                                 $this->proposal = null;
