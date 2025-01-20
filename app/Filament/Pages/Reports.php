@@ -86,7 +86,11 @@ class Reports extends \Filament\Pages\Dashboard
                         Forms\Components\Select::make('person')
                             ->label('תלמיד')
                             ->optionsLimit(200)
-                            ->afterStateUpdated(function (Forms\Set $set) {
+                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                                if (! $state) {
+                                    $set('subscription', null);
+                                }
+                                $set('subscription', Person::find($state)->lastSubscription->id);
                                 $this->proposal = null;
                             })
                             ->options(fn (Forms\Get $get) =>
