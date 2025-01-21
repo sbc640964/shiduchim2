@@ -21,6 +21,11 @@ class CalendarWidget extends FullCalendarWidget
 {
     protected int | string | array $columnSpan = 1;
 
+    public static function canView(): bool
+    {
+        return false;
+    }
+
     protected static ?int $sort = -4;
     public string|null|Model $model = Task::class;
 
