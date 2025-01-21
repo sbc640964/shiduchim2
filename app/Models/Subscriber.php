@@ -193,4 +193,12 @@ class Subscriber extends Model
             && $this->start_date
             && $this->next_payment_date;
     }
+
+    public function subPayment(?int $num = 1): void
+    {
+        $this->update([
+            'balance_payments' => $this->balance_payments + $num,
+            'next_payment_date' => $this->next_payment_date->subMonths($num),
+        ]);
+    }
 }

@@ -54,12 +54,7 @@ class Payment extends Model
                 'status_message' => $this->status_message . ' | ' . $comments,
             ]);
 
-            if($changeTimes || $changeNextTime) {
-                $this->subscriber->update([
-                    'balance_payments' => $changeTimes ? $this->subscriber->balance_payments - 1 : $this->subscriber->balance_payments,
-                    'next_payment_date' => $changeNextTime ? $this->subscriber->next_payment_date->subMonth() : $this->subscriber->next_payment_date,
-                ]);
-            }
+            $this->subscriber->subPayment();
         }
 
         return $result;
@@ -79,6 +74,8 @@ class Payment extends Model
                 'status' => 'cancelled',
                 'status_message' => $this->status_message . ' | ' . $comments,
             ]);
+
+            $this->subscriber->subPayment();
         }
 
         return $result;
