@@ -62,7 +62,7 @@ class FamiliesPanelProvider extends PanelProvider
             ->topNavigation()
 //            ->navigationGroups([])
             ->widgets([
-                CalendarWidget::class,
+//                CalendarWidget::class,
                 Widgets\AccountWidget::class,
                 GoldListWidget::class,
             ])
