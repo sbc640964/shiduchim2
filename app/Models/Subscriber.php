@@ -34,7 +34,7 @@ class Subscriber extends Model
     protected static function booted(): void
     {
         static::creating(function (Subscriber $subscriber) {
-            if($subscriber->start_date)
+            if($subscriber->start_date && !$subscriber->next_payment_date)
                 $subscriber->next_payment_date = $subscriber->start_date->copy();
         });
 
@@ -67,9 +67,9 @@ class Subscriber extends Model
             return;
         }
 
-        if ($this->balance_payments === 0 && !$force) {
+        if (! $this->balance_payments && ! $force) {
             $this->update([
-                'status' => 'inactive',
+                'status' => 'completed',
                 'error' => 'התשלומים נגמרו',
             ]);
             return;
