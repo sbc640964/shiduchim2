@@ -23,7 +23,7 @@ class CalendarWidget extends FullCalendarWidget
 
     public static function canView(): bool
     {
-        return false;
+        return request()->path() === 'admin/tasks';
     }
 
     protected static ?int $sort = -4;
