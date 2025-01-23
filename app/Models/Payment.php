@@ -54,7 +54,7 @@ class Payment extends Model
     {
         $amount = $amount ?? $this->amount;
 
-        $result = Nedarim::refundTransaction($this->transaction_id, $amount);
+        $result = Nedarim::reefundTransaction($this->transaction_id, $amount);
 
         if($result['Result'] === 'OK') {
             $this->update([
