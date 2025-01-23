@@ -265,8 +265,20 @@ class Subscription extends ManageRelatedRecords
                     ->badge()
                     ->width(100)
                     ->tooltip(fn ($record) => $record->status_message)
-                    ->color(fn($state) => $state === 'OK' ? 'success' : 'danger')
-                    ->formatStateUsing(fn($state) => $state === 'OK' ? 'הצליח' : 'נכשל')
+                    ->color(fn($state) => match ($state) {
+                        'OK' => 'success',
+                        'Error' => 'danger',
+                        'refunded' => 'warning',
+                        'cancelled' => 'info',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'OK' => 'הצליח',
+                        'Error' => 'נכשל',
+                        'refunded' => 'הוחזר',
+                        'cancelled' => 'בוטל',
+                        default => $state,
+                    })
                     ->label('סטטוס'),
                 Tables\Columns\TextColumn::make('description')
                     ->tooltip(fn (Payment $record) => str($record->description)->endsWith('*') ? 'חיוב ידני' : false)
