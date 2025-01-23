@@ -125,7 +125,7 @@ class Reports extends \Filament\Pages\Dashboard
                                 $this->proposal = null;
                             })
                             ->default(function (Forms\Get $get) {
-                                return Person::find($get('person'))->lastSubscription->id;
+                                return Person::find($get('person'))?->lastSubscription?->id ?? null;
                             })
                             ->options(function (Forms\Get $get) {
                                 $dates = collect(explode(' - ', $get('dates_range')))

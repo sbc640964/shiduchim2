@@ -98,6 +98,7 @@ class GoldListResource extends Resource
                     })
                     ->label('תאריך רישום'),
                 Tables\Filters\Filter::make('filter')
+                    ->visible(static::isManager())
                     ->form([
                         Forms\Components\ToggleButtons::make('no_select_matchmaker')
                             ->boolean('לא מוקצה', 'מוקצה')
@@ -356,7 +357,7 @@ class GoldListResource extends Resource
     private static function getMatchmakerColumns(): array
     {
         return [
-            TextColumn::make('billing_matchmaker_day')
+            TextColumn::make('work_day')
                 ->badge()
                 ->color(fn ($state) => now()->day === $state ? 'success' : 'gray')
                 ->formatStateUsing(fn ($state) => 'יום: '.match ($state) {
