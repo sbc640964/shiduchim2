@@ -40,24 +40,53 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
         return $this->record;
     }
 
-    public function enableSubscription(): Action
+    public function toggleSubscription(): Action
     {
-        return Action::make('enableSubscription')
+        $record = $this->getSubscription();
+
+        dump($record->status);
+
+        return Action::make('toggleSubscription')
             ->label('')
             ->requiresConfirmation()
+            ->visible($record->status !== 'inactive')
             ->modalHeading('הפעל מנוי')
             ->modalDescription('האם אתה בטוח שברצונך להפעיל את המנוי?')
-            ->modalContent(str(str($this->getSubscription()->next_payment_date->isToday()
-                ? 'המנוי יופעל **היום** והתשלום יתבצע מיד'
-                : 'המנוי יופעל בתאריך ' . $this->getSubscription()->next_payment_date->format('d/m/Y') . ' והתשלום הראשון יתבצע באותו יום'
+            ->modalContent(str(str(
+                $record->next_payment_date->isPast()
+                    ? 'המנוי יופעל **היום** והתשלום יתבצע מיד'
+                    : 'המנוי יחוייב בתאריך ' . $record->next_payment_date->format('d/m/Y')
             )->markdown())->toHtmlString())
-            ->color('success')
-            ->size('lg')
+            ->action(function (self $livewire) use ($record) {
+                $record->status = 'active';
+
+                if ($record->next_payment_date->isPast()) {
+                    $record->next_payment_date = now();
+                    $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
+                }
+
+                $record->save();
+
+                $this->redirect(StudentResource::getUrl('subscription', [
+                    'record' => $livewire->record->id,
+                ]), true);
+            })
             ->tooltip('הפעל מנוי')
+            ->color('success')
             ->icon('heroicon-s-play')
-            ->action(function (self $livewire) {
-                $livewire->record->lastSubscription->update(['status' => 'active']);
-            });
+            ->when($record->status === 'active', function ($component) use ($record) {
+                $component
+                    ->icon('heroicon-s-pause')
+                    ->color('danger')
+                    ->tooltip('השהה מנוי')
+                    ->action(function  (self $livewire) use ($record) {
+                        $record->status = 'hold';
+                        $this->redirect(StudentResource::getUrl('subscription', [
+                            'record' => $livewire->record->id,
+                        ]), true);
+                    });
+            })
+            ->size('lg');
     }
 
     public function editBilling(): Action
@@ -102,30 +131,6 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             })
             ->form(function (Form $form) {
                 return $form->schema(fn (Subscriber $record) => [
-                    Actions::make([
-                        FormAction::make('run')
-                            ->color('success')
-                            ->label('הפעל')
-                            ->visible(in_array($this->record->billing_status, ['pending', 'hold', 'inactive']))
-                            ->icon('heroicon-o-play')
-                            ->action(function (self $livewire) {
-                                $livewire->record->update(['billing_status' => 'active']);
-                                redirect(StudentResource::getUrl('subscription', [
-                                    'record' => $livewire->record->id,
-                                ]));
-                            }),
-
-                        FormAction::make('hold')
-                            ->label('השהה')
-                            ->icon('heroicon-o-pause')
-                            ->visible($this->record->billing_status === 'active')
-                            ->action(function  (self $livewire){
-                                $this->record->update(['billing_status' => 'hold']);
-                                redirect(StudentResource::getUrl('subscription', [
-                                    'record' => $livewire->record->id,
-                                ]));
-                            }) ,
-                    ]),
                     ...Subscription::formFields($record),
                 ]);
             });

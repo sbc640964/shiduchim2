@@ -187,7 +187,7 @@ class Subscriber extends Model
 
     public function allowActivation(): bool
     {
-        return $this->status === 'pending'
+        return in_array($this->status, [ 'pending', 'hold', 'inactive' ])
             && $this->payments > 0
             && $this->user_id
             && $this->start_date
