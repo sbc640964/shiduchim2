@@ -119,6 +119,15 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     $data['end_date'] = Carbon::make($data['start_date'])->addMonths($data['payments'] - 1);
                 }
 
+                if($data['payments'] ?? null) {
+                    $okTransactions = $this->record->lastSubscription
+                        ->transactions()->whereStatus('OK')->count();
+
+                    $balance = $data['payments'] - $okTransactions;
+
+                    $data['balance_payments'] = $balance;
+                }
+
                 $this->record
                     ->lastSubscription
                     ->update($data);
