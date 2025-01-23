@@ -44,8 +44,6 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
     {
         $record = $this->getSubscription();
 
-        dump($record->status);
-
         return Action::make('toggleSubscription')
             ->label('')
             ->requiresConfirmation()
