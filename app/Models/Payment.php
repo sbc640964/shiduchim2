@@ -44,14 +44,22 @@ class Payment extends Model
         return $this->belongsTo(Subscriber::class);
     }
 
-    public function refund($amount, $changeTimes, $changeNextTime, $comments)
+    /**
+     * @param string $comments
+     * @param float|int|null $amount
+     * @return mixed
+     */
+
+    public function refund(string $comments, float|int|null $amount = null): mixed
     {
+        $amount = $amount ?? $this->amount;
+
         $result = Nedarim::refundTransaction($this->transaction_id, $amount);
 
         if($result['Result'] === 'OK') {
             $this->update([
                 'status' => 'refunded',
-                'status_message' => $this->status_message . ' | ' . $comments,
+                'status_message' => ($this->status_message ?? '') . ' | ' . $comments,
             ]);
 
             $this->subscriber->subPayment();
@@ -72,7 +80,7 @@ class Payment extends Model
         if($result['Result'] === 'OK') {
             $this->update([
                 'status' => 'cancelled',
-                'status_message' => $this->status_message . ' | ' . $comments,
+                'status_message' => ($this->status_message ?? '') . ' | ' . $comments,
             ]);
 
             $this->subscriber->subPayment();
