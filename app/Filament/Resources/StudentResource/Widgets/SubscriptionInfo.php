@@ -47,18 +47,21 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
         return Action::make('toggleSubscription')
             ->label('')
             ->requiresConfirmation()
-            ->visible($record->status !== 'completed')
+            ->visible($record->status !== 'completed' && $record->end_date->isFuture())
             ->modalHeading('הפעל מנוי')
             ->modalDescription('האם אתה בטוח שברצונך להפעיל את המנוי?')
+            ->extraAttributes([
+                'class' => 'w-10 gap-0 items-center justify-center p-0',
+            ])
             ->modalContent(str(str(
-                $record->next_payment_date->isPast()
+                !$record->next_payment_date || $record->next_payment_date->isPast()
                     ? 'המנוי יופעל **היום** והתשלום יתבצע מיד'
                     : 'המנוי יחוייב בתאריך ' . $record->next_payment_date->format('d/m/Y')
             )->markdown())->toHtmlString())
             ->action(function (self $livewire) use ($record) {
                 $record->status = 'active';
 
-                if ($record->next_payment_date->isPast()) {
+                if (!$record->next_payment_date || $record->next_payment_date->isPast()) {
                     $record->next_payment_date = now();
                     $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
                 }
@@ -72,11 +75,14 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->tooltip('הפעל מנוי')
             ->color('success')
             ->icon('heroicon-s-play')
-            ->when($record->status === 'active', function ($component) use ($record) {
+            ->when($record->status === 'active', function (Action $component) use ($record) {
                 $component
                     ->icon('heroicon-s-pause')
                     ->color('danger')
                     ->tooltip('השהה מנוי')
+                    ->modalHeading('השהה מנוי')
+                    ->modalDescription('האם אתה בטוח שברצונך להשהות את המנוי?')
+                    ->modalContent(null)
                     ->action(function  (self $livewire) use ($record) {
                         $record->status = 'hold';
                         $this->redirect(StudentResource::getUrl('subscription', [
@@ -106,9 +112,9 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                             'status' => 'canceled',
                         ]);
 
-                        redirect(StudentResource::getUrl('subscription', [
+                        $this->redirect(StudentResource::getUrl('subscription', [
                             'record' => $livewire->record->id,
-                        ]));
+                        ]), true);
                     })
                     ->color('danger'),
             ])
