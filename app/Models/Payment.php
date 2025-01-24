@@ -70,18 +70,22 @@ class Payment extends Model
 
     public function cancel(string $comments = 'ביטול')
     {
-        $result = Http::asForm()->post('https://matara.pro/nedarimplus/Reports/Manage3.aspx', [
+        $actionData = [
             'Action' => 'DeletedAllowedTransaction',
             'MosadId' => config('app.nedarim.mosad'),
             'ApiPassword' => config('app.nedarim.password'),
             'TransactionId' => $this->transaction_id,
-        ]);
+        ];
+
+        $result = Http::asForm()->post('https://matara.pro/nedarimplus/Reports/Manage3.aspx', $actionData);
 
         if($result->status() !== 200) {
             $numberError = rand(1000, 9999);
-            \Log::error("Failed to cancel transaction ($numberError)"
-                , [
+            \Log::error("Failed to cancel transaction ($numberError)", [
+                'action' => 'cancel transaction',
+                'request_session' => request(),
                 'transaction_id' => $this->transaction_id,
+                'request' => $actionData,
                 'response' => $result->body(),
             ]);
 
