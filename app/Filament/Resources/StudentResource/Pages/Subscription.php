@@ -421,7 +421,7 @@ class Subscription extends ManageRelatedRecords
                         if($result['Message'] === "עסקה זו כבר בוטלה") {
                             if($record->is_join) {
                                 $record->subscriber->subPayment();
-                                $record->status = 'refunded';
+                                $record->status = 'cancelled';
                                 $record->save();
                             }
                         }
