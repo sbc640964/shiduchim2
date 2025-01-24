@@ -209,7 +209,7 @@ HTML
         }
     }
 
-    function updateTextCall()
+    function updateTextCall(): void
     {
         $text = $this->getParserTheCallText();
 
