@@ -418,6 +418,12 @@ class Subscription extends ManageRelatedRecords
                             return;
                         }
 
+                        if($result['Message'] === "עסקה זו כבר בוטלה") {
+                            if($record->is_join) {
+                                $record->subscriber->subPayment();
+                            }
+                        }
+
                         $action->failureNotificationTitle('ההחזרה נכשלה (' . $result['Message'] . ')');
                         $action->failure();
                     })

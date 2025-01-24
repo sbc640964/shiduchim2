@@ -11,6 +11,7 @@ class Payment extends Model
 {
     protected $fillable = [
         "credit_card_id",
+        "is_join",
         "student_id",
         "status",
         "amount",

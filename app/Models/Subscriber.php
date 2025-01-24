@@ -90,6 +90,7 @@ class Subscriber extends Model
             "last4" => $this->creditCard->last4,
             "transaction_id" => $result['TransactionId'] ?? null,
             "data" => $result,
+            "is_join" => $joinTheDirectDebit,
         ]);
 
         $payment && $joinTheDirectDebit && $this->update([
