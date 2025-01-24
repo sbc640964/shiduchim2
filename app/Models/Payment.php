@@ -75,7 +75,23 @@ class Payment extends Model
             'MosadId' => config('app.nedarim.mosad'),
             'ApiPassword' => config('app.nedarim.password'),
             'TransactionId' => $this->transaction_id,
-        ])->json();
+        ]);
+
+        if($result->status() !== 200) {
+            $numberError = rand(1000, 9999);
+            \Log::error("Failed to cancel transaction ($numberError)"
+                , [
+                'transaction_id' => $this->transaction_id,
+                'response' => $result->body(),
+            ]);
+
+            return [
+                'Result' => 'Error',
+                'Message' => "Failed to cancel transaction (billing service error $numberError)",
+            ];
+        }
+
+        $result = $result->json();
 
         if($result['Result'] === 'OK') {
             $this->update([
