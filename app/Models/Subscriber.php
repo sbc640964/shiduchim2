@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Nedarim;
+use Carbon\Carbon;
 use Carbon\Traits\Localization;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -83,7 +84,7 @@ class Subscriber extends Model
             "status" => $result['Status'],
             "amount" => $this->amount,
             "paid_at" => now(),
-            "description" => $joinTheDirectDebit ? ("תשלום עבור " . now()->locale('he')->translatedFormat('F-Y') . ($force ? '*' : '')) : "זוהי פעולה יזומה שלא צורפה להוראת הקבע",
+            "description" => $joinTheDirectDebit ? ("תשלום עבור " . Carbon::make($this->next_payment_date)->locale('he')->translatedFormat('F-Y') . ($force ? '*' : '')) : "זוהי פעולה יזומה שלא צורפה להוראת הקבע",
             "status_message" => $result['Message'] ?? null,
             "payment_method" => "credit_card",
             "last4" => $this->creditCard->last4,

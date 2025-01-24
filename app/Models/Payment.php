@@ -62,7 +62,9 @@ class Payment extends Model
                 'status_message' => ($this->status_message ?? '') . ' | ' . $comments,
             ]);
 
-            $this->subscriber->subPayment();
+            if($this->is_join) {
+                $this->subscriber->subPayment();
+            }
         }
 
         return $result;
@@ -103,7 +105,9 @@ class Payment extends Model
                 'status_message' => ($this->status_message ?? '') . ' | ' . $comments,
             ]);
 
-            $this->subscriber->subPayment();
+            if($this->is_join) {
+                $this->subscriber->subPayment();
+            }
         }
 
         return $result;

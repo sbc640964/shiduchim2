@@ -408,8 +408,8 @@ class Subscription extends ManageRelatedRecords
                     ->button()
                     ->size('xs')
                     ->visible(fn (Payment $record) => $record->status === 'OK' && auth()->user()->can('refund_payments'))
-                    ->action(function (Subscriber $record, array $data, Tables\Actions\Action $action) {
-                        $result = $record->refund(...\Arr::except($data, 'confirm_password'));
+                    ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
+                        $result = $record->refund($data['comments'] ?? '', $data['amount'] ?? null);
 
                         if($result['Result'] === 'OK') {
                             $action->successNotificationTitle('ההחזרה בוצעה בהצלחה');
@@ -428,10 +428,6 @@ class Subscription extends ManageRelatedRecords
                             ->helperText('לא ניתן לזכות פעמיים את אותה עסקה')
                             ->default(fn ($record) => $record->amount)
                             ->required(),
-                        Forms\Components\Checkbox::make('changeTimes')
-                            ->label('החזר את התשלום למונה התשלומים'),
-                        Forms\Components\Checkbox::make('changeNextTime')
-                            ->label('החזר את התשלום הבא אחורה'),
                         Forms\Components\Textarea::make('comments')
                             ->label('הערות')
                             ->rule('max:255')
