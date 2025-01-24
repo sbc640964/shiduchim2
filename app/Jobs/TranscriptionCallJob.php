@@ -25,6 +25,7 @@ class TranscriptionCallJob implements ShouldQueue
 
     public function handle(): void
     {
+        dump('start transcription');
         $call = $this->call;
 
         if(!$call->audio_url || !$call->diaries->count()) {
