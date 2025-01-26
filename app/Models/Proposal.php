@@ -47,7 +47,10 @@ class Proposal extends Model
         'guy_next_time',
         'girl_id',
         'guy_id',
-        'hidden_at'
+        'hidden_at',
+        'opened_at',
+        'closed_at',
+        'reason_closed',
     ];
 
     /**
@@ -68,6 +71,8 @@ class Proposal extends Model
         'girl_next_time' => 'date',
         'guy_next_time' => 'date',
         'hidden_at' => 'datetime',
+        'opened_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     protected static function booted()
@@ -625,5 +630,26 @@ class Proposal extends Model
             ->where('type', 'call')
             ->filter(fn (Diary $diary) => in_array($diary->call->phone_id, $phones, true))
             ->count();
+    }
+
+    public function openProposal(): static
+    {
+        $this->update([
+            'opened_at' => now(),
+            'closed_at' => null,
+            'reason_closed' => null,
+        ]);
+
+        return $this;
+    }
+
+    public function closeProposal(string $reason): static
+    {
+        $this->update([
+            'closed_at' => now(),
+            'reason_closed' => $reason,
+        ]);
+
+        return $this;
     }
 }

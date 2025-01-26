@@ -7,6 +7,7 @@ use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\ProposalResource\Widgets;
 use App\Filament\Resources\StudentResource;
 use App\Models\Proposal;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms;
 use Filament\Infolists\Components;
@@ -37,10 +38,37 @@ class ViewProposal extends ViewRecord
 
     protected function getActions(): array
     {
+        $text = str('<div class="bg-orange-200 text-orange-950 text-center font-bold p-2 rounded-xl border border-orange-900">"שידוך פתוח הכוונה: שכרגע אם שואלים את האבא מה קורה שידוכים? הוא אומר: כן, יש לי עכשיו כזה וכזה הצעה, והוא בודק את זה"  (יוחנן) </div>')->toHtmlString();
+
         return [
             DeleteAction::make()
                 ->label('מחק')
                 ->before(fn (Proposal $proposal) => $proposal->deleteDependencies()),
+
+            Action::make('open')
+                ->label('סמן כהצעה פתוחה')
+                ->requiresConfirmation()
+                ->modalContent($text)
+                ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כפתוחה?')
+                ->action(fn (Proposal $proposal) => $proposal->openProposal())
+                ->visible(fn (Proposal $proposal) => auth()->user()->can('open_proposals')
+                    && $proposal->opened_at === null || $proposal->closed_at !== null),
+
+            Action::make('close')
+                ->label('סמן כהצעה סגורה')
+                ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כסגורה?')
+                ->requiresConfirmation()
+                ->modalContent($text)
+                ->form(fn (Forms\Form $form, Proposal $proposal) => $form
+                    ->schema([
+                        Forms\Components\Textarea::make('description')
+                            ->rules('required')
+                            ->minLength(20)
+                            ->label('סיבת סגירה'),
+                    ]))
+                ->action(fn (Proposal $proposal, array $data) => $proposal->closeProposal($data['description']))
+                ->visible(fn (Proposal $proposal) => auth()->user()->can('open_proposals')
+                    && $proposal->opened_at !== null && $proposal->closed_at === null),
         ];
     }
 
