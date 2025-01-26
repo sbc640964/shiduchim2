@@ -27,10 +27,10 @@ class TranscriptionCallJob implements ShouldQueue
         $this->call->refreshCallText();
     }
 
-    public function middleware(): array
-    {
-        return [
-            new WithoutOverlapping(),
-        ];
-    }
+//    public function middleware(): array
+//    {
+//        return [
+//            new WithoutOverlapping(),
+//        ];
+//    }
 }
