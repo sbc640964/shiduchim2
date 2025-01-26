@@ -47,7 +47,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
         return Action::make('toggleSubscription')
             ->label('')
             ->requiresConfirmation()
-            ->visible($record->status !== 'completed' && $record->end_date->isFuture())
+            ->visible($record->status !== 'completed' && ($record->end_date?->isFuture() ?? null))
             ->modalHeading('הפעל מנוי')
             ->modalDescription('האם אתה בטוח שברצונך להפעיל את המנוי?')
             ->extraAttributes([
