@@ -290,6 +290,7 @@ HTML
                 ]
             ]);
 
+            dump($response->text());
             return $response->text();
         }
 
@@ -327,7 +328,7 @@ HTML
             return null;
         }
 
-        return json_decode(json_decode($text, true)) ?? json_decode($text, true);
+        return json_decode(json_decode($text, true));
     }
 
     function getProposalContactsCount(): int
