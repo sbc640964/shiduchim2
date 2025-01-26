@@ -20,6 +20,7 @@ class TranscriptionCallJob implements ShouldQueue
 
     public function handle(): void
     {
+        $this->call->loadMissing('diaries.proposal.people.father', 'diaries.proposal.people.mother.father', 'phoneModel.model', 'user');
         $this->call->refreshCallText();
     }
 
