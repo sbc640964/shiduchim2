@@ -13,6 +13,11 @@ class OpenProposals extends BaseWidget
 
     protected int | string | array $columnSpan = 4;
 
+    public static function canView(): bool
+    {
+        return auth()->user()->can('open_proposals');
+    }
+
     protected function getStats(): array
     {
         $opens = Proposal::query()
