@@ -11,7 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
-class TranscriptionCallJob implements ShouldQueue, ShouldBeUnique
+class TranscriptionCallJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -21,14 +21,16 @@ class TranscriptionCallJob implements ShouldQueue, ShouldBeUnique
 
     public function handle(): void
     {
-        $this->call->loadMissing('diaries.proposal.people.father', 'diaries.proposal.people.mother.father', 'phoneModel.model', 'user');
+        $this->call->load(['diaries' => fn($q) => $q->whereHas("proposal", fn($qq) => $qq->whereHas("people"))]);
+        $this->call->diaries->load('proposal.people.father', 'proposal.people.mother.father');
+        $this->call->loadMissing('phoneModel.model', 'user');
         $this->call->refreshCallText();
     }
 
-//    public function middleware(): array
-//    {
-//        return [
-//            new WithoutOverlapping(),
-//        ];
-//    }
+    public function middleware(): array
+    {
+        return [
+            new WithoutOverlapping(),
+        ];
+    }
 }
