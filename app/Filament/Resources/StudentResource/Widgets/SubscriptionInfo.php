@@ -85,6 +85,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ->modalContent(null)
                     ->action(function  (self $livewire) use ($record) {
                         $record->status = 'hold';
+                        $record->save();
                         $this->redirect(StudentResource::getUrl('subscription', [
                             'record' => $livewire->record->id,
                         ]), true);
