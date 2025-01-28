@@ -43,12 +43,12 @@ class CalendarWidget extends FullCalendarWidget
             ->when(! $this->showCompletedTasks, fn ($query) => $query->whereNull('completed_at'))
             ->whereBetween('due_date', [$info['start'], $info['end']])
             ->where('user_id', auth()->id())
-            ->with('proposal')
+            ->with('proposal.people')
             ->get()
             ->map(function ($task) {
                 return EventData::make()
                     ->id($task->id)
-                    ->title($task->description)
+                    ->title($task->descriptionToCalendar())
                     ->start($task->due_date)
                     ->borderColor($task->completed_at ? 'green' : 'red')
                     ->end($task->due_date);
