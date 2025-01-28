@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Guava\Calendar\Contracts\Eventable;
+use Guava\Calendar\ValueObjects\Event;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 
-class Task extends Model
+class Task extends Model implements Eventable
 {
     use HasJsonRelationships;
 
@@ -55,4 +57,40 @@ class Task extends Model
     {
         return $this->belongsTo(Person::class, 'data->contact_to');
     }
+
+    public function descriptionToCalendar()
+    {
+        if (! $this->proposal) {
+            return $this->description;
+        }
+
+        return \Arr::join([
+            $this->proposal->guy->last_name . ' - ' . $this->proposal->girl->last_name,
+            $this->description,
+        ], ' | ');
+    }
+
+    public function toEvent(): array|Event
+    {
+        return Event::make()
+            ->styles([
+                'background-color' => '#fff',
+                'color' => '#000',
+                'border-color' => '#dddddd',
+                'border-right-color' => match ($this->priority) {
+                    1 => "#dddddd",
+                    2 => "#e78313",
+                    3 => "#df1313",
+                },
+                'border-width' => '1px 3px 1px 1px',
+            ])
+            ->title($this->descriptionToCalendar())
+            ->start($this->due_date)
+            ->editable()
+            ->extendedProps([
+                'x-tooltip.html.max-width.350.theme.light' => $this->descriptionToCalendar(),
+            ])
+            ->end($this->due_date);
+    }
+
 }

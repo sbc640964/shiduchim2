@@ -98,6 +98,8 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         DateTimePicker::make('next_payment_date')
                             ->label('תאריך התשלום הבא')
                             ->required()
+                            ->native(false)
+                            ->format('d/m/Y')
                             ->helperText(fn ($state) => $state && Carbon::make($state)->isPast() ? 'שים לב!!! התאריך עבר!!!!!!!!!!!!' : '')
                             ->rule(function ($attribute, $value, $fail) use ($record) {
                                 if ($value && Carbon::make($value)->isBefore(now()->startOfMonth())) {

@@ -165,3 +165,7 @@ td.description-diary p{
     background-repeat: repeat;
     opacity: 0.1;
 }
+
+.ec-event-time {
+    @apply !ms-0 !me-[3px];
+}
