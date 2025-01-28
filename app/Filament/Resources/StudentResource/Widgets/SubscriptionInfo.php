@@ -101,7 +101,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                             ->native(false)
                             ->format('d/m/Y')
                             ->helperText(fn ($state) => $state && Carbon::make($state)->isPast() ? 'שים לב!!! התאריך עבר!!!!!!!!!!!!' : '')
-                            ->rule(function ($attribute, $value, $fail) use ($record) {
+                            ->rule(fn () => function ($attribute, $value, $fail) use ($record) {
                                 if ($value && Carbon::make($value)->isBefore(now()->startOfMonth())) {
                                     $fail('תאריך התשלום הבא חייב להיות מהחודש הנוכחי או אחרי');
                                 }
