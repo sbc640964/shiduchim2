@@ -194,11 +194,10 @@ class Subscription extends ManageRelatedRecords
                 ->label('תאריך תשלום ראשון')
                 ->native(false)
                 ->displayFormat('d/m/Y')
-                ->afterOrEqual(fn(?Subscriber $record) => $record && $record->transactions->count() > 0 ? null : Carbon::today())
                 ->default(Carbon::today())
-                ->disabled(fn(?Subscriber $record) => $record && $record->transactions->count() > 0)
+                ->disabled(fn(?Subscriber $record) => $record && $record->transactions->where('status', 'active' )->count() > 0)
                 ->when(
-                    fn (Forms\Components\DatePicker $component) => $formRecord && $formRecord->transactions->count() === 0,
+                    fn (Forms\Components\DatePicker $component) => $formRecord && $formRecord->transactions->where('status', 'active' )->count() === 0,
                     fn (Forms\Components\DatePicker $component) => $component->afterOrEqual(Carbon::today())
                 )
                 ->validationMessages([

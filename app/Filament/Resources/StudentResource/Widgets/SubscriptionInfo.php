@@ -12,6 +12,7 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Actions;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -58,20 +59,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ? 'המנוי יופעל **היום** והתשלום יתבצע מיד'
                     : 'המנוי יחוייב בתאריך ' . $record->next_payment_date->format('d/m/Y')
             )->markdown())->toHtmlString())
-            ->action(function (self $livewire) use ($record) {
-                $record->status = 'active';
 
-                if (!$record->next_payment_date || $record->next_payment_date->isPast()) {
-                    $record->next_payment_date = now();
-                    $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
-                }
-
-                $record->save();
-
-                $this->redirect(StudentResource::getUrl('subscription', [
-                    'record' => $livewire->record->id,
-                ]), true);
-            })
             ->tooltip('הפעל מנוי')
             ->color('success')
             ->icon('heroicon-s-play')
@@ -90,6 +78,34 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                             'record' => $livewire->record->id,
                         ]), true);
                     });
+            }, function (Action $component) use ($record) {
+                $component
+                    ->action(function (self $livewire) use ($record) {
+                        $record->status = 'active';
+
+                        if (!$record->next_payment_date || $record->next_payment_date->isPast()) {
+                            $record->next_payment_date = now();
+                            $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
+                        }
+
+                        $record->save();
+
+                        $this->redirect(StudentResource::getUrl('subscription', [
+                            'record' => $livewire->record->id,
+                        ]), true);
+                    })
+                    ->form([
+                        DateTimePicker::make('next_payment_date')
+                            ->label('תאריך התשלום הבא')
+                            ->required()
+                            ->helperText(fn ($state) => $state && Carbon::make($state)->isPast() ? 'שים לב!!! התאריך עבר!!!!!!!!!!!!' : '')
+                            ->rule(function ($attribute, $value, $fail) use ($record) {
+                                if ($value && Carbon::make($value)->isBefore(now()->startOfMonth())) {
+                                    $fail('תאריך התשלום הבא חייב להיות מהחודש הנוכחי או אחרי');
+                                }
+                            })
+                            ->default($record->next_payment_date ?? $record->start_date),
+                    ]);
             })
             ->size('lg');
     }
