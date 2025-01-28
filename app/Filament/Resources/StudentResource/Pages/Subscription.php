@@ -194,7 +194,7 @@ class Subscription extends ManageRelatedRecords
                 ->label('תאריך תשלום ראשון')
                 ->native(false)
                 ->displayFormat('d/m/Y')
-                ->afterOrEqual(Carbon::today())
+                ->afterOrEqual(fn(?Subscriber $record) => $record && $record->transactions->count() > 0 ? Carbon::today() : null)
                 ->default(Carbon::today())
                 ->disabled(fn(?Subscriber $record) => $record && $record->transactions->count() > 0)
                 ->when(
