@@ -46,7 +46,7 @@ class ImportRow extends Model
 
     public function getMapData(): array
     {
-        $mapping = array_flip($this->batch->options['mapping'] ?? []);
+        $mapping = collect($this->batch->options['mapping'] ?? [])->filter()->flip()->toArray();
 
         $dataWithoutFieldsThatAreNotMapped = array_filter($this->data, fn ($value, $key) => in_array($key, array_keys($mapping)), ARRAY_FILTER_USE_BOTH);
 
