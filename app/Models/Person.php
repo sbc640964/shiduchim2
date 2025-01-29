@@ -460,6 +460,12 @@ class Person extends Model
             $thisPerson->save();
             $person->save();
 
+            $person->lastSubscription->status = 'married';
+            $person->lastSubscription->save();
+
+            $thisPerson->lastSubscription->status = 'married';
+            $thisPerson->lastSubscription->save();
+
             $otherProposals = Proposal::query()
                 ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
                 ->whereHas('people', function (Builder $query) use ($thisPerson, $person) {
