@@ -175,13 +175,13 @@ class Subscriber extends Model
     public function getWorkDayHeAttribute()
     {
         return match ($this->work_day) {
-            0 => 'ראשון',
-            1 => 'שני',
-            2 => 'שלישי',
-            3 => 'רביעי',
-            4 => 'חמישי',
-            5 => 'שישי',
-            6 => 'שבת',
+            1 => 'ראשון',
+            2 => 'שני',
+            3 => 'שלישי',
+            4 => 'רביעי',
+            5 => 'חמישי',
+            6 => 'שישי',
+            7 => 'שבת',
             default => null,
         };
     }
