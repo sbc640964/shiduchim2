@@ -169,3 +169,7 @@ td.description-diary p{
 .ec-event-time {
     @apply !ms-0 !me-[3px];
 }
+
+.hidden-label-btn .fi-btn-label{
+    @apply hidden;
+}

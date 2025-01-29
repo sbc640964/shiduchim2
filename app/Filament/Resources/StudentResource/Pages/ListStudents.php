@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\StudentResource\Pages;
 
 use App\Filament\Imports\StudentImporter;
+use App\Filament\Resources\GoldListResource;
 use App\Filament\Resources\StudentResource;
 use App\Jobs\ImportCsv;
 use App\Models\Person;
@@ -14,6 +15,7 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListStudents extends ListRecords
 {
@@ -38,20 +40,28 @@ class ListStudents extends ListRecords
             'all' => Tab::make()->label('כל התלמידים'),
             'gold_list' => Tab::make()->label('רשימת הזהב שלי')
                 ->modifyQueryUsing(function ($query) {
-                    return $query->where('billing_matchmaker', auth()->user()->id)
-                        ->where('billing_status', 'active');
+                    return $query->whereHas('lastSubscription', function ($query) {
+                        return $query
+                            ->where('user_id', auth()->user()->id)
+                            ->where('status', 'active');
+                    });
                 }),
         ], auth()->user()->can('students_subscriptions') ? [
             'subscriptions' => Tab::make()->label('מנויים')
                 ->modifyQueryUsing(function ($query) {
-                    return $query->whereNotNull('billing_status');
+                    return $query->whereHas('lastSubscription', function ($query) {
+                        return $query->where('status', 'active');
+                    });
                 }),
         ] : [
             'subscriptions_pending' => Tab::make()
                 ->label('מנויים ממתינים')
-                ->modifyQueryUsing(function ($query) {
-                    return $query->whereNull('billing_matchmaker')
-                        ->where('billing_published', true);
+                ->modifyQueryUsing(function (Builder $query) {
+                    return $query->whereHas('lastSubscription', function ($query) {
+                        return $query
+                            ->whereNull('user_id')
+                            ->where('is_published', true);
+                    });
                 }),
         ]);
     }
@@ -59,7 +69,7 @@ class ListStudents extends ListRecords
     public function getExtraColumns(): array
     {
             return [
-                TextColumn::make('billing_status')
+                TextColumn::make('lastSubscription.status')
                     ->badge()
                     ->visible(fn () => $this->activeTab === 'subscriptions')
                     ->color(fn ($state) => match ($state) {
@@ -74,13 +84,13 @@ class ListStudents extends ListRecords
                         default => $state,
                     })
                     ->label('סטטוס'),
-                ToggleColumn::make('billing_published')
+                ToggleColumn::make('lastSubscription.is_published')
                     ->label('פרסום')
                     ->sortable()
                     ->getStateUsing(fn (Person $record) => \Str::trim($record->billing_status) === 'pending' ? $record->billing_published : null)
                     ->disabled(fn (Person $record) => \Str::trim($record->billing_status) !== 'pending')
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
-                TextColumn::make('billingMatchmaker.name')
+                TextColumn::make('lastSubscription.matchmaker.name')
                     ->label('שדכן')
                     ->visible(fn () => $this->activeTab === 'subscriptions')
                     ->description(fn (Person $record) => 'יום: '.match ($record->billing_matchmaker_day) {
@@ -93,38 +103,38 @@ class ListStudents extends ListRecords
                             7 => 'מוצ"ש',
                             default => $record->billing_matchmaker_day,
                         }),
-                TextColumn::make('billing_amount')
+                TextColumn::make('lastSubscription.amount')
                     ->label('סכום')
                     ->money('ILS')
                     ->description(fn (Person $record) => $record->billing_balance_times ? "נותרו $record->billing_balance_times חודשים" : null)
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
 
-                TextColumn::make('billing_next_date')
+                TextColumn::make('lastSubscription.next_payment_date')
                     ->label('תאריך תשלום הבא')
                     ->date('d/m/Y')
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
 
-                TextColumn::make('lastDiary.created_at')
-                    ->sortable()
-                    ->description(fn (Person $record) => $record->lastDiary ? $record->lastDiary->created_at->diffForHumans() : null)
-                    ->tooltip(fn (Person $record) => $record->lastDiary ? $record->lastDiary->label_type.': '.$record->lastDiary->data['description'] : null)
-                    ->label('פעילות אחרונה')
-                    ->date('d/m/Y')
-                    ->visible(fn () => $this->activeTab === 'subscriptions'),
+//                TextColumn::make('lastDiary.created_at')
+//                    ->sortable()
+//                    ->description(fn (Person $record) => $record->lastDiary ? $record->lastDiary->created_at->diffForHumans() : null)
+//                    ->tooltip(fn (Person $record) => $record->lastDiary ? $record->lastDiary->label_type.': '.$record->lastDiary->data['description'] : null)
+//                    ->label('פעילות אחרונה')
+//                    ->date('d/m/Y')
+//                    ->visible(fn () => $this->activeTab === 'subscriptions'),
 
-                TextColumn::make('billingReferrer.full_name')
+                TextColumn::make('lastSubscription.referrer.full_name')
                     ->label('מפנה')
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
 
-                TextColumn::make('subscriptions')
-                    ->label('תקופת פרוייקט')
-                    ->formatStateUsing(function (Person $record) {
-                        $start = $record->subscriptions->where('credit_card_id', $record->billing_credit_card_id)->first()->created_at->format('m/Y');
-                        $end = $record->billing_next_date->copy()->addMonths($record->billing_balance_times - 1)->format('m/Y');
-
-                        return "$start עד $end";
-                    })
-                    ->visible(fn () => $this->activeTab === 'subscriptions'),
+//                TextColumn::make('subscriptions')
+//                    ->label('תקופת פרוייקט')
+//                    ->formatStateUsing(function (Person $record) {
+//                        $start = $record->subscriptions->where('credit_card_id', $record->billing_credit_card_id)->first()->created_at->format('m/Y');
+//                        $end = $record->billing_next_date->copy()->addMonths($record->billing_balance_times - 1)->format('m/Y');
+//
+//                        return "$start עד $end";
+//                    })
+//                    ->visible(fn () => $this->activeTab === 'subscriptions'),
             ];
     }
 

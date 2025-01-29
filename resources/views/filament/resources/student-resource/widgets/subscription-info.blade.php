@@ -76,6 +76,10 @@
                     @if($this->toggleSubscription()->isVisible())
                         {{ $this->toggleSubscription() }}
                     @endif
+
+                    @if($this->togglePublished()->isVisible())
+                         {{ $this->togglePublished() }}
+                    @endif
                 </div>
             </div>
         </div>{{-- Widget content --}}

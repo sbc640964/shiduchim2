@@ -32,6 +32,10 @@ class Subscriber extends Model
         'amount',
     ];
 
+    protected $casts = [
+        'is_published' => 'boolean',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (Subscriber $subscriber) {

@@ -15,6 +15,7 @@ use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -52,7 +53,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->modalHeading('הפעל מנוי')
             ->modalDescription('האם אתה בטוח שברצונך להפעיל את המנוי?')
             ->extraAttributes([
-                'class' => 'w-10 gap-0 items-center justify-center p-0',
+                'class' => 'hidden-label-btn w-10 gap-0 items-center justify-center p-0',
             ])
             ->modalContent(str(str(
                 !$record->next_payment_date || $record->next_payment_date->isPast()
@@ -112,6 +113,24 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ]);
             })
             ->size('lg');
+    }
+
+    public function togglePublished(): Action
+    {
+        return Action::make('togglePublished')
+            ->label('')
+            ->icon(!$this->getSubscription()->is_published ? 'heroicon-s-eye' : 'heroicon-s-eye-slash')
+            ->size('lg')
+            ->outlined()
+            ->color(!$this->getSubscription()->is_published ? 'success' : 'danger')
+            ->extraAttributes([
+                'class' => 'hidden-label-btn w-10 gap-0 items-center justify-center',
+            ])
+            ->tooltip(!$this->getSubscription()->is_published ? 'פרסם מנוי לשדכנים' : 'בטל פרסום מנוי לשדכנים')
+            ->visible($this->getSubscription()->status === 'pending')
+            ->action(fn (self $livewire) => $livewire->getSubscription()->update([
+                'is_published' => ! $livewire->getSubscription()->is_published,
+            ]));
     }
 
     public function editBilling(): Action
