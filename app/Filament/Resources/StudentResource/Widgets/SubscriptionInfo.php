@@ -80,13 +80,15 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     });
             }, function (Action $component) use ($record) {
                 $component
-                    ->action(function (self $livewire) use ($record) {
+                    ->action(function (self $livewire, array $data) use ($record) {
                         $record->status = 'active';
 
-                        if (!$record->next_payment_date || $record->next_payment_date->isPast()) {
-                            $record->next_payment_date = now();
-                            $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
-                        }
+//                        if (!$record->next_payment_date || $record->next_payment_date->isPast()) {
+//                            $record->next_payment_date = now();
+//                            $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
+//                        }
+
+                        $record->next_payment_date = $data['next_payment_date'];
 
                         $record->save();
 

@@ -93,7 +93,7 @@ class Subscriber extends Model
             "is_join" => $joinTheDirectDebit,
         ]);
 
-        $payment && $joinTheDirectDebit && $this->update([
+        $payment && $joinTheDirectDebit && $payment->status === 'OK' && $this->update([
             'balance_payments' => $this->balance_payments - 1,
             'next_payment_date' => $this->next_payment_date ? $this->next_payment_date->copy()->addMonth() : null,
         ]);
