@@ -57,7 +57,7 @@
                 <div><span
                         class="text-gray-950 font-bold">שדכן מטפל:</span> {{ $this->getSubscription()->matchmaker?->name ?? 'לא הותאם שדכן' }}
                 </div>
-                <div><span class="text-gray-950 font-bold">יום:</span> {{ $this->getSubscription()->work_day_he }}</div>
+                <div><span class="text-gray-950 font-bold">יום:</span> {{ $this->getSubscription()->getWorkDayHeAttribute() }}</div>
             </div>
             <div class="flex items-center ms-auto">
                 @if($this->getSubscription()->notes)

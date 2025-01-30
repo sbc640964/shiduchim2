@@ -87,26 +87,17 @@ class ListStudents extends ListRecords
                 ToggleColumn::make('lastSubscription.is_published')
                     ->label('פרסום')
                     ->sortable()
-                    ->getStateUsing(fn (Person $record) => \Str::trim($record->billing_status) === 'pending' ? $record->billing_published : null)
-                    ->disabled(fn (Person $record) => \Str::trim($record->billing_status) !== 'pending')
+                    ->getStateUsing(fn (Person $record) => \Str::trim($record->lastSubscription->status) === 'pending' ? $record->lastSubscription->is_published : null)
+                    ->disabled(fn (Person $record) => \Str::trim($record->lastSubscription->status) !== 'pending')
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
                 TextColumn::make('lastSubscription.matchmaker.name')
                     ->label('שדכן')
                     ->visible(fn () => $this->activeTab === 'subscriptions')
-                    ->description(fn (Person $record) => 'יום: '.match ($record->billing_matchmaker_day) {
-                            1 => 'ראשון',
-                            2 => 'שני',
-                            3 => 'שלישי',
-                            4 => 'רביעי',
-                            5 => 'חמישי',
-                            6 => 'שישי',
-                            7 => 'מוצ"ש',
-                            default => $record->billing_matchmaker_day,
-                        }),
+                    ->description(fn (Person $record) => 'יום: '. $record->lastSubscription->work_day_he),
                 TextColumn::make('lastSubscription.amount')
                     ->label('סכום')
                     ->money('ILS')
-                    ->description(fn (Person $record) => $record->billing_balance_times ? "נותרו $record->billing_balance_times חודשים" : null)
+                    ->description(fn (Person $record) => $record->lastSubscription->balance_payments ? "נותרו {$record->lastSubscription->balance_payments} חודשים" : null)
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
 
                 TextColumn::make('lastSubscription.next_payment_date')

@@ -192,6 +192,10 @@ class Subscription extends ManageRelatedRecords
 
             Forms\Components\DatePicker::make('start_date')
                 ->label('תאריך תשלום ראשון')
+                ->hidden(fn(?Subscriber $record, Forms\Get $get) =>
+                    ($record && $record->transactions->where('status', 'OK')->count() > 0)
+                    || (!$get('payments') || !$get('user_id'))
+                )
                 ->native(false)
                 ->displayFormat('d/m/Y')
                 ->default(Carbon::today())
@@ -203,7 +207,6 @@ class Subscription extends ManageRelatedRecords
                 ->validationMessages([
                     'after_or_equal' => 'תאריך תשלום ראשון חייב להיות לאחר התאריך הנוכחי או בו',
                 ])
-                ->hidden(fn(Forms\Get $get) => !$get('payments') || !$get('user_id'))
                 ->placeholder('הגבייה לא תתחיל עד שתבחר תאריך')
                 ->live()
                 ->helperText(function (Forms\Get $get, $state) {

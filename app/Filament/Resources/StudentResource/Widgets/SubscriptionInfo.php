@@ -10,18 +10,12 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Widgets\Widget;
-use Filament\Forms\Components\Actions\Action as FormAction;
 
 class SubscriptionInfo extends Widget implements HasActions, HasForms
 {
@@ -181,6 +175,8 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                 $action->successNotificationTitle('הפרטים נשמרו בהצלחה');
 
                 $action->success();
+
+                $this->getSubscription()->refresh();
             })
             ->form(function (Form $form) {
                 return $form->schema(fn (Subscriber $record) => [
