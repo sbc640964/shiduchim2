@@ -6,6 +6,7 @@ use App\Filament\Widgets\FilterReportsTrait;
 use App\Models\Diary;
 use App\Models\Person;
 use App\Models\Proposal;
+use App\Models\Subscriber;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,8 +42,8 @@ class StatsReportOverview extends BaseWidget
         return [
 
             Stat::make('מנויים' ,
-                Person::whereIn('billing_matchmaker', $matchmaker)
-                    ->where('billing_status', 'active')
+                Subscriber::whereIn('user_id', $matchmaker)
+                    ->where('status', 'active')
                     ->count()
             )
                 ->icon('heroicon-o-users'),

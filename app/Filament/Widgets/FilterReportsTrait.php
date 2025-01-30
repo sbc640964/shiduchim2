@@ -7,6 +7,7 @@ use App\Models\Subscriber;
 use App\Models\User;
 use Arr;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 
 trait FilterReportsTrait
@@ -36,8 +37,10 @@ trait FilterReportsTrait
                         fn ($date) => $date ? Carbon::createFromFormat('d/m/Y',$date) : null
                     ) : [null, null]),
                     'person' => $raw ? $this->filters['person'] ?? null : Arr::wrap($this->filters['person'] ?? Person::query()
-                        ->whereIn('billing_matchmaker', $this->getFilter('matchmaker'))
-                        ->where('billing_status', 'active')
+                        ->whereHas('subscriptions', fn (Builder $query) => $query
+                            ->whereIn('user_id', $this->getFilter('matchmaker'))
+                            ->where('status', 'active')
+                        )
                         ->pluck('id')
                         ->toArray()
                     ),
