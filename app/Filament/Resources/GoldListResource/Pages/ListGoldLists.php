@@ -24,9 +24,11 @@ class ListGoldLists extends ListRecords
     {
         $isManager = self::$resource::isManager();
 
-        return array_merge([
+        if(!$isManager) {
+            return [];
+        }
+        return [
             Tab::make('הכל'),
-        ], $isManager ? [
             Tab::make('שגיאת תשלום')
                 ->modifyQueryUsing(function (Builder  $query) {
                     $query->where('status', 'active')
@@ -37,6 +39,6 @@ class ListGoldLists extends ListRecords
                         ->where('status', 'active')
                         ->count()
                 )->badgeColor('danger')
-        ] : []);
+        ];
     }
 }

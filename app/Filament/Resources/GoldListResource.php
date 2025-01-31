@@ -50,7 +50,10 @@ class GoldListResource extends Resource
         return parent::getEloquentQuery()
             ->with('matchmaker', 'student.lastDiary', 'payer', 'student.father', 'student.mother', 'referrer')
             ->when(!static::isManager(), function (Builder $query) {
-                $query->where('user_id', auth()->user()->id);
+                $query
+                    ->where('user_id', auth()->user()->id)
+                    ->whereStatus('active');
+                ;
             });
     }
 
