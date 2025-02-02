@@ -57,6 +57,11 @@ class DiscussionTopBar extends Component
         $discussion->markAsRead();
     }
 
+    public function markAllAsRead()
+    {
+        $this->getUnreadMessages->each->markAsRead();
+    }
+
     public function openViewRoom($id): void
     {
         $this->redirect(\App\Filament\Pages\Inbox::getUrl(['discussion' => $id]), navigate: true);

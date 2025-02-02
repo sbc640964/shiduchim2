@@ -17,7 +17,7 @@
     })"
     x-on:win-message-created.window="playSound"
 >
-    <x-filament::dropdown width="lg" teleport="true">
+    <x-filament::dropdown width="sm" teleport="true" placement="bottom-end">
         <x-slot name="trigger">
             <x-filament::icon-button
                 icon="heroicon-o-envelope"
@@ -29,7 +29,7 @@
             />
         </x-slot>
 
-        <x-filament::dropdown.list>
+        <x-filament::dropdown.list class="max-h-96 overflow-auto">
             @foreach($this->getUnreadMessages as $message)
                 <x-filament::dropdown.list.item
                     tag="a"
@@ -45,15 +45,16 @@
                                 size="lg"
                             />
                         </div>
-                        <div class="w-full">
-                            <div class="flex mt-1 text-center gap-2">
+                        <div class="overflow-hidden flex-grow">
+                            <div class="flex mt-1 text-center gap-2 text-xs">
                                 <p class="text-sm leading-tight font-semibold text-gray-700">{{ $message->user->name }}</p>
                                 <p class="text-xs leading-normal text-gray-500">{{ $message->created_at->diffForHumans() }}</p>
                             </div>
 
                             <div>
-                                <p class="text-sm font-semibold text-gray-600">
-                                    <span class="font-bold text-gray-800">{{ $message->parent->title }}</span> |
+                                <p class="font-semibold text-gray-600 text-xs text-ellipsis overflow-hidden">
+                                    <span class="font-bold text-gray-800">{{ $message->parent->title }}</span>
+                                    <br>
                                     {{ $message->content }}
                                 </p>
                             </div>
@@ -72,12 +73,28 @@
                 </x-filament::dropdown.list.item>
             @endforeach
 
-            <x-filament::dropdown.list.item
-                tag="a"
-                href="{{ \App\Filament\Pages\Inbox::getUrl() }}"
+            <div
+                 @class([
+                 "sticky bottom-0 bg-white shadow-lg rounded-lg border",
+                 'grid-cols-2 grid gap-2 divide-x rtl:divide-x-reverse' => $this->getUnreadMessages->isNotEmpty(),
+                 ])
             >
-                לכל ההודעות
-            </x-filament::dropdown.list.item>
+                <x-filament::dropdown.list.item
+                    tag="a"
+                    href="{{ \App\Filament\Pages\Inbox::getUrl() }}"
+                >
+                    לכל ההודעות
+                </x-filament::dropdown.list.item>
+
+                @if($this->getUnreadMessages->isNotEmpty())
+                    <x-filament::dropdown.list.item
+                        wire:click="markAllAsRead"
+                        class="cursor-pointer"
+                    >
+                        סמן הכל כנקרא
+                    </x-filament::dropdown.list.item>
+                @endif
+            </div>
         </x-filament::dropdown.list>
     </x-filament::dropdown>
 

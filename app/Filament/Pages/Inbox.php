@@ -30,12 +30,11 @@ class Inbox extends Page
     #[Url]
     public ?int $discussion = null;
 
-    #[Url]
-    public ?int $page = 1;
+    public ?int $perPage = 10;
 
 
     #[Computed]
-    public function list(): LengthAwarePaginator|array
+    public function list(): LengthAwarePaginator
     {
         return $this->getDiscussions();
     }
@@ -136,8 +135,14 @@ class Inbox extends Page
             ->with(['user', 'lastChildren' => fn ($query) => $query->with('user')->readAt()])
             ->withCount('children')
             ->select('discussions.*')
+            ->latest('updated_at')
             ->readAt()
-            ->paginate(25, page: $this->page);
+            ->paginate($this->perPage, page: 1);
+    }
+
+    public function loadMore(): void
+    {
+        $this->perPage += 10;
     }
 
     protected function getForms(): array

@@ -24,6 +24,8 @@ class Discussion extends Model
         'image_hero',
     ];
 
+    protected $touches = ['parent'];
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Discussion::class, 'parent_id');
