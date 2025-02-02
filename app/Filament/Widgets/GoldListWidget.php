@@ -50,7 +50,7 @@ class GoldListWidget extends BaseWidget
                             ]);
                     }])
                     ->where('user_id', auth()->user()->id)
-                    ->whereNotIn('status', [ 'inactive' ])
+                    ->whereIn('status', ['active'])
             )
             ->recordUrl(fn (Subscriber $record) => StudentResource::getUrl('proposals', [
                 'record' => $record->person_id,
@@ -83,7 +83,7 @@ class GoldListWidget extends BaseWidget
                     ->dateTimeTooltip()
                     ->icon('heroicon-s-clock')
                     ->iconColor(function ($state) {
-                        return Carbon::make($state)->isBetween(Carbon::now()->subDays(3), now()) ? 'gray' : 'danger';
+                        return Carbon::make($state)->isBetween(Carbon::now()->subDays(7), now()) ? 'gray' : 'danger';
                     })
                     ->formatStateUsing(function (?string $state = null) {
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
@@ -93,7 +93,7 @@ class GoldListWidget extends BaseWidget
                     ->dateTimeTooltip()
                     ->icon('heroicon-s-clock')
                     ->iconColor(function ($state) {
-                        return Carbon::make($state)->isBetween(Carbon::now()->subDays(3), now()) ? 'gray' : 'danger';
+                        return Carbon::make($state)->isBetween(Carbon::now()->subDays(7), now()) ? 'gray' : 'danger';
                     })
                     ->formatStateUsing(function (?string $state = null) {
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
