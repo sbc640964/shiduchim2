@@ -58,6 +58,15 @@ class Task extends Model implements Eventable
         return $this->belongsTo(Person::class, 'data->contact_to');
     }
 
+    public function getProposalNames()
+    {
+        if (! $this->proposal) {
+            return null;
+        }
+
+        return $this->proposal->guy->last_name . ' - ' . $this->proposal->girl->last_name;
+    }
+
     public function descriptionToCalendar()
     {
         if (! $this->proposal) {
@@ -65,7 +74,7 @@ class Task extends Model implements Eventable
         }
 
         return \Arr::join([
-            $this->proposal->guy->last_name . ' - ' . $this->proposal->girl->last_name,
+            $this->getProposalNames(),
             $this->description,
         ], ' | ');
     }
@@ -83,10 +92,13 @@ class Task extends Model implements Eventable
                     3 => "#df1313",
                 },
                 'border-width' => '1px 3px 1px 1px',
+                'padding-inline-start' => '5px',
             ])
-            ->title($this->descriptionToCalendar())
+            ->title($this->description)
             ->start($this->due_date)
             ->editable()
+            ->extendedProp('proposal_names', $this->getProposalNames())
+            ->extendedProp('completed_at', $this->completed_at)
             ->extendedProps([
                 'x-tooltip.html.max-width.350.theme.light' => $this->descriptionToCalendar(),
             ])
