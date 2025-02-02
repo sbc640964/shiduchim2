@@ -7,6 +7,7 @@ use App\Models\Person;
 use App\Models\Proposal;
 use App\Models\Subscriber;
 use Carbon\Carbon;
+use DB;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Table;
 use Filament\Tables\Columns;
@@ -34,17 +35,19 @@ class GoldListWidget extends BaseWidget
                             ->withMax(['proposals as last_proposal' => function (Builder $q) {
                                 $q->where('created_by', auth()->user()->id);
                             }], 'created_at')
-                            ->addSelect(\DB::raw(
-                                <<<'SQL'
-                                    (select max(`diaries`.`created_at`)
-                                    from `proposals`
-                                             inner join `person_proposal` on `proposals`.`id` = `person_proposal`.`proposal_id`
-                                            left join `diaries` on `proposals`.`id` = `diaries`.`proposal_id` and `diaries`.`type` = 'call'
-                                    where `people`.`id` = `person_proposal`.`person_id`
-                                      and `hidden_at` is null
-                                      and `status` != 'סגור') as `last_call`
-                                SQL
-                            ));
+                            ->addSelect([
+                                'last_call' => DB::table('proposals')
+                                    ->join('person_proposal', 'proposals.id', '=', 'person_proposal.proposal_id')
+                                    ->leftJoin('diaries', function ($join) {
+                                        $join->on('proposals.id', '=', 'diaries.proposal_id')
+                                            ->where('diaries.type', 'call');
+                                    })
+                                    ->whereColumn('people.id', 'person_proposal.person_id')
+                                    ->where('diaries.created_by', auth()->user()->id)
+                                    ->whereNull('hidden_at')
+                                    ->where('status', '!=', 'סגור')
+                                    ->selectRaw('MAX(diaries.created_at)')
+                            ]);
                     }])
                     ->where('user_id', auth()->user()->id)
                     ->whereNotIn('status', [ 'inactive' ])
