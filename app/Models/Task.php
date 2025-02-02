@@ -66,7 +66,7 @@ class Task extends Model implements Eventable
             return null;
         }
 
-        Log::debug('debug', $this);
+        Log::debug('debug', [$this]);
         return $this->proposal->guy->last_name . ' - ' . $this->proposal->girl->last_name;
     }
 
