@@ -7,6 +7,7 @@ use Guava\Calendar\ValueObjects\Event;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
+use Symfony\Component\ErrorHandler\Debug;
 
 class Task extends Model implements Eventable
 {
@@ -64,6 +65,7 @@ class Task extends Model implements Eventable
             return null;
         }
 
+        \Log::info($this);
         return $this->proposal->guy->last_name . ' - ' . $this->proposal->girl->last_name;
     }
 
