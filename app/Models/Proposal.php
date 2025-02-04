@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Filament\Clusters\Settings\Pages\Statuses;
+use App\Models\Traits\HasActivities;
 use App\Models\Traits\HasProposalFilamentFormsFields;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
@@ -21,7 +23,9 @@ use App\Models\SettingOld as Setting;
 
 class Proposal extends Model
 {
-    use HasFactory, HasProposalFilamentFormsFields, HasTags;
+    use HasActivities,
+        HasProposalFilamentFormsFields,
+        HasTags;
 
     /**
      * The attributes that are mass assignable.
@@ -73,6 +77,11 @@ class Proposal extends Model
         'hidden_at' => 'datetime',
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
+    ];
+
+    protected static array $defaultActivityDescription = [
+        'open' => 'פתיחת הצעת שידוך',
+        'close' => 'סגירת הצעת שידוך',
     ];
 
     protected static function booted()
@@ -640,6 +649,8 @@ class Proposal extends Model
             'reason_closed' => null,
         ]);
 
+        $this->recordActivity('open');
+
         return $this;
     }
 
@@ -650,6 +661,11 @@ class Proposal extends Model
             'reason_closed' => $reason,
         ]);
 
+        $this->recordActivity('close', [
+            'reason' => $reason,
+        ]);
+
         return $this;
     }
+
 }

@@ -1,0 +1,36 @@
+<x-filament-widgets::widget>
+    <div class="flex gap-8 h-full">
+        <x-filament::section heading="השידוכים הפתוחים שלך" class="[&_.fi-section-content]:flex-col [&_.fi-section-content]:flex flex flex-col [&_.fi-section-content]:h-full [&_.fi-section-content-ctn]:flex-grow">
+            <div class="flex-grow flex justify-center items-center">
+                <p class="text-6xl font-bold text-gray-400">{{ $this->currentUserProposals()->open_proposals }}</p>
+            </div>
+            <div class="flex justify-center items-center flex-col mt-auto border-t pt-1">
+                <p class="text-sm text-gray-500">סה"כ שידוכים פתוחים</p>
+                <p class="text-xl font-bold text-gray-500 mt-2">
+                    <span class="text-xl font-bold text-gray-500">{{ $this->otherUsersProposals()->sum('open_proposals') }}</span>
+                </p>
+            </div>
+        </x-filament::section>
+        <div class="flex gap-6 flex-wrap">
+            @foreach($this->otherUsersProposals() as $user)
+                <div class="bg-white flex items-center relative justify-center shadow-xl shadow-gray-300/25 rounded-full border border-gray-200/50 w-20 h-20">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-xl font-bold text-gray-500">{{ $user->open_proposals }}</span>
+                        </div>
+                    </div>
+                    @if(auth()->user()->can('open_proposals_manager'))
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs text-center whitespace-nowrap rounded-full px-2">
+                            {{ $user->name }}
+                        </div>
+                    @endif
+                    <x-filament::avatar
+                        src="{{ $user->avater_uri }}"
+                        :circular="true"
+                        class="absolute bg-white border -bottom-2 right-0"
+                    />
+                </div>
+            @endforeach
+        </div>
+    </div>
+</x-filament-widgets::widget>
