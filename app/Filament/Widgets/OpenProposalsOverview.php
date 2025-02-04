@@ -27,6 +27,16 @@ class OpenProposalsOverview extends Widget
             ])->get();
     }
 
+    #[Computed]
+    public function currentUserOpenProposals()
+    {
+        return auth()->user()->proposals()
+            ->whereNotNull('opened_at')
+            ->whereNull('closed_at')
+            ->with('people')
+            ->get();
+    }
+
     public function otherUsersProposals()
     {
         return $this->openProposals->where('id', '!=', auth()->id());
@@ -34,6 +44,6 @@ class OpenProposalsOverview extends Widget
 
     public function currentUserProposals()
     {
-        return $this->openProposals->firstWhere('id', auth()->id()) ?? auth()->user();
+        return $this->currentUserOpenProposals;
     }
 }
