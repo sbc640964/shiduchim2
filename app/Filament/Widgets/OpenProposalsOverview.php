@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\Proposal;
+use App\Models\Subscriber;
 use App\Models\User;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Collection;
@@ -50,7 +52,7 @@ class OpenProposalsOverview extends Widget
             ->proposals()
             ->whereNotNull('opened_at')
             ->whereNull('closed_at')
-            ->with('people')
+            ->with('people.lastSubscription')
             ->get();
     }
 
@@ -78,5 +80,23 @@ class OpenProposalsOverview extends Widget
         }
 
         $this->currentUserId = $userId > 0 ? $userId : null;
+    }
+
+    public function isHasInGoldList(Proposal $proposal)
+    {
+
+        return collect([
+            $proposal->guy->lastSubscription,
+            $proposal->girl->lastSubscription
+        ])
+            ->filter()
+            ->map(function (Subscriber $subscriber) {
+                if($subscriber->status === 'active' && $subscriber->user_id == $this->currentUser()->getKey()){
+                    return true;
+                }
+
+                return false;
+            })
+            ->contains(true);
     }
 }

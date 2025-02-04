@@ -80,6 +80,10 @@
                         <div class="text-sm text-gray-500">{{ $proposal->guy->parents_info }}</div>
                     </div>
 
+                    @if($this->isHasInGoldList($proposal))
+                        <x-icon name="iconsax-bul-medal-star" class="text-yellow-500 w-10 h-10" />
+                    @endif
+
                     <div class="text-left">
                         <div class="font-bold">{{ $proposal->girl->full_name }}</div>
                         <div class="text-sm text-gray-500">{{ $proposal->girl->parents_info }}</div>
