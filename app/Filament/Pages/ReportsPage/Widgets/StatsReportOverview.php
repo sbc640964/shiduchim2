@@ -15,6 +15,8 @@ class StatsReportOverview extends BaseWidget
 {
     use FilterReportsTrait;
 
+    protected static ?string $pollingInterval = null;
+
     protected function getStats(): array
     {
         $matchmaker = $this->getFilter('matchmaker');

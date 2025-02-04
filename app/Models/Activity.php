@@ -10,6 +10,13 @@ class Activity extends Model
 {
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return [
+            'data' => 'array',
+        ];
+    }
+
     public function subject(): MorphTo
     {
         return $this->morphTo();

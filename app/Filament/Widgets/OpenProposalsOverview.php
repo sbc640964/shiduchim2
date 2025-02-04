@@ -34,6 +34,6 @@ class OpenProposalsOverview extends Widget
 
     public function currentUserProposals()
     {
-        return $this->openProposals->firstWhere('id', auth()->id());
+        return $this->openProposals->firstWhere('id', auth()->id()) ?? auth()->user();
     }
 }

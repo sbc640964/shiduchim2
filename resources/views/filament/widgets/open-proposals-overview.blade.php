@@ -2,7 +2,7 @@
     <div class="flex gap-8 h-full">
         <x-filament::section heading="השידוכים הפתוחים שלך" class="[&_.fi-section-content]:flex-col [&_.fi-section-content]:flex flex flex-col [&_.fi-section-content]:h-full [&_.fi-section-content-ctn]:flex-grow">
             <div class="flex-grow flex justify-center items-center">
-                <p class="text-6xl font-bold text-gray-400">{{ $this->currentUserProposals()->open_proposals }}</p>
+                <p class="text-6xl font-bold text-gray-400">{{ $this->currentUserProposals()->open_proposals ?? 0 }}</p>
             </div>
             <div class="flex justify-center items-center flex-col mt-auto border-t pt-1">
                 <p class="text-sm text-gray-500">סה"כ שידוכים פתוחים</p>

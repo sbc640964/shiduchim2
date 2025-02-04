@@ -668,4 +668,9 @@ class Proposal extends Model
         return $this;
     }
 
+    public function getIsOpenAttribute()
+    {
+        return $this->opened_at && !$this->closed_at;
+    }
+
 }
