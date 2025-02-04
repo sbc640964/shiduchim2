@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use STS\FilamentImpersonate\Tables\Actions\Impersonate;
 
 class UserResource extends Resource
@@ -137,6 +138,42 @@ class UserResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('roles')
+                        ->icon('iconsax-bul-user')
+                        ->label('הוסף/הסר תפקידים')
+                        ->form([
+                            Forms\Components\ToggleButtons::make('action')
+                                ->label('פעולה')
+                                ->grouped()
+                                ->default('1')
+                                ->boolean(
+                                    'הוסף',
+                                    'הסר',
+                                ),
+                            Forms\Components\Select::make('roles')
+                                ->label('תפקידים')
+                                ->options(fn () => \App\Models\Role::pluck('name', 'name')->toArray())
+                                ->multiple()
+                                ->preload()
+                                ->required()
+                                ->searchable(),
+                        ])
+                        ->deselectRecordsAfterCompletion()
+                        ->action(function (Collection $records, array $data, Tables\Actions\BulkAction $action) {
+                            $action = $data['action'] === '1';
+
+                            if($action) {
+                                $records->each(function (User $record) use ($data, $action) {
+                                    $record->assignRole(...$data['roles']);
+                                });
+                            } else {
+                                $records->each(function (User $record) use ($data, $action) {
+                                    foreach ($data['roles'] as $role) {
+                                        $record->removeRole($role);
+                                    }
+                                });
+                            }
+                        }),
                 ]),
             ]);
     }
