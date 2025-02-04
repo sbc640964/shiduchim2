@@ -15,7 +15,7 @@ class OpenProposals extends BaseWidget
 
     public static function canView(): bool
     {
-        return auth()->user()->can('open_proposals');
+        return false;
     }
 
     protected function getStats(): array
