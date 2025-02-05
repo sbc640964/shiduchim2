@@ -30,6 +30,7 @@ class DiaryListWidget extends BaseWidget
         }
 
     protected int|string|array $columnSpan = 2;
+    protected static bool $isLazy = false;
 
     #[Reactive]
     public $datesRange = null;
