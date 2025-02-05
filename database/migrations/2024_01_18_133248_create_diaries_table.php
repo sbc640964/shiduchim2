@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
+        Schema::connection($this->getConnection())->disableForeignKeyConstraints();
 
         Schema::create('diaries', function (Blueprint $table) {
             $table->id();
