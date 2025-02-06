@@ -12,3 +12,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 Broadcast::channel('chat.room.{discussion}', function (User $user, Discussion $discussion) {
     return $discussion->usersAssigned->contains($user);
 });
+
+Broadcast::channel('extension.{extension}', function (User $user, $extension) {
+    return $user->ext === (int) $extension;
+});
