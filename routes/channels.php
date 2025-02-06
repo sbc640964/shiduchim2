@@ -14,5 +14,5 @@ Broadcast::channel('chat.room.{discussion}', function (User $user, Discussion $d
 });
 
 Broadcast::channel('extension.{extension}', function (User $user, $extension) {
-    return $user->ext === (int) $extension;
+    return $user->ext === $extension;
 });
