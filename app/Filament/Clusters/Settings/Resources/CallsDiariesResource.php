@@ -8,6 +8,7 @@ use App\Filament\Resources\PersonResource;
 use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\ProposalResource\Pages\Diaries;
 use App\Infolists\Components\AudioEntry;
+use App\Jobs\TranscriptionCallJob;
 use App\Models\Call;
 use App\Models\Diary;
 use App\Models\Family;
@@ -213,7 +214,8 @@ class CallsDiariesResource extends Resource
                                 ->iconButton()
                                 ->tooltip('נתח מחדש את הטקסט של השיחה')
                                 ->color('gray')
-                                ->action(fn (Call $call) => $call->refreshCallText())
+                                ->successNotificationTitle('ההקלטה נשלחה לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
+                                ->action(fn (Call $call) => TranscriptionCallJob::dispatch($call))
                                 ->visible(auth()->user()->can('ai_beta'))
                             )
                             ->html()
