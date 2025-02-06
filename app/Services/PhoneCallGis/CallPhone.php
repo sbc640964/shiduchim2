@@ -4,6 +4,7 @@ namespace App\Services\PhoneCallGis;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
+use Ramsey\Collection\Collection;
 
 class CallPhone
 {
@@ -33,7 +34,7 @@ class CallPhone
         });
     }
 
-    public function getExtensionState(int $ext): array
+    public function getExtensionState(int $ext): Collection
     {
         return $this->get([
             'reqtype' => 'INFO',

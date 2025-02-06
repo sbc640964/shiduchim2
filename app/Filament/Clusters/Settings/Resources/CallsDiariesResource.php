@@ -15,6 +15,7 @@ use App\Models\Family;
 use App\Models\Person;
 use App\Models\Proposal;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
@@ -215,7 +216,10 @@ class CallsDiariesResource extends Resource
                                 ->tooltip('נתח מחדש את הטקסט של השיחה')
                                 ->color('gray')
                                 ->successNotificationTitle('ההקלטה נשלחה לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
-                                ->action(fn (Call $call) => TranscriptionCallJob::dispatch($call))
+                                ->action(function (Call $call, Action $action) {
+                                    TranscriptionCallJob::dispatch($call);
+                                    $action->success();
+                                })
                                 ->visible(auth()->user()->can('ai_beta'))
                             )
                             ->html()
