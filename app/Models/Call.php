@@ -59,7 +59,9 @@ class Call extends Model
     {
         static::query()
             ->whereNull('finished_at')
-            ->where('created_at', '<', now()->subMinutes(2))->each->checkAndFinish();
+            ->whereNotNull('extension')
+            ->where('created_at', '<', now()->subMinutes(2))
+            ->get()->each->checkAndFinish();
     }
 
     public function checkAndFinish(): void
