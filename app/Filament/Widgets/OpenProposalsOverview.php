@@ -6,6 +6,7 @@ use App\Models\Proposal;
 use App\Models\Subscriber;
 use App\Models\User;
 use Filament\Widgets\Widget;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 
@@ -24,9 +25,9 @@ class OpenProposalsOverview extends Widget
     {
         return User::query()
             ->role(static::ACTIVITY_MATCHMAKER)
-            ->withoutGlobalScope('accessByUser')
             ->withCount(['proposals as open_proposals' =>
-                    fn ($query) => $query
+                    fn (Builder $query) => $query
+                        ->withoutGlobalScope('accessByUser')
                         ->whereNotNull('opened_at')
                         ->whereNull('closed_at')
             ])->get();
