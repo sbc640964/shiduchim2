@@ -4,7 +4,7 @@ namespace App\Services\PhoneCallGis;
 
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
-use Ramsey\Collection\Collection;
+use Illuminate\Support\Collection;
 
 class CallPhone
 {
@@ -24,7 +24,7 @@ class CallPhone
         return array_merge_recursive($params, $this->authParams());
     }
 
-    public function getExtensions(): \Illuminate\Support\Collection
+    public function getExtensions(): Collection
     {
         return collect($this->get([
             'reqtype' => 'INFO',
