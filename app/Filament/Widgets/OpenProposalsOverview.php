@@ -24,6 +24,7 @@ class OpenProposalsOverview extends Widget
     {
         return User::query()
             ->role(static::ACTIVITY_MATCHMAKER)
+            ->withoutGlobalScope('accessByUser')
             ->withCount(['proposals as open_proposals' =>
                     fn ($query) => $query
                         ->whereNotNull('opened_at')
