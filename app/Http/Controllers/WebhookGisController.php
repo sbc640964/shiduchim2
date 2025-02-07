@@ -46,6 +46,10 @@ class WebhookGisController extends Controller
 
         $extension = Str::before($data['extension'] ?? '', '-');
 
+        if(blank($extension)) {
+            $extension = null;
+        }
+
         $user = $this->resolveUser($isOutgoing ? $data['from_phone'] : $data['target_phone'], $extension);
 
         CallDiary::create([
