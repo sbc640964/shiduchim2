@@ -396,7 +396,7 @@ Blade;
         return $this->getPersonContact()?->id ?? null;
     }
 
-    public function extansionWithTarget($html = false)
+    public function extensionWithTarget($html = false)
     {
         $ext = $this->extension;
         $target = data_get($this->data_raw, 'events.0.target_phone');
