@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\CallActivityEvent;
 use App\Services\PhoneCallGis\CallPhone;
 use Derrickob\GeminiApi\Data\Content;
 use Derrickob\GeminiApi\Data\GenerationConfig;
@@ -60,6 +61,7 @@ class Call extends Model
         static::query()
             ->whereNull('finished_at')
             ->whereNotNull('extension')
+            ->with('user')
             ->where('created_at', '<', now()->subMinutes(2))
             ->get()->each->checkAndFinish();
     }
@@ -78,9 +80,11 @@ class Call extends Model
             return;
         }
 
-        $this->update([
+        if($this->update([
             'finished_at' => now(),
-        ]);
+        ]) && $this->user) {
+            CallActivityEvent::dispatch($this->user, $this);
+        }
     }
 
     public function diary(): BelongsTo

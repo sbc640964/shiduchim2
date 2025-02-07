@@ -25,7 +25,7 @@ class WebhookGisController extends Controller
             'is_outgoing' => 'required|in:incoming,outgoing',
             'from_phone' => 'required',
             'target_phone' => 'required',
-            'extension' => 'required',
+            'extension' => 'nullable',
             'vendor' => 'in:gis',
         ]);
 
@@ -68,55 +68,44 @@ class WebhookGisController extends Controller
         );
 
         if ($action === 'ring' && ! $isOutgoing) {
-            $call = Call::create([
-                'extension' => $extension,
-                'unique_id' => $data['original_call_id'],
-                'phone' => $phoneNumber,
-                'phone_id' => $phone?->id,
-                'is_pending' => true,
-                'direction' => 'incoming',
-                'user_id' => $user?->id ?? null,
-                'data_raw' => [
-                    'events' => [
-                        $data,
-                    ],
-                ],
-            ]);
-
-            CallActivityEvent::dispatch($user, $call);
-
+            $this->createCall($data, $extension, $phoneNumber, $phone, $user);
             return 'Call created';
         }
 
         $call = $this->resolveCall($data, $extension, $phoneNumber);
 
-        if(! $call && $data['action'] === 'answered' && $isOutgoing){
-            $call = Call::create([
-                'extension' => $extension,
-                'unique_id' => $data['original_call_id'],
-                'phone' => $phoneNumber,
-                'phone_id' => $phone?->id,
-                'is_pending' => true,
-                'direction' => 'outgoing',
-                'user_id' => $user?->id ?? null,
-                'data_raw' => [
-                    'events' => [
-
-                    ],
-                ],
-            ]);
+        if(! $call
+            && (
+                ($data['action'] === 'answered' && $isOutgoing)
+                || ($data['action'] === 'missed' && ! $isOutgoing)
+            )
+        ) {
+           $call = $this->createCall(
+               $data,
+               $extension,
+               $phoneNumber,
+               $phone,
+               $user,
+               $isOutgoing
+           );
         }
+
 
         if (! $call) {
             return 'Error: Call not found';
         }
 
         $callEvents = $call->data_raw;
-        $callEvents['events'][] = $data;
+
+        if(! $call->wasRecentlyCreated) {
+            $callEvents['events'][] = $data;
+        }
+
 
         $updateAttributes = [
             'data_raw' => $callEvents,
             'unique_id' => $data['original_call_id'],
+            'extension' => $call->extension ?? $extension,
         ];
 
         if ($action === 'answered') {
@@ -231,5 +220,27 @@ class WebhookGisController extends Controller
                 ]),
             ]);
         }
+    }
+
+    private function createCall(array $data, string $extension, mixed $phoneNumber, ?Phone $phone, mixed $user, $isOutgoing = false): ?Call
+    {
+        $call = Call::create([
+            'extension' => $extension,
+            'unique_id' => $data['original_call_id'],
+            'phone' => $phoneNumber,
+            'phone_id' => $phone?->id ?? null,
+            'is_pending' => true,
+            'direction' => $isOutgoing ? 'outgoing' : 'incoming',
+            'user_id' => $user?->id ?? null,
+            'data_raw' => [
+                'events' => [
+                    $data,
+                ],
+            ],
+        ]);
+
+        $call && CallActivityEvent::dispatch($user, $call);
+
+        return $call;
     }
 }
