@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Events\CallActivityEvent;
+use App\Services\PhoneCallGis\ActiveCall;
 use App\Services\PhoneCallGis\CallPhone;
 use Derrickob\GeminiApi\Data\Content;
 use Derrickob\GeminiApi\Data\GenerationConfig;
@@ -393,5 +394,24 @@ Blade;
     public function getPersonContactId(): mixed
     {
         return $this->getPersonContact()?->id ?? null;
+    }
+
+    public function extansionWithTarget($html = false)
+    {
+        $ext = $this->extension;
+        $target = data_get($this->data_raw, 'events.0.target_phone');
+
+        $target = ActiveCall::normalizedPhoneNumber($target);
+
+
+        if(! $target) {
+            return filled($ext) ? $ext : 'לא ידוע';
+        }
+
+        if(!$html) {
+            return $target . ' -> ' . $ext;
+        }
+
+        return str("<span class='text-xs text-gray-500'>$target</span> -> <span class='text-xs font-bold text-gray-700'>$ext</span>")->toHtmlString();
     }
 }

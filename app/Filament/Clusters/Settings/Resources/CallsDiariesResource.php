@@ -93,7 +93,7 @@ class CallsDiariesResource extends Resource
                 Tables\Columns\TextColumn::make('extension')
                     ->weight(FontWeight::Bold)
                     ->formatStateUsing(fn (Call $call) => $call->user?->name)
-                    ->description(fn (Call $call) => $call->extension)
+                    ->description(fn (Call $call) => $call->extansionWithTarget(true))
                     ->label('משתמש')
                     ->visible(auth()->user()->canAccessAllCalls())
                     ->searchable(),
