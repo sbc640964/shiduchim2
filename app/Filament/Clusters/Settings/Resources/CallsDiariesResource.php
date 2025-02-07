@@ -90,13 +90,17 @@ class CallsDiariesResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('extension')
+                Tables\Columns\TextColumn::make('id')
                     ->weight(FontWeight::Bold)
                     ->formatStateUsing(fn (Call $call) => $call->user?->name ?? 'לא ידוע')
                     ->description(fn (Call $call) => $call->extensionWithTarget(true))
                     ->label('משתמש')
                     ->visible(auth()->user()->canAccessAllCalls())
-                    ->searchable(),
+                    ->searchable(
+                        query: function (Builder $query, $search) {
+                            $query->whereHas('user', fn (Builder $query) => $query->where('name', 'like', "%$search%"));
+                        }
+                    ),
                 Tables\Columns\IconColumn::make('group')
                     ->icons([
                         'iconsax-bul-call-incoming' => 'incoming',
