@@ -226,7 +226,7 @@ class WebhookGisController extends Controller
         }
     }
 
-    private function createCall(array $data, string $extension, mixed $phoneNumber, ?Phone $phone, mixed $user, $isOutgoing = false): ?Call
+    private function createCall(array $data, ?string $extension, mixed $phoneNumber, ?Phone $phone, mixed $user, $isOutgoing = false): ?Call
     {
         $call = Call::create([
             'extension' => $extension,
