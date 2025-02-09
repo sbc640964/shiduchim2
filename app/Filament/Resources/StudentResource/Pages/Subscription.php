@@ -193,7 +193,7 @@ class Subscription extends ManageRelatedRecords
             Forms\Components\DatePicker::make('start_date')
                 ->label('תאריך תשלום ראשון')
                 ->hidden(fn(null|Subscriber|Person $record, Forms\Get $get) =>
-                    ($record::class === Subscriber::class && $record->transactions->where('status', 'OK')->count() > 0)
+                    ($record && $record::class === Subscriber::class && $record->transactions->where('status', 'OK')->count() > 0)
                     || (!$get('payments') || !$get('user_id'))
                 )
                 ->native(false)
