@@ -8,6 +8,7 @@ use App\Models\Proposal;
 use App\Models\Subscriber;
 use Carbon\Carbon;
 use DB;
+use Filament\Facades\Filament;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Table;
 use Filament\Tables\Columns;
@@ -100,6 +101,14 @@ class GoldListWidget extends BaseWidget
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
                     })
                     ->label('שיחה אחרונה'),
+                Columns\TextColumn::make('payments')
+                    ->formatStateUsing(function (Subscriber $record) {
+                        return $record->payments - $record->balance_payments;
+                    })
+                    ->label('חודש')
+                    ->color(Color::Fuchsia)
+                    ->alignCenter()
+                    ->badge(),
                 ProgressBar::make('balance_payments')
                     ->label('מצב התקופה')
                     ->tooltip(function (Subscriber $record) {
