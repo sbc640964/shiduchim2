@@ -121,8 +121,8 @@ class GoldListWidget extends BaseWidget
                     })
                     ->getStateUsing(function (Subscriber $record) {
                         return [
-                            'total' => $record->payments,
-                            'progress' => $record->balance_payments,
+                            'total' => $record->start_date->diffInDays($record->end_date),
+                            'progress' => now()->diffInDays($record->end_date),
                         ];
                     })
             ]);
