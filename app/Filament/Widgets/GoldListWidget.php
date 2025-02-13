@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Filament\Widgets\TableWidget as BaseWidget;
+use IbrahimBougaoua\FilaProgress\Tables\Columns\ProgressBar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -98,7 +99,32 @@ class GoldListWidget extends BaseWidget
                     ->formatStateUsing(function (?string $state = null) {
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
                     })
-                    ->label('שיחה אחרונה')
+                    ->label('שיחה אחרונה'),
+                ProgressBar::make('balance_payments')
+                    ->label('מצב התקופה')
+                    ->tooltip(function (Subscriber $record) {
+                        //תחזיר בטקסט בעברית כמה שבועות ימים או חודשים נותרו לפי הend_date
+                        $text = '';
+
+                        $diff = now()->diffInDays($record->end_date);
+                        if ($diff < 0) {
+                            $text = 'התקופה נגמרה';
+                        } elseif ($diff < 7) {
+                            $text = 'נשארו ' . $diff . ' ימים';
+                        } else {
+                            $text = 'נשארו ' . ceil($diff / 7) . ' שבועות';
+                        }
+
+                        $text .= ' עד לסיום התקופה (' . $record->end_date->format('d/m/Y') . ')';
+
+                        return $text;
+                    })
+                    ->getStateUsing(function (Subscriber $record) {
+                        return [
+                            'total' => $record->payments,
+                            'progress' => $record->balance_payments,
+                        ];
+                    })
             ]);
     }
 }
