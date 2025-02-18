@@ -156,7 +156,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->action(function ($data, Action $action){
 
                 if(($data['user_id'] ?? 0) > 0 && data_get($data, 'start_date')) {
-                    $data['end_date'] = Carbon::make($data['start_date'])->addMonths($data['payments'] - 1);
+                    $data['end_date'] = Carbon::make($data['start_date'])->addMonths($data['payments']);
                 }
 
                 if($data['payments'] ?? null) {
