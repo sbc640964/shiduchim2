@@ -40,10 +40,13 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
     {
         $record = $this->getSubscription();
 
+        $holdActivityAt = $record->activities()->where('type', 'hold')->latest()->first()?->created_at ?? null;
+
+
         return Action::make('toggleSubscription')
             ->label('')
             ->requiresConfirmation()
-            ->visible($record->status !== 'completed' && ($record->end_date?->isFuture() ?? null))
+            ->visible($record->status !== 'completed' && ($record->end_date?->isFuture() ?? true))
             ->modalHeading('הפעל מנוי')
             ->modalDescription('האם אתה בטוח שברצונך להפעיל את המנוי?')
             ->extraAttributes([
@@ -69,41 +72,66 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ->action(function  (self $livewire) use ($record) {
                         $record->status = 'hold';
                         $record->save();
+
+                        $record->recordActivity('hold');
+
                         $this->redirect(StudentResource::getUrl('subscription', [
                             'record' => $livewire->record->id,
                         ]), true);
                     });
-            }, function (Action $component) use ($record) {
+            }, function (Action $component) use ($record, $holdActivityAt) {
                 $component
-                    ->action(function (self $livewire, array $data) use ($record) {
+                    ->action(function (self $livewire, array $data) use ($record, $holdActivityAt) {
                         $record->status = 'active';
-
-//                        if (!$record->next_payment_date || $record->next_payment_date->isPast()) {
-//                            $record->next_payment_date = now();
-//                            $record->end_date = $record->next_payment_date->copy()->addMonths($record->payments);
-//                        }
-
                         $record->next_payment_date = $data['next_payment_date'];
 
+                        if(!$holdActivityAt) {
+                            $record->start_date = $data['start_date'];
+                            $record->end_date = Carbon::make($data['start_date'])->addMonths($record->balance_payments);
+                        } else {
+                            $balance = $record->start_date->diffInDays($record->end_date) - $record->start_date->diffInDays($holdActivityAt);
+                            $record->end_date = now()->addDays($balance);
+                        }
+
                         $record->save();
+
+                        $record->recordActivity('run');
 
                         $this->redirect(StudentResource::getUrl('subscription', [
                             'record' => $livewire->record->id,
                         ]), true);
                     })
                     ->form([
+                        DateTimePicker::make('start_date')
+                            ->label('תאריך תחילת העבודה')
+                            ->required()
+                            ->native(false)
+                            ->displayFormat('d/m/Y')
+                            ->disabled($record->status === 'hold')
+                            ->helperText(function ($state) use($record, $holdActivityAt) {
+                                if($state){
+                                    $state = Carbon::make($state);
+                                    $isPast = $state->isBefore(now()->startOfDay());
+                                    $endDate = $record->status === 'hold'
+                                        ? now()->addDays($record->start_date->diffInDays($record->end_date) - $record->start_date->diffInDays($holdActivityAt))
+                                        : $state->copy()->addMonths($record->payments);
+                                    return "תאריך הסיום: " . $endDate->format('d/m/Y') . " ($record->payments חודשים)" . ($isPast ? ' | התאריך מוקדם מהיום!' : '');
+                                }
+                                return null;
+                            })
+                            ->default($record->start_date ?? now()),
                         DateTimePicker::make('next_payment_date')
                             ->label('תאריך התשלום הבא')
                             ->required()
                             ->native(false)
                             ->displayFormat('d/m/Y')
-                            ->helperText(fn ($state) => $state && Carbon::make($state)->isPast() ? 'שים לב!!! התאריך עבר!!!!!!!!!!!!' : '')
+                            ->helperText(fn ($state) => $state && Carbon::make($state)->isBefore(now()->startOfDay()) ? 'שים לב!!! התאריך עבר!!!!!!!!!!!!' : '')
                             ->rule(fn () => function ($attribute, $value, $fail) use ($record) {
                                 if ($value && Carbon::make($value)->isBefore(now()->startOfMonth())) {
                                     $fail('תאריך התשלום הבא חייב להיות מהחודש הנוכחי או אחרי');
                                 }
                             })
-                            ->default($record->next_payment_date ?? $record->start_date),
+                            ->default($record->status === 'hold' ? now() : $record->next_payment_date ?? now()),
                     ]);
             })
             ->size('lg');

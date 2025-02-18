@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasActivities;
 use App\Services\Nedarim;
 use Carbon\Carbon;
 use Carbon\Traits\Localization;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Http;
 
 class Subscriber extends Model
 {
+    use HasActivities;
+
     protected $fillable = [
         'person_id',
         'payer_id',
@@ -36,17 +39,25 @@ class Subscriber extends Model
         'is_published' => 'boolean',
     ];
 
+    protected static array $defaultActivityDescription = [
+        'run' => 'הפעלת מנוי',
+        'hold' => 'השהיית מנוי',
+        'completed' => 'השלמת מנוי',
+        'cancel' => 'ביטול מנוי',
+        'update' => 'עדכון מנוי',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (Subscriber $subscriber) {
-            if($subscriber->start_date && !$subscriber->next_payment_date)
-                $subscriber->next_payment_date = $subscriber->start_date->copy();
+//            if($subscriber->start_date && !$subscriber->next_payment_date)
+//                $subscriber->next_payment_date = $subscriber->start_date->copy();
         });
 
         static::saving(function (Subscriber $subscriber) {
             if($subscriber->transactions()->doesntExist()){
-                if($subscriber->start_date && $subscriber->isDirty('start_date'))
-                    $subscriber->next_payment_date = $subscriber->start_date->copy();
+//                if($subscriber->start_date && $subscriber->isDirty('start_date'))
+//                    $subscriber->next_payment_date = $subscriber->start_date->copy();
 
                 if($subscriber->payments && $subscriber->isDirty('payments'))
                     $subscriber->balance_payments = $subscriber->payments;

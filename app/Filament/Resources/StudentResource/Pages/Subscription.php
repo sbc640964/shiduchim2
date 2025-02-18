@@ -190,7 +190,7 @@ class Subscription extends ManageRelatedRecords
                 ->live()
                 ->required(),
 
-            Forms\Components\DatePicker::make('start_date')
+            Forms\Components\DatePicker::make('next_payment_date')
                 ->label('תאריך תשלום ראשון')
                 ->hidden(fn(null|Subscriber|Person $record, Forms\Get $get) =>
                     ($record && $record::class === Subscriber::class && $record->transactions->where('status', 'OK')->count() > 0)
