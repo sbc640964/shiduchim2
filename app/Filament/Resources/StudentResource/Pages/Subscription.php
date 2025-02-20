@@ -159,71 +159,18 @@ class Subscription extends ManageRelatedRecords
                 ->stripCharacters(',')
                 ->required(),
 
-            Forms\Components\Select::make('user_id')
-                ->model(Subscriber::class)
-                ->relationship('matchmaker', 'name')
-                ->saveRelationshipsUsing(fn () => null)
-                ->label('שדכן')
-                ->placeholder('בחר שדכן')
-                ->searchable()
-                ->preload()
-                ->live()
-                ->nullable(),
-
-            Forms\Components\Select::make('work_day')
-                ->visible(fn(Forms\Get $get) => $get('user_id'))
-                ->label('יום פעילות לשדכן')
-                ->options([
-                    '1' => 'ראשון',
-                    '2' => 'שני',
-                    '3' => 'שלישי',
-                    '4' => 'רביעי',
-                    '5' => 'חמישי',
-                    '6' => 'שישי',
-                    '7' => 'מוצ"ש',
-                ])
-                ->nullable(),
-
             Forms\Components\TextInput::make('payments')
-                ->label("מס תשלומים")
+                ->label("מס תשלומים/חודשי עבודה")
                 ->numeric()
                 ->live()
                 ->required(),
 
-            Forms\Components\DatePicker::make('next_payment_date')
-                ->label('תאריך תשלום ראשון')
-                ->hidden(fn(null|Subscriber|Person $record, Forms\Get $get) =>
-                    ($record && $record::class === Subscriber::class && $record->transactions->where('status', 'OK')->count() > 0)
-                    || (!$get('payments') || !$get('user_id'))
-                )
-                ->native(false)
-                ->displayFormat('d/m/Y')
-                ->default(Carbon::today())
-                ->disabled(fn(?Subscriber $record) => $record && $record->transactions->where('status', 'active' )->count() > 0)
-                ->when(
-                    fn (Forms\Components\DatePicker $component) => $formRecord && $formRecord->transactions->where('status', 'active' )->count() === 0,
-                    fn (Forms\Components\DatePicker $component) => $component->afterOrEqual(Carbon::today())
-                )
-                ->validationMessages([
-                    'after_or_equal' => 'תאריך תשלום ראשון חייב להיות לאחר התאריך הנוכחי או בו',
-                ])
-                ->placeholder('הגבייה לא תתחיל עד שתבחר תאריך')
-                ->live()
-                ->helperText(function (Forms\Get $get, $state) {
-                    if(blank($state)) {
-                        return null;
-                    }
-
-                    $lastPayment = Carbon::make($state)->addMonths($get('payments') - 1);
-
-                    return "תשלום אחרון בתאריך " . $lastPayment->format('d/m/Y') . " | סיום מנוי ב " . $lastPayment->addMonth()->format('d/m/Y');
-                })
-                ->nullable(),
             Forms\Components\Toggle::make('is_published')
                 ->label('פרסם לכל השדכנים')
                 ->visible(fn(Forms\Get $get) => !$get('user_id'))
                 ->default(true)
                 ->nullable(),
+
             Forms\Components\Textarea::make('notes')
                 ->label('הערות')
                 ->rule('max:255')

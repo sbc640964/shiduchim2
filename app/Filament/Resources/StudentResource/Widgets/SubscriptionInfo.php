@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\StudentResource\Widgets;
 
+use App\Filament\Resources\PersonResource\Pages\CreditCards;
 use App\Filament\Resources\StudentResource;
 use App\Filament\Resources\StudentResource\Pages\Subscription;
+use App\Models\CreditCard;
 use App\Models\Person;
 use App\Models\Subscriber;
+use App\Models\User;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -14,8 +17,11 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Forms;
 use Filament\Support\Enums\MaxWidth;
+use Filament\Support\RawJs;
 use Filament\Widgets\Widget;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionInfo extends Widget implements HasActions, HasForms
 {
@@ -52,12 +58,6 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->extraAttributes([
                 'class' => 'hidden-label-btn w-10 gap-0 items-center justify-center p-0',
             ])
-            ->modalContent(str(str(
-                !$record->next_payment_date || $record->next_payment_date->isPast()
-                    ? 'המנוי יופעל **היום** והתשלום יתבצע מיד'
-                    : 'המנוי יחוייב בתאריך ' . $record->next_payment_date->format('d/m/Y')
-            )->markdown())->toHtmlString())
-
             ->tooltip('הפעל מנוי')
             ->color('success')
             ->icon('heroicon-s-play')
@@ -68,7 +68,6 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ->tooltip('השהה מנוי')
                     ->modalHeading('השהה מנוי')
                     ->modalDescription('האם אתה בטוח שברצונך להשהות את המנוי?')
-                    ->modalContent(null)
                     ->action(function  (self $livewire) use ($record) {
                         $record->status = 'hold';
                         $record->save();
@@ -84,30 +83,47 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     ->action(function (self $livewire, array $data) use ($record, $holdActivityAt) {
                         $record->status = 'active';
                         $record->next_payment_date = $data['next_payment_date'];
+                        $record->user_id = $data['user_id'];
+                        $record->work_day = $data['work_day'];
 
                         if(!$holdActivityAt) {
                             $record->start_date = $data['start_date'];
                             $record->end_date = Carbon::make($data['start_date'])->addMonths($record->balance_payments);
                         } else {
+                            $startDate = Carbon::make($data['start_date']);
                             $balance = $record->start_date->diffInDays($record->end_date) - $record->start_date->diffInDays($holdActivityAt);
-                            $record->end_date = now()->addDays($balance);
+                            $record->end_date = $startDate->addDays($balance);
                         }
 
                         $record->save();
 
-                        $record->recordActivity('run');
+                        if($record->isDirty('user_id')){
+                            $record->recordActivity($record->getOriginal('user_id') ? 'replace_matchmaker' : 'set_matchmaker', collect([
+                                'old' => $record->getOriginal('user_id'),
+                                'new' => $data['user_id'],
+                            ])->filter()->toArray());
+                        }
+                        $record->recordActivity('run', [
+                            'start_date' => $data['start_date'],
+                            'next_payment_date' => $record->next_payment_date,
+                        ]);
 
                         $this->redirect(StudentResource::getUrl('subscription', [
                             'record' => $livewire->record->id,
                         ]), true);
                     })
                     ->form([
+                        ...static::setMatchmakerFormFields(),
                         DateTimePicker::make('start_date')
                             ->label('תאריך תחילת העבודה')
                             ->required()
                             ->native(false)
                             ->displayFormat('d/m/Y')
-                            ->disabled($record->status === 'hold')
+                            ->rule('before:tomorrow')
+                            ->validationMessages([
+                                'before' => 'תאריך תחילת העבודה לא יכול להיות מאוחר מהיום',
+                            ])
+                            ->live()
                             ->helperText(function ($state) use($record, $holdActivityAt) {
                                 if($state){
                                     $state = Carbon::make($state);
@@ -119,7 +135,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                                 }
                                 return null;
                             })
-                            ->default($record->start_date ?? now()),
+                            ->default(now()),
                         DateTimePicker::make('next_payment_date')
                             ->label('תאריך התשלום הבא')
                             ->required()
@@ -153,6 +169,68 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->action(fn (self $livewire) => $livewire->getSubscription()->update([
                 'is_published' => ! $livewire->getSubscription()->is_published,
             ]));
+    }
+
+    public function setMatchmakerFormFields(): array
+    {
+        return [
+            Forms\Components\Select::make('user_id')
+                ->required()
+                ->model(Subscriber::class)
+                ->relationship('matchmaker', 'name')
+                ->saveRelationshipsUsing(fn () => null)
+                ->label('שדכן')
+                ->placeholder('בחר שדכן')
+                ->searchable()
+                ->preload()
+                ->live(),
+
+            Forms\Components\Select::make('work_day')
+                ->required()
+                ->label('יום פעילות לשדכן')
+                ->options(function (Forms\Get $get) {
+
+                    $hasDays = collect();
+
+                    if($user = $get('user_id') ? User::find($get('user_id')) : null) {
+                        $hasDays = $user
+                            ->subscribers()
+                            ->isActive()
+                            ->groupBy('work_day')
+                            ->selectRaw('work_day, count(*) as count')
+                            ->get()
+                            ->pluck('count', 'work_day');
+                    }
+
+                    return collect(['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'מוצ"ש'])
+                        ->mapWithKeys(function($day, $index) use($hasDays) {
+                            $index = $index + 1;
+                            return [$index => $day . ($hasDays->get($index) ? " ($hasDays[$index])" : '')];
+                        });
+                }),
+        ];
+    }
+
+    public function setMatchmaker(): Action
+    {
+        return Action::make('setMatchmaker')
+            ->label('הגדר שדכן')
+            ->modalWidth(MaxWidth::Small)
+            ->form([
+                ...static::setMatchmakerFormFields(),
+            ])
+            ->action(function (self $livewire, array $data){
+                $record = $livewire->getSubscription();
+                if($record->update([
+                    'matchmaker_id' => $data['user_id'],
+                    'work_day' => $data['work_day'],
+                ])) {
+                    $record->recordActivity($record->getOriginal('user_id') ? 'replace_matchmaker' : 'set_matchmaker', collect([
+                        'old' => $record->getOriginal('user_id'),
+                        'new' => $data['user_id'],
+                    ])->filter()->toArray());
+                }
+            });
     }
 
     public function editBilling(): Action
@@ -208,7 +286,103 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             })
             ->form(function (Form $form) {
                 return $form->schema(fn (Subscriber $record) => [
-                    ...Subscription::formFields($record),
+                    Forms\Components\Select::make('referrer_id')
+                        ->model(Subscriber::class)
+                        ->relationship('referrer', modifyQueryUsing: fn (Builder $query, ?string $search) =>
+                        $query->limit(60)
+                            ->orderBy('first_name')
+                            ->orderBy('last_name')
+                            ->searchName($search)
+                            ->with(['father', 'spouse', 'mother', 'family.city', 'city'])
+                        )
+                        ->saveRelationshipsUsing(fn () => null)
+                        ->label('מפנה')
+                        ->optionsLimit(60)
+                        ->getOptionLabelFromRecordUsing(fn(Person $record) => $record->getSelectOptionHtmlAttribute(withAddress: true))
+                        ->getSearchResultsUsing(fn (string $search) => Person::searchName($search)->limit(60)
+                            ->get()
+                            ->mapWithKeys(fn(Person $person) => [$person->getKey() => $person->getSelectOptionHtmlAttribute(withAddress: true)])
+                        )
+                        ->searchable()
+                        ->allowHtml(),
+
+                    Forms\Components\Select::make('payer_id')
+                        ->model(Subscriber::class)
+                        ->relationship('payer', modifyQueryUsing: fn (Builder $query, ?string $search) =>
+                        $query->limit(60)
+                            ->orderBy('first_name')
+                            ->orderBy('last_name')
+                            ->searchName($search)
+                            ->with(['father', 'spouse', 'mother', 'family.city', 'city'])
+                        )
+                        ->saveRelationshipsUsing(fn () => null)
+                        ->default(fn($livewire) => $livewire->getRecord()->father_id)
+                        ->helperText('ברירת מחדל יופיע האבא של הבחור/ה')
+                        ->label('משלם')
+                        ->searchable()
+                        ->allowHtml()
+                        ->getOptionLabelFromRecordUsing(fn(Person $record) => $record->getSelectOptionHtmlAttribute(withAddress: true))
+                        ->getSearchResultsUsing(fn (string $search) => Person::searchName($search)
+                            ->limit(60)
+                            ->with(['father', 'spouse', 'mother', 'family.city', 'city'])
+                            ->orderBy('first_name')
+                            ->orderBy('last_name')
+                            ->get()
+                            ->mapWithKeys(fn(Person $person) => [$person->getKey() => $person->getSelectOptionHtmlAttribute(withAddress: true)])
+                        )
+                        ->live()
+                        ->required(),
+
+                    Forms\Components\Select::make('method')
+                        ->label('אמצעי תשלום')
+                        ->options([
+                            'credit_card' => 'כרטיס אשראי',
+                            'cash' => 'מזומן',
+                        ])
+                        ->live()
+                        ->required(),
+
+                    Forms\Components\Select::make('credit_card_id')
+                        ->label('כרטיס אשראי')
+                        ->preload()
+                        ->options(fn (Forms\Get $get) => $get('payer_id')
+                            ? CreditCard::where('person_id', $get('payer_id'))->get()->mapWithKeys(fn(CreditCard $card) => [$card->getKey() => $card->last4])
+                            : []
+                        )
+                        ->searchable()
+                        ->hidden(fn(Forms\Get $get) => $get('method') !== 'credit_card')
+                        ->disabled(fn(Forms\Get $get) => !$get('payer_id'))
+                        ->native(false)
+                        ->createOptionForm(function (Forms\Get $get,  Form $form) {
+                            return $form
+                                ->schema([
+                                    Forms\Components\Hidden::make('person_id')
+                                        ->default($get('payer_id'))
+                                        ->required(),
+                                    ...CreditCards::formFields(),
+                                ]);
+                        })
+                        ->createOptionAction(fn ($action) => $action->modalWidth(MaxWidth::Small))
+                        ->createOptionUsing(function ($data) {
+                            $record = Person::findOrFail($data['person_id']);
+                            $card = CreditCards::createNewCreditCard($record, $data);
+                            return $card?->getKey();
+                        })
+                        ->required(),
+
+                    Forms\Components\TextInput::make('amount')
+                        ->numeric()
+                        ->label('סכום')
+                        ->type('number')
+                        ->mask(RawJs::make('$money($input)'))
+                        ->stripCharacters(',')
+                        ->required(),
+
+                    Forms\Components\TextInput::make('payments')
+                        ->label("מס תשלומים/חודשי עבודה")
+                        ->numeric()
+                        ->live()
+                        ->required(),
                 ]);
             });
     }

@@ -112,6 +112,11 @@ class User extends Authenticatable implements FilamentUser
 
     public function subscribers()
     {
-        return $this->hasMany(Person::class, 'billing_matchmaker');
+        return $this->hasMany(Subscriber::class);
+    }
+
+    public function activeSubscriber()
+    {
+        return $this->subscribers()->where('end_date', '>', now())->first();
     }
 }

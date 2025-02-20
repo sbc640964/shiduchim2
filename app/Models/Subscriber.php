@@ -45,6 +45,10 @@ class Subscriber extends Model
         'completed' => 'השלמת מנוי',
         'cancel' => 'ביטול מנוי',
         'update' => 'עדכון מנוי',
+        'register' => 'רישום מנוי',
+        'charge' => 'חיוב מנוי',
+        'set_matchmaker' => 'הגדרת שדכן',
+        'replace_matchmaker' => 'החלפת שדכן',
     ];
 
     protected static function booted(): void
@@ -200,6 +204,11 @@ class Subscriber extends Model
     public function isActive()
     {
         return $this->status === 'active';
+    }
+
+    public function scopeIsActive($query)
+    {
+        return $query->where('status', 'active');
     }
 
     public function allowActivation(): bool

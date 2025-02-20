@@ -71,8 +71,7 @@
                     </button>
                 @endif
 
-                <div class="flex gap-2">
-                    {{ $this->editBilling() }}
+                <div class="flex items-center gap-2">
                     @if($this->toggleSubscription()->isVisible())
                         {{ $this->toggleSubscription() }}
                     @endif
@@ -80,6 +79,17 @@
                     @if($this->togglePublished()->isVisible())
                          {{ $this->togglePublished() }}
                     @endif
+
+                    <x-filament-actions::group
+                        dropdown-placement="bottom-center"
+                        icon="heroicon-o-cog-8-tooth"
+                        color="gray"
+                        size="lg"
+                        :actions="[
+                            $this->editBilling(),
+                            $this->setMatchmaker()
+                        ]"
+                    />
                 </div>
             </div>
         </div>{{-- Widget content --}}
