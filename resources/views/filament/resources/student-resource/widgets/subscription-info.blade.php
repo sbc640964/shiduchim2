@@ -4,6 +4,9 @@
             <div class="flex items-center">
                 <div class="flex gap-2 items-center">
                     @switch($this->getSubscription()->status)
+                        @case('pending')
+                            <span class="bg-gray-400 block w-5 h-5 rounded-full"></span>
+                            @break
                         @case('active')
                             <span class="bg-success-400 block w-5 h-5 rounded-full"></span>
                             @break
@@ -15,16 +18,9 @@
                     @endswitch
 
                     <span class="text-sm text-gray-500">
-                        @switch(trim($this->getSubscription()->status))
-                            @case('active')
-                                פעיל
-                                @break
-                            @case('hold')
-                                מושהה
-                                @break
-                            @case('pending')
+                        {{ $this->getSubscription()->statusLabel() }}
+                            @if('pending')
                                 <div>
-                                    <div>ממתין</div>
                                     <span
                                         class="text-xs border-b border-dashed opacity-80 hover:opacity-100 cursor-pointer">
                                         <span
@@ -36,10 +32,7 @@
                                         >{{ $this->getSubscription()->start_date?->diffForHumans() ?? '' }}</span>
                                     </span>
                                 </div>
-                                @break
-                            @default
-                                לא פעיל
-                        @endswitch
+                            @endif
                     </span>
                 </div>
             </div>
@@ -87,7 +80,8 @@
                         size="lg"
                         :actions="[
                             $this->editBilling(),
-                            $this->setMatchmaker()
+                            $this->setMatchmaker(),
+                            $this->cancelSubscription(),
                         ]"
                     />
                 </div>

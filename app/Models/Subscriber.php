@@ -227,4 +227,16 @@ class Subscriber extends Model
             'next_payment_date' => $this->next_payment_date->subMonths($num),
         ]);
     }
+
+    public function statusLabel()
+    {
+        return match ($this->status) {
+            'active' => 'פעיל',
+            'pending' => 'ממתין',
+            'hold' => 'בהשהייה',
+            'completed' => 'הושלם',
+            'canceled' => 'בוטל',
+            default => 'לא ידוע',
+        };
+    }
 }

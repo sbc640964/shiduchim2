@@ -22,6 +22,7 @@ use Filament\Support\Enums\MaxWidth;
 use Filament\Support\RawJs;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Builder;
+use phpDocumentor\Reflection\Types\This;
 
 class SubscriptionInfo extends Widget implements HasActions, HasForms
 {
@@ -113,7 +114,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         ]), true);
                     })
                     ->form([
-                        ...static::setMatchmakerFormFields(),
+                        ...$this->setMatchmakerFormFields(),
                         DateTimePicker::make('start_date')
                             ->label('תאריך תחילת העבודה')
                             ->required()
@@ -147,7 +148,17 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                                     $fail('תאריך התשלום הבא חייב להיות מהחודש הנוכחי או אחרי');
                                 }
                             })
-                            ->default($record->status === 'hold' ? now() : $record->next_payment_date ?? now()),
+                            ->default(function () use ($record) {
+                                if($record->status === 'pending') {
+                                    return now()->addDays(4)->startOfDay();
+                                }
+
+                                if($record->next_payment_date->isPast()) {
+                                    return now();
+                                }
+
+                                return $record->next_payment_date;
+                            }),
                     ]);
             })
             ->size('lg');
@@ -183,11 +194,13 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                 ->placeholder('בחר שדכן')
                 ->searchable()
                 ->preload()
+                ->default($this->getSubscription()->user_id)
                 ->live(),
 
             Forms\Components\Select::make('work_day')
                 ->required()
                 ->label('יום פעילות לשדכן')
+                ->default($this->getSubscription()->work_day)
                 ->options(function (Forms\Get $get) {
 
                     $hasDays = collect();
@@ -216,48 +229,65 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
         return Action::make('setMatchmaker')
             ->label('הגדר שדכן')
             ->modalWidth(MaxWidth::Small)
+            ->icon('heroicon-o-user')
             ->form([
-                ...static::setMatchmakerFormFields(),
+                ...$this->setMatchmakerFormFields(),
             ])
             ->action(function (self $livewire, array $data){
                 $record = $livewire->getSubscription();
+
                 if($record->update([
                     'matchmaker_id' => $data['user_id'],
                     'work_day' => $data['work_day'],
                 ])) {
-                    $record->recordActivity($record->getOriginal('user_id') ? 'replace_matchmaker' : 'set_matchmaker', collect([
-                        'old' => $record->getOriginal('user_id'),
-                        'new' => $data['user_id'],
-                    ])->filter()->toArray());
+                    if($record->isDirty('user_id')) {
+                        $record->recordActivity($record->getOriginal('user_id') ? 'replace_matchmaker' : 'set_matchmaker', collect([
+                            'old' => $record->getOriginal('user_id'),
+                            'new' => $data['user_id'],
+                        ])->filter()->toArray());
+                    }
                 }
             });
+    }
+
+    public function cancelSubscription()
+    {
+        return Action::make('cancelSubscription')
+            ->label('בטל מנוי')
+            ->requiresConfirmation()
+            ->form([
+                Forms\Components\Textarea::make('reason')
+                    ->label('סיבת ביטול')
+                    ->required(),
+            ])
+            ->icon('heroicon-o-trash')
+            ->action(function (self $livewire, array $data) {
+                if($livewire->getSubscription()->update([
+                    'status' => 'canceled',
+                    'end_date' => now(),
+                ])) {
+                    $livewire->getSubscription()->recordActivity('cancel', [
+                        'reason' => $data['reason'] ?? null,
+                    ]);
+                }
+
+                $this->redirect(StudentResource::getUrl('subscription', [
+                    'record' => $livewire->record->id,
+                ]), true);
+            })
+            ->color('danger');
     }
 
     public function editBilling(): Action
     {
         return Action::make('editBilling')
             ->label('ערוך פרטי חיוב')
+            ->icon('heroicon-o-pencil')
             ->modalHeading('ערוך פרטי חיוב')
             ->slideOver()
             ->record($this->getSubscription())
             ->fillForm($this->getSubscription()->attributesToArray())
             ->modalSubmitActionLabel('עדכן')
-            ->extraModalFooterActions([
-                Action::make('deleteBilling')
-                    ->label('בטל מנוי')
-                    ->requiresConfirmation()
-                    ->icon('heroicon-o-x-mark')
-                    ->action(function (self $livewire) {
-                        $livewire->getSubscription()->update([
-                            'status' => 'canceled',
-                        ]);
-
-                        $this->redirect(StudentResource::getUrl('subscription', [
-                            'record' => $livewire->record->id,
-                        ]), true);
-                    })
-                    ->color('danger'),
-            ])
             ->modalWidth(MaxWidth::Small)
             ->action(function ($data, Action $action){
 
