@@ -18,11 +18,14 @@ use Filament\Forms\Components\Group;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Navigation\NavigationGroup;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Actions\DeleteAction as TableDeleteAction;
 use Filament\Tables\Columns;
 use Filament\Tables\Enums\FiltersLayout;
@@ -318,6 +321,34 @@ class ProposalResource extends Resource
                     ->icon('iconsax-bul-trash')
                     ->before(fn (Proposal $record) => $record->deleteDependencies())
                     ->tooltip('מחק הצעה'),
+            ])
+            ->bulkActions([
+                BulkAction::make('hidden')
+                    ->label('הסתר הצעות')
+                    ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->hide()),
+                BulkAction::make('hidden')
+                    ->label('ביטול הסתרה להצעות')
+                    ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->show()),
+                BulkAction::make('share')
+                    ->label('שתף הצעות')
+                    ->modalWidth(MaxWidth::Small)
+                    ->form([
+                        Forms\Components\Select::make('users')
+                            ->label('שדכנים')
+                            ->options(User::orderBy('name')->pluck('name', 'id'))
+                            ->multiple()
+                    ])
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                        $users = $records->map->share($data['users'])
+                            ->flatten(1)->unique('id');
+
+                        Notification::make()
+                            ->title(auth()->user()->name . " שיתף איתך {$records->count()} הצעות")
+                            ->icon('iconsax-bul-notification-bing')
+                            ->iconColor('primary')
+                            ->body('עבור כל אחת מהם קיבלת הודעה בתיבת ההתראות, על מנת להציג אותם עליך ללחוץ על הפעמון בצד שמאל של המסך למעלה')
+                            ->broadcast($users);
+                    }),
             ])
             ->recordClasses(fn (Proposal $proposal) => [
                 "bg-red-50 hover:bg-red-100" => $proposal->hidden_at,

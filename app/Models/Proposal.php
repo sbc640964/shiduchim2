@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Filament\Clusters\Settings\Pages\Statuses;
+use App\Filament\Resources\ProposalResource;
 use App\Models\Traits\HasActivities;
 use App\Models\Traits\HasProposalFilamentFormsFields;
 use Carbon\CarbonInterface;
@@ -20,6 +21,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Spatie\Tags\HasTags;
 use App\Models\SettingOld as Setting;
+use Filament\Notifications\Notification;
+
 
 class Proposal extends Model
 {
@@ -671,6 +674,30 @@ class Proposal extends Model
     public function getIsOpenAttribute()
     {
         return $this->opened_at && !$this->closed_at;
+    }
+
+    public function share(int|array $id): Collection
+    {
+        $result = $this->users()->syncWithoutDetaching(\Arr::wrap($id));
+
+        if(count($result['attached']) === 0) {
+            return collect();
+        }
+
+
+        $users = User::whereIn('id', $result['attached'])->get();
+
+        Notification::make()
+            ->title('שותפה אתך הצעת שידוך')
+            ->body(auth()->user()->name . " שיתף איתך הצעת שידוך " . $this->guy->full_name . ' ו' . $this->girl->full_name)
+            ->actions([
+                \Filament\Notifications\Actions\Action::make('get_to_page')
+                    ->label('פתח הצעת שידוך')
+                    ->url(ProposalResource::getUrl('view', ['record' => $this->getKey()]))
+            ])
+            ->sendToDatabase($users, isEventDispatched: true);
+
+        return $users;
     }
 
 }
