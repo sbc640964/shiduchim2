@@ -110,6 +110,7 @@ class WebhookGisController extends Controller
             'data_raw' => $callEvents,
             'unique_id' => $data['original_call_id'],
             'extension' => $call->extension ?? $extension,
+            'user_id' => !$call->extension ? ($user?->id ?? null) : $call->user_id ?? null,
         ];
 
         if ($action === 'answered') {
