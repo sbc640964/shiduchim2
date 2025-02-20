@@ -19,7 +19,7 @@
 
                     <span class="text-sm text-gray-500">
                         {{ $this->getSubscription()->statusLabel() }}
-                            @if('pending')
+                            @if($this->getSubscription()->status === 'pending')
                                 <div>
                                     <span
                                         class="text-xs border-b border-dashed opacity-80 hover:opacity-100 cursor-pointer">
