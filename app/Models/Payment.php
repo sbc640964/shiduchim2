@@ -98,7 +98,14 @@ class Payment extends Model
             ];
         }
 
-        $result = $result->json();
+        if(!$result->json()){
+            $result = [
+                'Result' => str($result->body())->contains(['העסקה בוטלה בהצלחה בשב"א', 'עסקה זו כבר בוטלה']) ? 'OK' : 'Error',
+                'Message' => $result->body(),
+            ];
+        } else {
+            $result = $result->json();
+        }
 
         if($result['Result'] === 'OK') {
             $this->update([
