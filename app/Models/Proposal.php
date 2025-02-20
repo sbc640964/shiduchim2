@@ -693,6 +693,7 @@ class Proposal extends Model
             ->actions([
                 \Filament\Notifications\Actions\Action::make('get_to_page')
                     ->label('פתח הצעת שידוך')
+                    ->markAsRead()
                     ->url(ProposalResource::getUrl('view', ['record' => $this->getKey()]))
             ])
             ->sendToDatabase($users, isEventDispatched: true);
