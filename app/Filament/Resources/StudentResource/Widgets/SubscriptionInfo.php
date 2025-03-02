@@ -4,7 +4,6 @@ namespace App\Filament\Resources\StudentResource\Widgets;
 
 use App\Filament\Resources\PersonResource\Pages\CreditCards;
 use App\Filament\Resources\StudentResource;
-use App\Filament\Resources\StudentResource\Pages\Subscription;
 use App\Models\CreditCard;
 use App\Models\Person;
 use App\Models\Subscriber;
@@ -22,7 +21,6 @@ use Filament\Support\Enums\MaxWidth;
 use Filament\Support\RawJs;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Builder;
-use phpDocumentor\Reflection\Types\This;
 
 class SubscriptionInfo extends Widget implements HasActions, HasForms
 {
@@ -295,13 +293,23 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     $data['end_date'] = Carbon::make($data['start_date'])->addMonths($data['payments']);
                 }
 
-                if($data['payments'] ?? null) {
+                if(($data['payments'] ?? null)) {
                     $okTransactions = $this->record->lastSubscription
                         ->transactions()->whereStatus('OK')->count();
 
                     $balance = $data['payments'] - $okTransactions;
 
                     $data['balance_payments'] = $balance;
+
+                    $oldPaymentsValue = $this->record->lastSubscription->payments;
+
+                    if($oldPaymentsValue && $data['payments'] != $oldPaymentsValue) {
+                        if($data['payments'] < $oldPaymentsValue) {
+                            $data['end_date'] = $this->record->lastSubscription->end_date->copy()->subMonths($oldPaymentsValue - $data['payments']);
+                        } else {
+                            $data['end_date'] = $this->record->lastSubscription->end_date->copy()->addMonths($data['payments'] - $oldPaymentsValue);
+                        }
+                    }
                 }
 
                 $this->record
