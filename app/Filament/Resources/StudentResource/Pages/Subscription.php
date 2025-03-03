@@ -274,13 +274,12 @@ class Subscription extends ManageRelatedRecords
                         ->required(),
 
                     Forms\Components\Toggle::make('join')
-                        ->visible(fn(Forms\Get $get) => $get('amount') === $this->getRecord()->lastSubscription->amount)
                         ->label('צרף את התשלום כחלק מהו"ק')
                         ->helperText('אם התשלום יצורף המנוי תשלומי היתרה ותאריך הבא יעודכנו')
                         ->rule('max:255'),
                 ])
                 ->action(fn (array $data) => $this->getRecord()->lastSubscription
-                    ->charge(true, $data['join'], $data['amount']))
+                    ->charge(true, $data['join'] ?? ($data['amount'] == $this->getRecord()->lastSubscription->amount), $data['amount']))
 
                 ,
                 Tables\Actions\CreateAction::make()
