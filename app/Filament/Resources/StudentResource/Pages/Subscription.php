@@ -270,7 +270,7 @@ class Subscription extends ManageRelatedRecords
                     Forms\Components\TextInput::make('amount')
                         ->label('סכום')
                         ->numeric()
-                        ->default($this->getRecord()->lastSubscription->amount)
+                        ->default($this->getRecord()->lastSubscription?->amount)
                         ->required(),
 
                     Forms\Components\Toggle::make('join')
