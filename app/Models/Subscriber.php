@@ -80,7 +80,7 @@ class Subscriber extends Model
         });
     }
 
-    public function charge(?bool $force = false, ?bool $joinTheDirectDebit = true): void
+    public function charge(?bool $force = false, ?bool $joinTheDirectDebit = true, int|float|null $amount = null): void
     {
         if($this->method !== 'credit_card') {
             // $this->notifyAdmin($subscriber);
@@ -95,13 +95,15 @@ class Subscriber extends Model
             return;
         }
 
-        $result = Nedarim::chargeDirectDebit($this->creditCard->token, $this->amount);
+        $amount = $amount ?? $this->amount;
+
+        $result = Nedarim::chargeDirectDebit($this->creditCard->token, $amount);
 
         $payment = $this->transactions()->create([
             "credit_card_id" => $this->credit_card_id,
             "student_id" => $this->student->getKey(),
             "status" => $result['Status'],
-            "amount" => $this->amount,
+            "amount" => $amount,
             "paid_at" => now(),
             "description" => $joinTheDirectDebit ? ("תשלום עבור " . Carbon::make($this->next_payment_date)->locale('he')->translatedFormat('F-Y') . ($force ? '*' : '')) : "זוהי פעולה יזומה שלא צורפה להוראת הקבע",
             "status_message" => $result['Message'] ?? null,
