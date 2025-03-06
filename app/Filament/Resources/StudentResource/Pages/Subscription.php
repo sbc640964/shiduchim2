@@ -203,6 +203,7 @@ class Subscription extends ManageRelatedRecords
             ->emptyStateDescription('בעת פעולת חיוב במנוי תוכל לראות אותה כאן ')
             ->emptyStateIcon('heroicon-o-credit-card')
             ->recordTitleAttribute('last4')
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('תאריך')
