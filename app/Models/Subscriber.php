@@ -42,6 +42,7 @@ class Subscriber extends Model
     protected static array $defaultActivityDescription = [
         'run' => 'הפעלת מנוי',
         'hold' => 'השהיית מנוי',
+        'married' => 'שינוי סטטוס לנשוי',
         'completed' => 'השלמת מנוי',
         'cancel' => 'ביטול מנוי',
         'update' => 'עדכון מנוי',
