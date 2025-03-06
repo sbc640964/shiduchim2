@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Filament\Clusters\Settings\Pages\Statuses;
+use App\Filament\Resources\ProposalResource;
+use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,6 +46,39 @@ class Diary extends Model
     ];
 
     protected $touches = ['proposal'];
+
+    protected static function booted(): void
+    {
+        static::created(function (Diary $model) {
+            $proposal = $model->proposal;
+            $otherProposalsUsers = $proposal->users()->where('user_id', '!=', $model->created_by)->get();
+
+            //send notification to other matchmakers in the proposal
+            Notification::make()
+                ->title('התקדמות בהצעה')
+                ->body(auth()->user()->name . " הוסיף תיעוד בהצעת שידוך שמשותפת אתך " . $proposal->guy->full_name . ' ו' . $proposal->girl->full_name)                ->icon('iconsax-bul-notification-bing')
+                ->iconColor('primary')
+                ->actions([
+                    \Filament\Notifications\Actions\Action::make('get_to_page')
+                        ->label('פתח הצעת שידוך')
+                        ->markAsRead()
+                        ->url(ProposalResource::getUrl('view', ['record' => $proposal->getKey()]))
+                ])
+                ->broadcast($otherProposalsUsers);
+
+            Notification::make()
+                ->title('התקדמות בהצעה')
+                ->body(auth()->user()->name . " הוסיף תיעוד בהצעת שידוך שמשותפת אתך " . $proposal->guy->full_name . ' ו' . $proposal->girl->full_name)
+                ->actions([
+                    \Filament\Notifications\Actions\Action::make('get_to_page')
+                        ->label('פתח הצעת שידוך')
+                        ->markAsRead()
+                        ->url(ProposalResource::getUrl('view', ['record' => $proposal->getKey()]))
+                ])
+                ->sendToDatabase($otherProposalsUsers, isEventDispatched: true);
+
+        });
+    }
 
     public function model(): MorphTo
     {
