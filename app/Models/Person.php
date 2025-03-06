@@ -6,6 +6,7 @@ use App\Filament\Resources\PersonResource;
 use App\Models\Pivot\PersonFamily;
 use App\Services\Nedarim;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,12 +23,10 @@ use Spatie\Tags\HasTags;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Staudenmeir\EloquentHasManyDeep\HasTableAlias;
-use Filament\Forms;
 
 class Person extends Model
 {
-    use HasFactory,
-        HasRelationships,
+    use HasRelationships,
         HasTableAlias,
         HasTags,
         Traits\HasFormEntries,
@@ -424,7 +423,9 @@ class Person extends Model
     //        return parent::__call($method, $parameters);
     //    }
 
-    /*********** Methods ***********/
+    /*********** Methods **********
+     * @throws \Throwable
+     */
 
     public function married(Person $person, Carbon $date, ?Proposal $proposal = null): ?Family
     {
@@ -434,7 +435,7 @@ class Person extends Model
 
         $thisPerson = $this;
 
-        return \DB::transaction(function () use ($proposal, $person, $date, $thisPerson) {
+        return DB::transaction(function () use ($proposal, $person, $date, $thisPerson) {
 
             $newFamily = Family::create([
                 'status' => 'married',
@@ -462,12 +463,26 @@ class Person extends Model
 
             if($person->lastSubscription) {
                 $person->lastSubscription->status = 'married';
-                $person->lastSubscription->save();
+                $person->lastSubscription->save() && $person
+                    ->lastSubscription->recordActivity(
+                        'married',
+                        [
+                            'hold_status' => $person->lastSubscription->status,
+                            'person_id' => $thisPerson->id
+                        ],
+                    );
             }
 
             if($thisPerson->lastSubscription) {
                 $thisPerson->lastSubscription->status = 'married';
-                $thisPerson->lastSubscription->save();
+                $thisPerson->lastSubscription->save() && $thisPerson
+                    ->lastSubscription->recordActivity(
+                        'married',
+                        [
+                            'hold_status' => $thisPerson->lastSubscription->status,
+                            'person_id' => $person->id
+                        ],
+                    );
             }
 
             $otherProposals = Proposal::query()
@@ -482,42 +497,63 @@ class Person extends Model
         });
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function reMarried(?Proposal $proposal = null): ?Family
     {
-        $spouse = $this->spouse;
-        $family = $this->family;
+        DB::beginTransaction();
 
-        $this->current_family_id = null;
-        $this->spouse_id = null;
-        $this->father_in_law_id = null;
-        $this->mother_in_law_id = null;
+        try {
+            $spouse = $this->spouse;
+            $family = $this->family;
 
-        $spouse->current_family_id = null;
-        $spouse->spouse_id = null;
-        $spouse->father_in_law_id = null;
-        $spouse->mother_in_law_id = null;
+            $this->current_family_id = null;
+            $this->spouse_id = null;
+            $this->father_in_law_id = null;
+            $this->mother_in_law_id = null;
 
-        $this->save();
-        $spouse->save();
+            $spouse->current_family_id = null;
+            $spouse->spouse_id = null;
+            $spouse->father_in_law_id = null;
+            $spouse->mother_in_law_id = null;
 
-        $family->people()->detach([$this->id, $spouse->id]);
+            $this->save();
+            $lastSubscriptionStatus = $this->lastSubscription->activities()->where('status', 'married')->latest()->first()?->data['hold_status'] ?? 'hold';
+            $this->lastSubscription->status = $lastSubscriptionStatus;
+            $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
 
-        $proposals = Proposal::query()
-            ->withoutGlobalScope('withoutClosed')
-            ->with('lastDiary')
-            ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
-            ->whereHas('people', fn (Builder $query) => $query
-                ->whereIn('id', [$this->id, $spouse->id])
-            )->get();
+            $spouse->save();
+            $lastSubscriptionStatus = $spouse->lastSubscription->activities()->where('status', 'married')->latest()->first()?->data['hold_status'] ?? 'hold';
+            $spouse->lastSubscription->status = $lastSubscriptionStatus;
+            $spouse->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
 
-        $proposals->each(function (Proposal $proposal) {
-            $proposal->reopen(
-                status: $proposal->lastDiary->data['statuses']['proposal'] ?? null,
-                changeStatusOnly: true
-            );
-        });
+            $family->people()->detach([$this->id, $spouse->id]);
 
-        return $family;
+            $proposals = Proposal::query()
+                ->withoutGlobalScope('withoutClosed')
+                ->with('lastDiary')
+                ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
+                ->whereHas('people', fn (Builder $query) => $query
+                    ->whereIn('id', [$this->id, $spouse->id])
+                )->get();
+
+            $proposals->each(function (Proposal $proposal) {
+                $proposal->reopen(
+                    status: $proposal->lastDiary->data['statuses']['proposal'] ?? null,
+                    changeStatusOnly: true
+                );
+            });
+
+            DB::commit();
+
+            return $family;
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+        }
+
+        return null;
     }
 
     public function marriedExternal(int $with, ?Carbon $date = null, ?int $matchmaker = null): Proposal
@@ -581,7 +617,7 @@ class Person extends Model
 
         $relatives->groupBy('gender');
 
-        $relativesSync = [];
+//        $relativesSync = [];
 
         //TODO: Add relatives to $relativesSync and sync with person relatives table
 
