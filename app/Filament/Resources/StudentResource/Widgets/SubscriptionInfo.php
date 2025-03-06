@@ -41,6 +41,26 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
         return $this->record;
     }
 
+    public function activities(): Action
+    {
+        return Action::make('activities')
+            ->label('היסטוריית מנוי')
+            ->icon('heroicon-o-clock')
+            ->slideOver()
+            ->modalHeading('היסטוריית מנוי')
+            ->modalContent(function () {
+                $activities = $this->getSubscription()->activities()->with('user')->get();
+                $users = User::findMany([
+                    ...$activities->pluck('data.old'),
+                    ...$activities->pluck('data.new'),
+                ]);
+                return view('filament.resources.student-resource.widgets.subscription-activities', [
+                    'activities' => $activities,
+                    'users' => $users,
+                ]);
+            });
+    }
+
     public function toggleSubscription(): Action
     {
         $record = $this->getSubscription();
@@ -234,13 +254,18 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->action(function (self $livewire, array $data){
                 $record = $livewire->getSubscription();
 
-                if($record->update([
-                    'matchmaker_id' => $data['user_id'],
+                $record->fill([
+                    'user_id' => $data['user_id'],
                     'work_day' => $data['work_day'],
-                ])) {
-                    if($record->isDirty('user_id')) {
-                        $record->recordActivity($record->getOriginal('user_id') ? 'replace_matchmaker' : 'set_matchmaker', collect([
-                            'old' => $record->getOriginal('user_id'),
+                ]);
+
+                $oldUser = $record->getOriginal('user_id');
+                $userIdIsDirty = $record->isDirty('user_id');
+
+                if($record->save()) {
+                    if($userIdIsDirty) {
+                        $record->recordActivity($oldUser ? 'replace_matchmaker' : 'set_matchmaker', collect([
+                            'old' => $oldUser,
                             'new' => $data['user_id'],
                         ])->filter()->toArray());
                     }
