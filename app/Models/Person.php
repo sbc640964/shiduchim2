@@ -803,4 +803,12 @@ class Person extends Model
     {
         return $this->hasMany(Payment::class, 'student_id');
     }
+
+    public function getCurrentSubscriptionMatchmakerAttribute(): ?string
+    {
+        if($this->lastSubscription?->status === 'active') {
+            return $this->lastSubscription->matchmaker?->name;
+        }
+        return null;
+    }
 }

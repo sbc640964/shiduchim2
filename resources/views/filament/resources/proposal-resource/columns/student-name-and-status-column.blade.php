@@ -13,7 +13,17 @@
             class="hover:underline hover:text-gray-700 transition decoration-dotted decoration-1 decoration-gray-400"
             href="{{ \App\Filament\Resources\StudentResource::getUrl('proposals', ['record' => $student->id]) }}"
         >
-            <div class="font-bold">{{ $student->full_name }}</div>
+            <div class="font-bold">
+                {{ $student->full_name }}
+                @if($student->current_subscription_matchmaker)
+                    <span class="inline-block ms-1 bg-yellow-100 ring-1 ring-yellow-600 rounded-full p-0.5 text-yellow-600">
+                        <x-icon
+                            class="w-3 h-3 focus:outline-none"
+                            name="heroicon-o-user"
+                            x-tooltip.raw="שדכן מטפל: {{ $student->current_subscription_matchmaker }}"
+                        /></span>
+                @endif
+            </div>
         </a>
         <div class="text-sm">{{ $student->parents_info }}</div>
     </div>

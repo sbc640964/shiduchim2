@@ -66,6 +66,7 @@ class StudentResource extends Resource
             'schools',
             'parentsFamily.city',
             'father.school',
+            'lastSubscription.matchmaker',
         ]);
     }
 
@@ -95,13 +96,14 @@ class StudentResource extends Resource
                 ->weight('bold')
                 ->searchable()
                 ->sortable(),
-
             TextColumn::make('first_name')
                 ->label('שם פרטי')
                 ->weight('bold')
                 ->searchable()
                 ->sortable(),
-            //
+            TextColumn::make('current_subscription_matchmaker')
+                ->label('שדכן מטפל')
+                ->badge(),
             TextColumn::make('city')
                 ->state(fn (Person $person) => $person->city?->name ?? $person->parentsFamily?->city?->name)
                 ->label('עיר')
