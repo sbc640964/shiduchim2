@@ -328,8 +328,8 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
 
                     $oldPaymentsValue = $this->record->lastSubscription->payments;
 
-                    if($oldPaymentsValue && $data['payments'] != $oldPaymentsValue) {
-                        if($data['payments'] < $oldPaymentsValue && $this->record->lastSubscription->end_date) {
+                    if($oldPaymentsValue && $data['payments'] != $oldPaymentsValue && $this->record->lastSubscription->end_date) {
+                        if($data['payments'] < $oldPaymentsValue) {
                             $data['end_date'] = $this->record->lastSubscription->end_date->copy()->subMonths($oldPaymentsValue - $data['payments']);
                         } else {
                             $data['end_date'] = $this->record->lastSubscription->end_date->copy()->addMonths($data['payments'] - $oldPaymentsValue);
