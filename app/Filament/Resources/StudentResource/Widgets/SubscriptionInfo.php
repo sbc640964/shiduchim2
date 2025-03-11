@@ -337,9 +337,15 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     }
                 }
 
-                $this->record
-                    ->lastSubscription
-                    ->update($data);
+                $originalData = $this->record->lastSubscription->getOriginal();
+
+                \DB::transaction(fn() => tap(
+                    $this->record->lastSubscription->update($data),
+                    fn() => $this->record->lastSubscription->recordActivity('update', [
+                        'old' => collect($originalData)->only(array_keys($this->record->lastSubscription->getChanges()))->toArray(),
+                        'new' => collect($data)->only(array_keys($this->record->lastSubscription->getChanges()))->toArray(),
+                    ])
+                ));
 
                 $action->successNotificationTitle('הפרטים נשמרו בהצלחה');
 

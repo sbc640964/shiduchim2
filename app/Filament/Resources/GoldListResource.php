@@ -255,6 +255,17 @@ class GoldListResource extends Resource
                 ->date('d/m/Y')
                 ->description(fn (Subscriber $record) => 'רישום: ' .$record->created_at->diffForHumans())
                 ->sortable(),
+            TextColumn::make('payments')
+                ->label('חודש פעילות')
+                ->badge()
+                ->color(fn (Subscriber $record) => match ($record->balance_payments) {
+                    1 => 'danger',
+                    2 => 'warning',
+                    3,4 => 'success',
+                    default => 'gray',
+                })
+                ->formatStateUsing(fn (Subscriber $record) => $record->balance_payments . '/' . $record->payments . ' חודשים')
+                ->sortable(['balance_payments', 'payments']),
             Tables\Columns\Layout\Stack::make([
                 TextColumn::make('status')
                     ->badge()
