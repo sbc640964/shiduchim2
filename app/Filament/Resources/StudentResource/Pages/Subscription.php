@@ -254,7 +254,7 @@ class Subscription extends ManageRelatedRecords
                     )
                     ->label('מנוי'),
 
-                Tables\Filters\SelectFilter::make('subscribers.status')
+                Tables\Filters\SelectFilter::make('payments.status')
                     ->options([
                         'OK' => 'הצליח',
                         'Error' => 'נכשל',
