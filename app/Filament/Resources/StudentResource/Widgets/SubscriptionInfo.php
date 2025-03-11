@@ -318,6 +318,8 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                     $data['end_date'] = Carbon::make($data['start_date'])->addMonths($data['payments']);
                 }
 
+                $isNeedCharge = false;
+
                 if(($data['payments'] ?? null)) {
                     $okTransactions = $this->record->lastSubscription
                         ->transactions()->whereStatus('OK')->count();
@@ -334,24 +336,39 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         } else {
                             $data['end_date'] = $this->record->lastSubscription->end_date->copy()->addMonths($data['payments'] - $oldPaymentsValue);
                         }
+
+                        if($this->record->lastSubscription->status === 'completed') {
+                            $data['status'] = 'active';
+                            if($this->record->lastSubscription->next_payment_date->isPast()) {
+                                $isNeedCharge = true;
+                            }
+                        }
                     }
                 }
 
+                $this->record->lastSubscription->fill($data);
+
                 $originalData = $this->record->lastSubscription->getOriginal();
 
-                \DB::transaction(fn() => tap(
-                    $this->record->lastSubscription->update($data),
+                $updated = \DB::transaction(fn() => tap(
+                    $this->record->lastSubscription->save(),
                     fn() => $this->record->lastSubscription->recordActivity('update', [
                         'old' => collect($originalData)->only(array_keys($this->record->lastSubscription->getChanges()))->toArray(),
                         'new' => collect($data)->only(array_keys($this->record->lastSubscription->getChanges()))->toArray(),
                     ])
                 ));
 
-                $action->successNotificationTitle('הפרטים נשמרו בהצלחה');
+                if($updated && $isNeedCharge) {
+                    $this->record->lastSubscription->charge();
+                    $action->successNotificationTitle('הפרטים נשמרו בהצלחה');
+                    $action->success();
+                    $this->getSubscription()->refresh();
 
-                $action->success();
+                    return;
+                }
 
-                $this->getSubscription()->refresh();
+                $action->failureNotificationTitle('הפרטים נשמרו בהצלחה');
+                $action->failure();
             })
             ->form(function (Form $form) {
                 return $form->schema(fn (Subscriber $record) => [
