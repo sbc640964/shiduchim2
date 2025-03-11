@@ -100,7 +100,7 @@
                             {{Number::currency($this->getSubscription()->transactions->where('is_join')->where('status', 'OK')->sum('amount'), in: 'ILS')}}
                         </div>
                         <div class="text-sm text-gray-400">
-                            ב {{ $this->getSubscription()->transactions->where('is_join')->count() }} תשלומים, מתוך {{ $this->getSubscription()->payments }}
+                            ב {{ $this->getSubscription()->transactions->where('is_join')->where('is_join')->where('status', 'OK')->count() }} תשלומים, מתוך {{ $this->getSubscription()->payments }}
                         </div>
                     </div>
                 </div>
@@ -127,10 +127,10 @@
                 <div class="flex gap-2">
                     <div>
                         <div class="font-bold text-3xl">
-                            {{Number::currency($this->getSubscription()->transactions->where('is_join', false)->sum('amount'), in: 'ILS')}}
+                            {{Number::currency($this->getSubscription()->transactions->where('is_join', false)->where('status', 'OK')->sum('amount'), in: 'ILS')}}
                         </div>
                         <div class="text-sm text-gray-400">
-                            ב {{ $this->getSubscription()->transactions->where('is_join', false)->count() }} תשלומים
+                            ב {{ $this->getSubscription()->transactions->where('status', 'OK')->where('is_join', false)->count() }} תשלומים
                         </div>
                     </div>
                 </div>

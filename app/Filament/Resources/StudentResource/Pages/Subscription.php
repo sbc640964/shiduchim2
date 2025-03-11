@@ -257,7 +257,9 @@ class Subscription extends ManageRelatedRecords
                 Tables\Filters\SelectFilter::make('subscribers.status')
                     ->options([
                         'OK' => 'הצליח',
-                        'FAILED' => 'נכשל',
+                        'Error' => 'נכשל',
+                        'cancelled' => 'בוטל',
+                        'refunded' => 'הוחזר',
                     ])
                     ->label('סטטוס'),
             ])
