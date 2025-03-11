@@ -97,7 +97,7 @@
                 <div class="flex gap-2">
                     <div>
                         <div class="font-bold text-3xl">
-                            {{Number::currency($this->getSubscription()->transactions->where('is_join')->sum('amount'), in: 'ILS')}}
+                            {{Number::currency($this->getSubscription()->transactions->where('is_join')->where('status', 'OK')->sum('amount'), in: 'ILS')}}
                         </div>
                         <div class="text-sm text-gray-400">
                             ב {{ $this->getSubscription()->transactions->where('is_join')->count() }} תשלומים, מתוך {{ $this->getSubscription()->payments }}

@@ -280,6 +280,7 @@ class GoldListResource extends Resource
                         'hold' => 'מושהה',
                         'pending' => 'ממתין',
                         'married' => 'נשוי',
+                        'canceled' => 'בוטל',
                         default => $state,
                     })
                     ->label('סטטוס'),
