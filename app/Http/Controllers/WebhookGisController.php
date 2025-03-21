@@ -74,9 +74,13 @@ class WebhookGisController extends Controller
 
         $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
-        $lock = Cache::lock($lockKey, 10)->block(10); // 5 שניות נעילה
+        $lock = Cache::lock($lockKey, 3);
 
-        $call = $this->resolveCall($data, $extension, $phoneNumber);
+        $call = null;
+
+        if($lock->get()) {
+            $call = $this->resolveCall($data, $extension, $phoneNumber);
+        }
 
         if ($action === 'ring' && ! $isOutgoing) {
             if($call && $extension) {
@@ -103,7 +107,9 @@ class WebhookGisController extends Controller
             );
         }
 
-
+        if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
+            $lock->release();
+        }
 
         if (! $call) {
             return 'Error: Call not found';
@@ -144,10 +150,6 @@ class WebhookGisController extends Controller
         }
 
         CallActivityEvent::dispatch($user, $call);
-
-        if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
-            $lock->release();
-        }
 
         return 'OK';
     }
