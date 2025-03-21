@@ -76,9 +76,9 @@ class WebhookGisController extends Controller
 
             $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
-            $lock = Cache::lock($lockKey, 10); // 5 שניות נעילה
+            $lock = Cache::lock($lockKey, 10)->block(10); // 5 שניות נעילה
 
-            if($lock->get()) {
+            if($lock) {
                 try {
                     $this->createCall($data, $extension, $phoneNumber, $phone, $user);
                     return 'Call created';
