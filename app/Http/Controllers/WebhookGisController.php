@@ -10,6 +10,7 @@ use App\Models\Person;
 use App\Models\Phone;
 use App\Models\User;
 use App\Services\PhoneCallGis\ActiveCall;
+use Cache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Str;
@@ -76,22 +77,35 @@ class WebhookGisController extends Controller
             return 'Call created';
         }
 
-        $call = $this->resolveCall($data, $extension, $phoneNumber);
 
-        if(! $call
-            && (
-                ($data['action'] === 'answered' && $isOutgoing)
-                || ($data['action'] === 'missed' && ! $isOutgoing)
-            )
-        ) {
-           $call = $this->createCall(
-               $data,
-               $extension,
-               $phoneNumber,
-               $phone,
-               $user,
-               $isOutgoing
-           );
+        $lockKey = 'lock:call:' . $data['original_call_id'];
+
+        $lock = Cache::lock($lockKey, 5); // 5 שניות נעילה
+
+        $call = null;
+
+        if ($lock->get()) {
+            try {
+                $call = $this->resolveCall($data, $extension, $phoneNumber);
+
+                if(! $call
+                    && (
+                        ($data['action'] === 'answered' && $isOutgoing)
+                        || ($data['action'] === 'missed' && ! $isOutgoing)
+                    )
+                ) {
+                   $call = $this->createCall(
+                       $data,
+                       $extension,
+                       $phoneNumber,
+                       $phone,
+                       $user,
+                       $isOutgoing
+                   );
+                }
+            } finally {
+                $lock->release();
+            }
         }
 
 
