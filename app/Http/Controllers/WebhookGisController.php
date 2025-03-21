@@ -72,24 +72,27 @@ class WebhookGisController extends Controller
             : $data['from_phone']
         );
 
-        $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
-
-        $lock = Cache::lock($lockKey, 3);
-
-        $call = null;
-
-        if($lock->get()) {
-            $call = $this->resolveCall($data, $extension, $phoneNumber);
-        }
 
         if ($action === 'ring' && ! $isOutgoing) {
+            $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
+
+            $lock = Cache::lock($lockKey, 3)->block(3);
+
+            $call = $this->resolveCall($data, $extension, $phoneNumber);
+
             if($call && $extension) {
                 $call->update(['extension' => $extension]);
             } else {
                 $this->createCall($data, $extension, $phoneNumber, $phone, $user);
                 return 'Call created';
             }
+
+            if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
+                $lock->release();
+            }
         }
+
+        $call = $this->resolveCall($data, $extension, $phoneNumber);
 
         if (! $call
             && (
@@ -105,10 +108,6 @@ class WebhookGisController extends Controller
                 $user,
                 $isOutgoing
             );
-        }
-
-        if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
-            $lock->release();
         }
 
         if (! $call) {
