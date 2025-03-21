@@ -52,14 +52,6 @@ class WebhookGisController extends Controller
 
         $user = $this->resolveUser($isOutgoing ? $data['from_phone'] : $data['target_phone'], $extension);
 
-        context([
-            'user' => $user,
-            'phone' => $phone,
-            'extension' => $extension,
-            'isOutgoing' => $isOutgoing,
-            'action' => $data['action']
-        ]);
-
         CallDiary::create([
             'event' => $data['action'],
             'call_id' => $data['original_call_id'],
@@ -143,13 +135,6 @@ class WebhookGisController extends Controller
 
         CallActivityEvent::dispatch($user, $call);
 
-        context([
-            'call' => $call,
-            'updateAttributes' => $updateAttributes,
-        ]);
-
-        \Log::info('test gis');
-
         return 'OK';
     }
 
@@ -162,7 +147,7 @@ class WebhookGisController extends Controller
             : $data['from_phone']
         );
 
-        $call = Call::whereUniqueId($data['original_call_id'])->first();
+        $call = Call::whereUniqueId($data['original_call_id'])->lockForUpdate()->first();
 
         if ($call) {
             return $call;
