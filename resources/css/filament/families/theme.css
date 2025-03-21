@@ -173,3 +173,11 @@ td.description-diary p{
 .hidden-label-btn .fi-btn-label{
     @apply hidden;
 }
+
+.fi-main-ctn:has(.drawer-opened:not([style*="display: none"])) {
+    margin-inline-end: 420px;
+}
+
+.fi-main-ctn {
+    transition: margin-inline-end 0.3s;
+}

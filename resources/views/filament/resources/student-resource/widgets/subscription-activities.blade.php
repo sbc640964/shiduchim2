@@ -12,7 +12,6 @@
         </thead>
         <tbody>
         @foreach($activities as $activity)
-{{--            @php(//** @var \App\Models\Activity $activity */)--}}
             <tr class="last:border-b">
                 <td class="text-gray-800 text-sm px-3 py-2 border-t">{{ $activity->created_at->format('d/m/Y H:i') }}</td>
                 <td class="text-gray-800 text-sm px-3 py-2 border-t">{{ $activity->user->name }}</td>

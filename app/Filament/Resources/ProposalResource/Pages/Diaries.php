@@ -6,6 +6,7 @@ use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\ProposalResource\Traits\DiariesComponents;
 use App\Http\Controllers\WebhookGisController;
 use App\Models\Call;
+use App\Models\Diary;
 use App\Models\Person;
 use App\Models\Proposal;
 use App\Models\Task;
@@ -57,13 +58,13 @@ class Diaries extends ManageRelatedRecords
         return $query;
     }
 
-    public static function createNewDiary($data, Proposal $record, $side)
+    public static function createNewDiary($data, Proposal $record, $side): ?Diary
     {
         $data['data'] = array_merge(
             [
                 'date' => now()->format('Y-m-d H:i:s'),
             ],
-            $data['data']
+            $data['data'] ?? []
         );
 
         $call = null;
@@ -91,13 +92,13 @@ class Diaries extends ManageRelatedRecords
                 'data' => [
                     'contact_to' => $task['contact_to'] ?? null,
                 ]
-            ])->toArray();
+            ]);
 
             $completedTask = data_get($data, 'completed_tasks', []);
 
             $data = \Arr::except($data, ['tasks', 'completed_tasks']);
 
-            $data['data']['tasks'] = $record->tasks()->createMany($newTasks);
+            $newTasks->isNotEmpty() && $data['data']['tasks'] = $record->tasks()->createMany($newTasks->toArray());
 
             $currentStatuses = [
                 'proposal' => $record->status,
@@ -124,7 +125,7 @@ class Diaries extends ManageRelatedRecords
                 })->filter()->keys()->toArray()
                 : [];
 
-            $diary->update([
+            count($completedTask) && $diary->update([
                 'data' => array_merge($diary->data, [
                     'completed_tasks' => $completedTask,
                 ]),
@@ -138,7 +139,7 @@ class Diaries extends ManageRelatedRecords
                 'status' => $data['statuses']['proposal'],
             ], $side ? [
                 "status_$side" => $data['statuses'][$side],
-                "{$side}_next_time" => $data['next_date'],
+                "{$side}_next_time" => $data['next_date'] ?? null,
             ] : [], ($changeNextDates && ! $side) ? [
                 'girl_next_time' => $data['next_date'],
                 'guy_next_time' => $data['next_date'],
@@ -149,6 +150,8 @@ class Diaries extends ManageRelatedRecords
             $record->people->each->update([
                 'last_diary_id' => $diary->id,
             ]);
+
+            return $diary;
         });
     }
 }

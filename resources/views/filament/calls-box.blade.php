@@ -1,16 +1,23 @@
 <div
-    class="h-16 group/card"
+    class="test-ttt h-16 group/card"
     wire:refresh-calls-box.window="$refresh"
+    x-data="{ hasCall: {{$this->hasCall()}}, toggle: () => $wire.isOpen = !$wire.isOpen }"
 >
     @if($this->hasCall())
-        <div class="px-8 grid grid-cols-1 gap-2 h-16 bg-white transition-all group-hover/card:h-auto group-hover/card:rounded-b-xl group-hover/card:py-8 group-hover/card:shadow-2xl">
-            <div class="items-center group-hover/card:flex-col flex gap-2">
+        <button x-on:click="toggle" class="hover:bg-slate-50 px-8 text-start grid grid-cols-1 gap-2 h-16 bg-white transition-all">
+            <div wire:show="isOpen" class="items-center flex">
+                <x-filament::button tag="a" :outlined="true" color="gray" class="whitespace-nowrap !block">
+                    סגור חלון שיחה
+                </x-filament::button>
+            </div>
+
+            <div wire:show="!isOpen" class="items-center flex gap-2">
                 <div class="flex-shrink flex items-center">
                     <div class="rounded-full flex justify-center p-1 bg-success-100 items-center">
                         <x-iconsax-bul-call class="w-8 h-8 text-success-600"/>
                     </div>
                 </div>
-                <div class="group-hover/card:flex flex-col items-center">
+                <div class="flex-col items-center">
                     <h3 class="leading-tight font-semibold">
                         {{ $this->getStatusLabel() }}
                     </h3>
@@ -19,35 +26,22 @@
                     </p>
                 </div>
             </div>
-
-            <div class="hidden group-hover/card:flex items-center justify-center gap-2 text-center text-gray-600 text-sm">
-                <div>
-                    {{ $this->getCall()->phone }}
-                </div>
-                <div>
-                    {{ $this->forceEndTheCall }}
-                </div>
-            </div>
-
-            @foreach($this->getPersons() as $person)
-                @if(($countProposals = $person->getProposalsCount()) > 0)
-                    <div class="hidden group-hover/card:block">
-                        <x-filament::button
-                            size="sm"
-                            icon="iconsax-bul-lamp-charge"
-                            tag="a"
-                            :outlined="true"
-                            badge="{{ $countProposals }}"
-                            href="{{ $person->getProposalsUrl() }}"
-                        >
-                            עבור להצעות הקשורות
-                        </x-filament::button>
-                    </div>
-                @endif
-            @endforeach
-        </div>
+        </button>
     @endif
 
         <x-filament-actions::modals />
+
+        <div
+            wire:show="isOpen"
+            class="drawer-opened fixed end-0 top-0 w-[420px] h-screen z-50 overflow-auto bg-white shadow-lg"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 -translate-x-full"
+            x-transition:enter-end="opacity-100 translate-x-0"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100 translate-x-0"
+            x-transition:leave-end="opacity-0 -translate-x-full"
+        >
+            <livewire:active-call-drawer :current-call="$this->getCall()" :key="$this->getCall()?->id" />
+        </div>
 </div>
 

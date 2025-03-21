@@ -135,6 +135,9 @@ class FamiliesPanelProvider extends PanelProvider
             ->renderHook(TablesRenderHook::TOOLBAR_START, function () {
                 return ReportsProposalsTableWidget::getTabsElement();
             }, ReportsProposalsTableWidget::class )
+//            ->renderHook(PanelsRenderHook::PAGE_END, function () {
+//                return Blade::render('@livewire(\'active-call-drawer\')');
+//            })
             ->userMenuItems([
                 MenuItem::make()
                     ->label('יומן שעות')

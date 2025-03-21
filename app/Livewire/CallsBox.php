@@ -10,12 +10,16 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 class CallsBox extends Component implements HasActions, HasForms
 {
     use InteractsWithActions;
     use InteractsWithForms;
+
+    public bool $isOpen = false;
+
     /**
      * @var Collection<Call>|null
      */
@@ -24,6 +28,11 @@ class CallsBox extends Component implements HasActions, HasForms
     protected ?int $countPersonProposals = null;
 
     public bool $show = false;
+
+    public function toggle(): void
+    {
+        $this->isOpen = !$this->isOpen;
+    }
 
     public function render()
     {
@@ -56,23 +65,7 @@ class CallsBox extends Component implements HasActions, HasForms
 
     public function getDialName()
     {
-        $call = $this->getCall();
-
-        if (! $call) {
-            return null;
-        }
-
-        $model = $call->phoneModel?->model;
-
-        if (! $model) {
-            return $call->phone;
-        }
-
-        if ($model instanceof Family) {
-            return "משפ' ".$model->name;
-        }
-
-        return $model->full_name;
+        return $this->getCall()?->getDialName();
     }
 
     public function forceEndTheCall(): Action
@@ -109,25 +102,7 @@ HTML;
 
     public function getStatusLabel(): ?string
     {
-        $call = $this->getCall();
-
-        if (! $call) {
-            return null;
-        }
-
-        if ($call->started_at && $call->finished_at == null) {
-            return 'בשיחה';
-        }
-
-        if ($call->direction === 'outgoing') {
-            return 'מחייג...';
-        }
-
-        if (! $call->started_at) {
-            return 'שיחה נכנסת...';
-        }
-
-        return 'סיים';
+        return $this->getCall()?->getStatusLabel();
     }
 
     public function getPersons(): Collection

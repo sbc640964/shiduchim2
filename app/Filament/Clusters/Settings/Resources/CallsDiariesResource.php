@@ -26,6 +26,7 @@ use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components as InfolistComponents;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\ActionSize;
@@ -367,6 +368,48 @@ class CallsDiariesResource extends Resource
                         $livewire->dispatch('refresh-calls-box');
                     })
                     ->button(),
+                    Tables\Actions\Action::make('diary_2')
+                        ->visible(fn (Call $call) => $call->phoneModel)
+                        ->tooltip('כרטיס שיחה')
+                        ->iconButton()
+                        ->icon('heroicon-o-cursor-arrow-rays')
+                        ->slideOver()
+                        ->extraModalWindowAttributes(['class' => '[&_.fi-modal-content]:p-0'])
+                        /*
+                        <div class="flex items-center gap-2">
+                <div class="flex-shrink flex items-center">
+                    <div class="rounded-full flex justify-center p-1 bg-success-100 items-center">
+                        <x-iconsax-bul-call class="w-8 h-8 text-success-600"/>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-semibold">
+                        {{ $this->call?->getStatusLabel() }}
+                    </h3>
+                    <p class="text-xs text-gray-500 whitespace-nowrap">
+                        {{ $this->call?->getDialName() }}
+                    </p>
+                </div>
+            </div>
+                         */
+                        ->modalHeading(fn (Call $call) => str(\Blade::render('<div class="flex items-center gap-2">
+                            <div class="flex-shrink flex items-center">
+                                <div
+                                 @class(["rounded-full flex justify-center p-1 items-center", "bg-success-100" => !$call->finished_at,  "bg-red-100" => $call->finished_at])
+                                >
+                                    <x-iconsax-bul-call @class([ "w-8 h-8", "text-success-600" => !$call->finished_at,  "text-red-600" => $call->finished_at])/>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">
+                                    {{ $call?->getStatusLabel() }}
+                                </h3>
+                                <p class="text-xs text-gray-500 whitespace-nowrap">
+                                    {{ $call?->getDialName() }}
+                                </p>
+                            </div>
+                        </div>', ['call' => $call]))->toHtmlString())
+                        ->modalContent(fn (Call $call) => str(\Blade::render('<livewire:active-call-drawer :hidden-header="true" :current-call="$call" :key="$call->id" />', ['call' => $call]))->toHtmlString())
                 //                Tables\Actions\EditAction::make(),
             ])
 //            ->contentGrid([

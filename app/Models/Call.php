@@ -414,4 +414,36 @@ Blade;
 
         return str("<span class='text-xs text-gray-500'>$target</span> -> <span class='text-xs font-bold text-gray-700'>$ext</span>")->toHtmlString();
     }
+
+    function getDialName(): string
+    {
+        $model = $this->phoneModel?->model;
+
+        if (! $model) {
+            return $this->phone;
+        }
+
+        if ($model instanceof Family) {
+            return "משפ' ".$model->name;
+        }
+
+        return $model->full_name;
+    }
+
+    public function getStatusLabel(): ?string
+    {
+        if ($this->started_at && $this->finished_at == null) {
+            return 'בשיחה';
+        }
+
+        if ($this->direction === 'outgoing') {
+            return 'מחייג...';
+        }
+
+        if (! $this->started_at) {
+            return 'שיחה נכנסת...';
+        }
+
+        return 'השיחה הסתיימה';
+    }
 }

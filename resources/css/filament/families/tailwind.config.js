@@ -8,7 +8,7 @@ export default {
         './resources/views/filament/**/*.blade.php',
         './resources/views/filament/**/**/*.blade.php',
         './resources/views/components/**/*.blade.php',
-        './resources/views/livewire/**/*.blade.php',
+        './resources/views/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
         './vendor/filament/*.blade.php',
         './vendor/kenepa/banner/resources/**/*.php',
