@@ -29,7 +29,7 @@ class ActiveCallDrawer extends Component implements HasForms
 
     public array $data = [];
 
-    public string $sideFamilyParent = 'B';
+    public string $sideFamilyParent = 'G';
 
     public function setActiveTab(string $tab): void
     {
@@ -183,6 +183,7 @@ class ActiveCallDrawer extends Component implements HasForms
             'type' => 'call',
             'statuses' => $data['statuses'],
             'data' => [
+                'spokenSide' => $this->isFamilyPhone() ? $this->sideFamilyParent : null,
                 'description' => $data['description'],
                 'call_id' => $this->call->id,
                 'participants' => $this->call->phoneModel?->model?->id,

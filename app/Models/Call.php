@@ -440,7 +440,7 @@ Blade;
             return 'מחייג...';
         }
 
-        if (! $this->started_at) {
+        if (! $this->started_at && ! $this->finished_at) {
             return 'שיחה נכנסת...';
         }
 
