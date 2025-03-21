@@ -78,9 +78,9 @@ class WebhookGisController extends Controller
         }
 
 
-        $lockKey = 'lock:call:' . $data['original_call_id'];
+        $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
-        $lock = Cache::lock($lockKey, 5); // 5 שניות נעילה
+        $lock = Cache::lock($lockKey, 10); // 5 שניות נעילה
 
         $call = null;
 
@@ -161,7 +161,7 @@ class WebhookGisController extends Controller
             : $data['from_phone']
         );
 
-        $call = Call::whereUniqueId($data['original_call_id'])->lockForUpdate()->first();
+        $call = Call::whereUniqueId($data['original_call_id'])->first();
 
         if ($call) {
             return $call;
