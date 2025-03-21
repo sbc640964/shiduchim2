@@ -147,6 +147,9 @@ class WebhookGisController extends Controller
             'call' => $call,
             'updateAttributes' => $updateAttributes,
         ]);
+
+        \Log::info('test gis');
+
         return 'OK';
     }
 
