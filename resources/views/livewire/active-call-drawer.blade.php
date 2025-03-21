@@ -4,9 +4,9 @@
             <div class="flex items-center gap-2">
                 <div class="flex-shrink flex items-center">
                     <div
-                        @class(["rounded-full flex justify-center p-1 items-center", "bg-success-100" => !$this->call->finished_at,  "bg-red-100" => $this->call->finished_at])
+                        @class(["rounded-full flex justify-center p-1 items-center", "bg-success-100" => !$this->call?->finished_at,  "bg-red-100" => $this->call?->finished_at])
                     >
-                        <x-iconsax-bul-call @class([ "w-8 h-8", "text-success-600" => !$this->call->finished_at,  "text-red-600" => $this->call->finished_at])/>
+                        <x-iconsax-bul-call @class([ "w-8 h-8", "text-success-600" => !$this->call?->finished_at,  "text-red-600" => $this->call?->finished_at])/>
                     </div>
                 </div>
                 <div>
