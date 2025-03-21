@@ -42,7 +42,7 @@
             x-transition:leave-start="opacity-100 translate-x-0"
             x-transition:leave-end="opacity-0 -translate-x-full"
         >
-            <livewire:active-call-drawer :current-call="$this->getCall()" />
+            <livewire:active-call-drawer :current-call="$this->getCall()" :wire:key="auth()->id()"/>
         </div>
 </div>
 
