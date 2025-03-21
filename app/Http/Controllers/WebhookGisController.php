@@ -78,30 +78,41 @@ class WebhookGisController extends Controller
         }
 
 
+        if(!$extension) {
+            sleep(5);
+        }
+
         $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
         $lock = Cache::lock($lockKey, 10)->block(10); // 5 שניות נעילה
 
-        try {
-            $call = $this->resolveCall($data, $extension, $phoneNumber);
+        if ($lock) { // רק אם הנעילה הצליחה
+            try {
+                $call = $this->resolveCall($data, $extension, $phoneNumber);
 
-            if(! $call
-                && (
-                    ($data['action'] === 'answered' && $isOutgoing)
-                    || ($data['action'] === 'missed' && ! $isOutgoing)
-                )
-            ) {
-               $call = $this->createCall(
-                   $data,
-                   $extension,
-                   $phoneNumber,
-                   $phone,
-                   $user,
-                   $isOutgoing
-               );
+                if (! $call
+                    && (
+                        ($data['action'] === 'answered' && $isOutgoing)
+                        || ($data['action'] === 'missed' && ! $isOutgoing)
+                    )
+                ) {
+                    $call = $this->createCall(
+                        $data,
+                        $extension,
+                        $phoneNumber,
+                        $phone,
+                        $user,
+                        $isOutgoing
+                    );
+                }
+            } finally {
+                // רק אם $lock אינו false - משחררים את הנעילה
+                if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
+                    $lock->release();
+                }
             }
-        } finally {
-            $lock->release();
+        } else {
+            \Log::error("Failed to acquire Redis lock for: $lockKey");
         }
 
 
