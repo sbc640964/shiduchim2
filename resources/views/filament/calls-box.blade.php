@@ -2,6 +2,7 @@
     class="test-ttt h-16 group/card"
     wire:refresh-calls-box.window="$refresh"
     x-data="{ hasCall: {{$this->hasCall()}}, toggle: () => $wire.isOpen = !$wire.isOpen }"
+    wire:ignore
 >
     @if($this->hasCall())
         <button x-on:click="toggle" class="hover:bg-slate-50 px-8 text-start grid grid-cols-1 gap-2 h-16 bg-white transition-all">
