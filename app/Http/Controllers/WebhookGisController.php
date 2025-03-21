@@ -76,14 +76,16 @@ class WebhookGisController extends Controller
 
             $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
-            $lock = Cache::lock($lockKey, 10)->block(10); // 5 שניות נעילה
+            $lock = Cache::lock($lockKey, 10); // 5 שניות נעילה
 
-            try {
-                $this->createCall($data, $extension, $phoneNumber, $phone, $user);
-                return 'Call created';
-            } finally {
-                if ($lock) {
-                    $lock->release();
+            if($lock->get()) {
+                try {
+                    $this->createCall($data, $extension, $phoneNumber, $phone, $user);
+                    return 'Call created';
+                } finally {
+                    if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
+                        $lock->release();
+                    }
                 }
             }
         }
