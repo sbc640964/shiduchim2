@@ -73,47 +73,40 @@ class WebhookGisController extends Controller
         );
 
         if ($action === 'ring' && ! $isOutgoing) {
-            $this->createCall($data, $extension, $phoneNumber, $phone, $user);
-            return 'Call created';
-        }
 
+            $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
-        if(!$extension) {
-            sleep(5);
-        }
+            $lock = Cache::lock($lockKey, 10)->block(10); // 5 שניות נעילה
 
-        $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
-
-        $lock = Cache::lock($lockKey, 10)->block(10); // 5 שניות נעילה
-
-        if ($lock) { // רק אם הנעילה הצליחה
             try {
-                $call = $this->resolveCall($data, $extension, $phoneNumber);
-
-                if (! $call
-                    && (
-                        ($data['action'] === 'answered' && $isOutgoing)
-                        || ($data['action'] === 'missed' && ! $isOutgoing)
-                    )
-                ) {
-                    $call = $this->createCall(
-                        $data,
-                        $extension,
-                        $phoneNumber,
-                        $phone,
-                        $user,
-                        $isOutgoing
-                    );
-                }
+                $this->createCall($data, $extension, $phoneNumber, $phone, $user);
+                return 'Call created';
             } finally {
-                // רק אם $lock אינו false - משחררים את הנעילה
-                if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
+                if ($lock) {
                     $lock->release();
                 }
             }
-        } else {
-            \Log::error("Failed to acquire Redis lock for: $lockKey");
         }
+
+
+        $call = $this->resolveCall($data, $extension, $phoneNumber);
+
+        if (! $call
+            && (
+                ($data['action'] === 'answered' && $isOutgoing)
+                || ($data['action'] === 'missed' && ! $isOutgoing)
+            )
+        ) {
+            $call = $this->createCall(
+                $data,
+                $extension,
+                $phoneNumber,
+                $phone,
+                $user,
+                $isOutgoing
+            );
+        }
+
 
 
         if (! $call) {
