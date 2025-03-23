@@ -56,9 +56,13 @@ class ActiveCallDrawer extends Component implements HasForms
     }
 
     #[Computed]
-    public function person(): Person
+    public function person(): ?Person
     {
         $model = $this->call?->phoneModel?->model;
+
+        if(!$model) {
+            return null;
+        }
 
         if($model instanceof Person) {
             return $model;
@@ -72,12 +76,20 @@ class ActiveCallDrawer extends Component implements HasForms
     #[Computed]
     public function proposals()
     {
+        if (!$this->person) {
+            return collect();
+        }
+
         return $this->person->proposalContacts;
     }
 
     #[Computed]
     public function children()
     {
+        if (!$this->person) {
+            return collect();
+        }
+
         return $this->person->children;
     }
 
