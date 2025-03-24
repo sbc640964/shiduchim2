@@ -81,7 +81,10 @@ class WebhookGisController extends Controller
             $call = $this->resolveCall($data, $extension, $phoneNumber);
 
             if($call && $extension) {
-                $call->update(['extension' => $extension]);
+                $call->update([
+                    'extension' => $extension,
+                    'user_id' => $user?->id ?? null,
+                ]);
             } else {
                 $this->createCall($data, $extension, $phoneNumber, $phone, $user);
                 return 'Call created';
