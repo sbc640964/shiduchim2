@@ -24,7 +24,8 @@ class OpenProposalsTable extends BaseWidget
         return $table
             ->heading('ההצעות הפתוחות')
             ->query(
-                $this->baseQuery()->with(['createdByUser', 'people.father', 'people.mother', 'people.parentsFamily'])
+                $this->baseQuery()
+                    ->with(['createdByUser', 'people.father', 'people.mother', 'people.parentsFamily'])
             )
             ->columns([
                 TextColumn::make('createdByUser.name')
