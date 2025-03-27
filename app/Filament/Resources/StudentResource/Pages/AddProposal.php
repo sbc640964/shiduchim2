@@ -203,6 +203,32 @@ class AddProposal extends ListRecords
 
     public function addProposal(Student $student, null|Action|BulkAction $action = null): void
     {
+
+        //A lock that will not allow the same offer (both people) to be created within 10 seconds
+
+        $lock = cache()->lock('add-proposal-'.$this->getRecord()->id.'-'.$student->id, 10);
+
+        if (! $lock->get()) {
+            if ($action) {
+                $action->failureNotificationTitle('הוספת הצעה נכשלה');
+                $action->failureNotification(fn (Notification $notification) => $notification->body('הצעה זו נוצרה בזמן האחרון'));
+                $action->failure();
+            }
+            return;
+        }
+
+        // check if the proposal already exists
+        if($student->proposals_exists) {
+            if ($action) {
+                $action->failureNotificationTitle('הוספת הצעה נכשלה');
+                $action->failureNotification(fn (Notification $notification) => $notification->body('הצעה זו כבר קיימת'));
+                $action->failure();
+            }
+            return;
+        }
+
+        \DB::beginTransaction();
+
         try {
             $proposal = Proposal::createWithPeopleAndContacts([
                 'created_by' => auth()->id(),
@@ -219,7 +245,12 @@ class AddProposal extends ListRecords
                 $action->successRedirectUrl(ProposalResource::getUrl('view', ['record' => $proposal->id]));
                 $action->success();
             }
+
+            \DB::commit();
         } catch (\Exception $e) {
+
+            \DB::rollBack();
+
             if ($action) {
                 $action->failureNotificationTitle('הוספת הצעה נכשלה');
                 $action->failureNotification(fn (Notification $notification) => $notification->body($e->getMessage()));
