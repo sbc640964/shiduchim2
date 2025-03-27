@@ -373,6 +373,7 @@ class CallsDiariesResource extends Resource
                         ->tooltip('כרטיס שיחה')
                         ->iconButton()
                         ->icon('heroicon-o-cursor-arrow-rays')
+                        ->modalSubmitAction(false)
                         ->slideOver()
                         ->extraModalWindowAttributes(['class' => '[&_.fi-modal-content]:p-0'])
                         /*

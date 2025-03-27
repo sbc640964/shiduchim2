@@ -48,7 +48,6 @@ class ActiveCallDrawer extends Component implements HasForms
         unset($this->children);
     }
 
-
     #[Computed]
     public function call()
     {
