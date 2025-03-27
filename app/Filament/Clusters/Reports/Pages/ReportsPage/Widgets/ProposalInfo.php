@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages\ReportsPage\Widgets;
+namespace App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets;
 
 use App\Filament\Widgets\FilterReportsTrait;
 use Filament\Widgets\Widget;

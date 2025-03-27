@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Clusters\Reports\Pages;
 
 
-use App\Filament\Pages\ReportsPage\Widgets\ProposalInfo;
-use App\Filament\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
-use App\Filament\Pages\ReportsPage\Widgets\StatsReportOverview;
-use App\Filament\Resources\ProposalResource\Widgets\DiaryListWidget;
+use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ProposalInfo;
+use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
+use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\StatsReportOverview;
 use App\Models\Person;
 use App\Models\Subscriber;
 use App\Models\User;
@@ -33,11 +32,13 @@ class Reports extends \Filament\Pages\Dashboard
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
 
-    protected static ?string $title = 'דוחות';
+    protected static ?string $title = 'מנויים';
 
     protected static ?int $navigationSort = 200;
 
-    protected static string $routePath = '/reports';
+    protected static ?string $cluster = \App\Filament\Clusters\Reports::class;
+
+    protected static string $routePath = '/subscriptions';
 
     public static function canAccess(): bool
     {

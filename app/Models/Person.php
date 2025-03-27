@@ -445,6 +445,8 @@ class Person extends Model
 
             $newFamily->people()->attach([$this->id, $person->id]);
 
+            $proposal && $proposal->update(['family_id' => $newFamily->id]);
+
             $thisPerson->current_family_id = $newFamily->id;
             $thisPerson->spouse_id = $person->id;
             $thisPerson->father_in_law_id = $person->father_id;

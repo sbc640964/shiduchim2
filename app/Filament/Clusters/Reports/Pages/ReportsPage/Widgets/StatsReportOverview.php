@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Filament\Pages\ReportsPage\Widgets;
+namespace App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets;
 
 use App\Filament\Widgets\FilterReportsTrait;
 use App\Models\Diary;
-use App\Models\Person;
 use App\Models\Proposal;
 use App\Models\Subscriber;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;

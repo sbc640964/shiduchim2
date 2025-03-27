@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Filament\Pages\ReportsPage\Widgets;
+namespace App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets;
 
 use App\Filament\Widgets\FilterReportsTrait;
 use App\Models\Person;
 use App\Models\Proposal;
-use App\Models\Subscriber;
-use Filament\Resources\Components\Tab;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -15,8 +13,6 @@ use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Reactive;
-use Livewire\Attributes\Url;
-use function Pest\Laravel\get;
 
 class ReportsProposalsTableWidget extends BaseWidget
 {

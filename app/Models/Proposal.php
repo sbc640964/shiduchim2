@@ -129,9 +129,9 @@ class Proposal extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function createdBy(): BelongsTo
+    public function createdByUser(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function calls(): HasMany

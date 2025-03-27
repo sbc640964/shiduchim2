@@ -330,7 +330,7 @@ trait DiariesComponents
                         ->formatStateUsing(fn ($state) => Carbon::make($state)->hebcal()->hebrewDate(withQuotes: true))
                         ->helperText(fn (Diary $diary) => Carbon::make($diary->data['date'])->format('d/m/Y H:i')),
 
-                    TextEntry::make('createdBy.name')
+                    TextEntry::make('created_by_user.name')
                         ->label('הוזן ע"י')
                         ->icon('heroicon-o-user'),
                 ]),

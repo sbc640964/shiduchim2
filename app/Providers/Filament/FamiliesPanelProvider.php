@@ -2,22 +2,18 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
 use App\Filament\Clusters\Settings\Resources\CallsDiariesResource;
 use App\Filament\Clusters\Settings\Resources\TimeSheetsResource;
 use App\Filament\Pages\Dashboard;
-use App\Filament\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
-use App\Filament\Widgets\CalendarWidget;
-//use App\Http\Middleware\UpgradeToHttpsUnderNgrokMiddleware;
 use App\Filament\Widgets\GoldListWidget;
 use Awcodes\FilamentGravatar\GravatarPlugin;
 use Awcodes\FilamentGravatar\GravatarProvider;
 use Blade;
 use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Notifications\Livewire\Notifications;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -25,7 +21,6 @@ use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\VerticalAlignment;
 use Filament\Tables\View\TablesRenderHook;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -35,6 +30,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Kenepa\Banner\BannerPlugin;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
+
+//use App\Http\Middleware\UpgradeToHttpsUnderNgrokMiddleware;
 
 class FamiliesPanelProvider extends PanelProvider
 {

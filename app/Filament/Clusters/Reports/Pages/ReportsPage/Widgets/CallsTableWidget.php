@@ -1,25 +1,25 @@
 <?php
 
-namespace App\Filament\Pages\ReportsPage\Widgets;
+namespace App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets;
 
+use App\Filament\Widgets\FilterReportsTrait;
 use App\Infolists\Components\AudioEntry;
 use App\Models\Call;
-use App\Filament\Widgets\FilterReportsTrait;
 use App\Models\Diary;
 use App\Models\Family;
 use App\Models\Person;
 use Carbon\Carbon;
+use Filament\Infolists\Components as InfolistComponents;
 use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Livewire\Attributes\Reactive;
-use Filament\Tables;
-use Filament\Infolists\Components as InfolistComponents;
 
 class CallsTableWidget extends BaseWidget
 {
