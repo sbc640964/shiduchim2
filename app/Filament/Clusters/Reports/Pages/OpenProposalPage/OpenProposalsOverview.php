@@ -15,6 +15,13 @@ class OpenProposalsOverview extends BaseWidget
 
         return [
             Stat::make(
+                label: 'פתוחות עכשיו',
+                value: $this->baseQuery()->whereNotNull('opened_at')
+                    ->whereNull('closed_at')
+                    ->count()
+            )
+                ->color('success'),
+            Stat::make(
                 label: 'נפתחו',
                 value: $this->baseQuery()->when($dates, fn($query) => $query->whereBetween('opened_at', $dates))->count()
             ),
