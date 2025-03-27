@@ -11,7 +11,7 @@ trait FiltersOpenProposalsPage
 {
     use InteractsWithPageFilters;
 
-    protected function normalizeDates(string $dates): ?array
+    protected function normalizeDates(string|null $dates): ?array
     {
         if(blank($dates)) return null;
 
