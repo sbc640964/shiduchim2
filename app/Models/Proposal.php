@@ -372,14 +372,16 @@ class Proposal extends Model
             $family = $this->getSpoken('guy')
                 ->reMarried($this);
 
-            $this->update([
-                'status' => $status,
-                'finished_at' => null,
-                'reason_status' => $reason,
-                'family_id' => null,
-            ]);
+            if($family) {
+                $this->update([
+                    'status' => $status,
+                    'finished_at' => null,
+                    'reason_status' => $reason,
+                    'family_id' => null,
+                ]);
 
-            $family?->delete();
+                $family->delete();
+            }
         });
     }
 

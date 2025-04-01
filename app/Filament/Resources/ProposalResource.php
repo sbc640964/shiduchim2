@@ -608,7 +608,7 @@ class ProposalResource extends Resource
                     ->default('נפתח מחדש ע"י '.auth()->user()->name),
             ]))
             ->modalWidth('sm')
-            ->modalSubmitActionLabel('סגור')
+            ->modalSubmitActionLabel('ביטול סגירה')
             ->icon('iconsax-bul-refresh')
             ->color('success')
             ->iconButton()

@@ -502,7 +502,7 @@ class Person extends Model
     /**
      * @throws \Throwable
      */
-    public function reMarried(?Proposal $proposal = null): ?Family
+    public function reMarried(?Proposal $proposal = null): Family
     {
         DB::beginTransaction();
 
@@ -553,9 +553,8 @@ class Person extends Model
 
         } catch (\Throwable $th) {
             DB::rollBack();
+            throw $th;
         }
-
-        return null;
     }
 
     public function marriedExternal(int $with, ?Carbon $date = null, ?int $matchmaker = null): Proposal
