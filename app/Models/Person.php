@@ -521,14 +521,18 @@ class Person extends Model
             $spouse->mother_in_law_id = null;
 
             $this->save();
-            $lastSubscriptionStatus = $this->lastSubscription->activities()->where('status', 'married')->latest()->first()?->data['hold_status'] ?? 'hold';
-            $this->lastSubscription->status = $lastSubscriptionStatus;
-            $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
+            if($this->lastSubscription && $this->lastSubscription->status === 'married') {
+                $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()->first()?->data['hold_status'] ?? 'hold';
+                $this->lastSubscription->status = $lastSubscriptionStatus;
+                $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
+            }
 
             $spouse->save();
-            $lastSubscriptionStatus = $spouse->lastSubscription->activities()->where('status', 'married')->latest()->first()?->data['hold_status'] ?? 'hold';
-            $spouse->lastSubscription->status = $lastSubscriptionStatus;
-            $spouse->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
+            if($spouse->lastSubscription && $spouse->lastSubscription->status === 'married') {
+                $lastSubscriptionStatus = $spouse->lastSubscription->activities()->latest()->first()?->data['hold_status'] ?? 'hold';
+                $spouse->lastSubscription->status = $lastSubscriptionStatus;
+                $spouse->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
+            }
 
             $family->people()->detach([$this->id, $spouse->id]);
 
