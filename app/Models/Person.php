@@ -520,19 +520,8 @@ class Person extends Model
             $spouse->father_in_law_id = null;
             $spouse->mother_in_law_id = null;
 
-            $this->save();
-            if($this->lastSubscription && $this->lastSubscription->status === 'married') {
-                $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()->first()?->data['hold_status'] ?? 'hold';
-                $this->lastSubscription->status = $lastSubscriptionStatus;
-                $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
-            }
-
-            $spouse->save();
-            if($spouse->lastSubscription && $spouse->lastSubscription->status === 'married') {
-                $lastSubscriptionStatus = $spouse->lastSubscription->activities()->latest()->first()?->data['hold_status'] ?? 'hold';
-                $spouse->lastSubscription->status = $lastSubscriptionStatus;
-                $spouse->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
-            }
+            $this->save() && $this->reBackStatusInMarriedLastSubscription();
+            $spouse->save() && $spouse->reBackStatusInMarriedLastSubscription();
 
             $family->people()->detach([$this->id, $spouse->id]);
 
@@ -558,6 +547,19 @@ class Person extends Model
         } catch (\Throwable $th) {
             DB::rollBack();
             throw $th;
+        }
+    }
+
+    /**
+     * @return void
+     */
+    private function reBackStatusInMarriedLastSubscription(): void
+    {
+        if ($this->lastSubscription && $this->lastSubscription->status === 'married') {
+            $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()->first()?->data['hold_status'] ?? 'hold';
+            $this->lastSubscription->status = $lastSubscriptionStatus;
+            $this->lastSubscription->save() &&
+            $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
         }
     }
 
