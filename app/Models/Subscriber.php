@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Http;
 
 class Subscriber extends Model
 {
@@ -44,7 +43,9 @@ class Subscriber extends Model
         'run' => 'הפעלת מנוי',
         'hold' => 'השהיית מנוי',
         'married' => 'שינוי סטטוס לנשוי',
-        'completed' => 'השלמת מנוי',
+        'completed' => 'תקופה הסתיימה',
+        'completed-active' => 'תקופה הסתיימה - תשלומים ממשיכים',
+        'completed-payments' => 'הסתיימו התשלומים',
         'cancel' => 'ביטול מנוי',
         'update' => 'עדכון מנוי',
         'register' => 'רישום מנוי',
@@ -82,6 +83,29 @@ class Subscriber extends Model
         });
     }
 
+    public function completeWork(): void
+    {
+        if(!in_array($this->status, ['active', 'completed-active'])){
+            return;
+        }
+
+        if(!$this->end_date || !$this->end_date->isPast()) {
+            return;
+        }
+
+        if($this->status === 'active') {
+            $this->update([
+                'status' => $this->balance_payments > 0 ? 'completed-active' : 'completed',
+            ]) &&
+            $this->recordActivity($this->balance_payments > 0 ? 'completed-active' : 'completed');
+        } else {
+            $this->update([
+                'status' => 'completed',
+            ]) &&
+            $this->recordActivity('completed-payments');
+        }
+    }
+
     public function charge(?bool $force = false, ?bool $joinTheDirectDebit = true, int|float|null $amount = null): void
     {
         if($this->method !== 'credit_card') {
@@ -90,10 +114,7 @@ class Subscriber extends Model
         }
 
         if (! $this->balance_payments && ! $force) {
-            $this->update([
-                'status' => 'completed',
-                'error' => 'התשלומים נגמרו',
-            ]);
+            $this->completeWork();
             return;
         }
 
@@ -119,7 +140,7 @@ class Subscriber extends Model
         $payment && $joinTheDirectDebit && $payment->status === 'OK' && $this->update([
             'balance_payments' => $this->balance_payments - 1,
             'next_payment_date' => $this->next_payment_date ? $this->next_payment_date->copy()->addMonth() : null,
-        ]);
+        ]) && $this->recordActivity('charge');
 
     }
 
