@@ -112,7 +112,7 @@
                 <div class="flex gap-2">
                     <div>
                         <div class="font-bold text-3xl">
-                            {{ $this->getSubscription()->payments - $this->getSubscription()->balance_payments }}
+                            {{ floor($this->getSubscription()->start_date->diffInMonths() + 1) }}
                         </div>
                         <div class="text-sm text-gray-400">
                             מתוך {{ $this->getSubscription()->payments }} חודשים
