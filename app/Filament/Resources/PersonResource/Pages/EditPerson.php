@@ -9,10 +9,13 @@ use App\Models\Phone;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Enums\MaxWidth;
 
 class EditPerson extends EditRecord
 {
@@ -26,6 +29,90 @@ class EditPerson extends EditRecord
     {
         return [
             ActionGroup::make([
+                Action::make('merge_people')
+                    ->modalWidth(MaxWidth::Small)
+                    ->label('מיזוג אנשים')
+                    ->action(function (array $data, Action $action) {
+                        $basePerson = $data['base_person'] === 'this' ? $this->record : Person::find($data['person_id']);
+                        if($basePerson->mergePerson($data['base_person'] === 'this' ? Person::find($data['person_id']) : $this->record, $data['delete_person'])){
+                            $action->success();
+                            $data['base_person'] !== 'this' && $action->redirect(PersonResource::getUrl('edit', ['record' => $basePerson->id]));
+                        } else {
+                            $action->failure();
+                        }
+                    })
+                    ->form([
+                        Select::make('person_id')
+                            ->label('אדם למיזוג')
+                            ->placeholder('בחר אדם...')
+                            ->searchable()
+                            ->allowHtml()
+                            ->getSearchResultsUsing(fn (string $search) =>
+                                Person::query()->searchName($search, inParents: true)
+                                    ->with('father', 'father.city')
+                                    ->limit(60)
+                                    ->get()
+                                    ->mapWithKeys(fn (Person $person) => [$person->id => $person->getSelectOptionHtmlAttribute()]),
+                            )
+                            ->required(),
+                        Select::make('base_person')
+                            ->label('אדם בסיס')
+                            ->options([
+                                'this' => 'האדם הנוכחי',
+                                'person_id' => 'האדם שנבחר',
+                            ]),
+                        Toggle::make('delete_person')
+                            ->label('מחיקת אדם')
+                            ->default(true),
+                    ]),
+                Action::make('update_prev_wife')
+                    ->label('עדכון אשה מנישואים קודמים')
+                    ->modalWidth(MaxWidth::Small)
+                    ->hidden($this->getRecord()->gender === 'G')
+                    ->form([
+                        Select::make('prev_wife_id')
+                            ->label('אשה קודמת')
+                            ->placeholder('בחר אשה...')
+                            ->searchable()
+                            ->allowHtml()
+                            ->getSearchResultsUsing(fn (string $search) =>
+                                Person::query()->searchName($search, gender: 'G', inParents: true)
+                                    ->with('father', 'father.city')
+                                    ->limit(60)
+                                    ->get()
+                                    ->mapWithKeys(fn (Person $person) => [$person->id => $person->getSelectOptionHtmlAttribute()]),
+                            )
+                            ->required(),
+                    ])
+                    ->action(function (array $data, Action $action) {
+                        /** @var Person $record */
+                        $record = $this->getRecord();
+
+                        $transaction = \DB::transaction(function () use ($data, $record, $action) {
+                            $family = $record->families()->create([
+                                'status' => 'divorced',
+                                'name' => $record->last_name,
+                            ]);
+
+                            if ($family) {
+                                $family->people()->attach([
+                                    $record->id,
+                                    $data['prev_wife_id'],
+                                ]);
+                            }
+
+                            return true;
+                        });
+
+                        if($transaction) {
+                            $action->success();
+                            return;
+                        }
+
+                        $action->failure();
+
+                    }),
+
                 Action::make('death')
                     ->label('עדכון פטירה')
                     ->form(function (Form $form) {

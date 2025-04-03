@@ -7,6 +7,7 @@ use App\Models\Person;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use phpDocumentor\Reflection\Types\Boolean;
 
 class EditStudent extends EditRecord
 {
@@ -60,26 +61,26 @@ class EditStudent extends EditRecord
 
             $record->refresh();
 
-            $record->parentsFamily->update([
-                'address' => $data['family_address'],
-                'city_id' => $data['family_city_id'],
-            ]);
+            $record->parentsFamily->update(array_filter([
+                'address' => $data['family_address'] ?? null,
+                'city_id' => $data['family_city_id'] ?? null,
+            ], fn($value) => $value !== null));
 
             if($record->parentsFamily->husband) {
                 /* @var Person $father */
                 $father = $record->parentsFamily->husband;
 
-                $father->update([
+                ($data['father_first_name'] ?? null) && $father->update([
                     'first_name' => $data['father_first_name'],
                 ]);
 
-                $data['father_synagogue_id'] &&
+                ($data['father_synagogue_id'] ?? null) &&
                     $father->schools()->syncWithoutDetaching([
                         $data['father_synagogue_id']
                     ]);
             }
 
-            if($record->parentsFamily->wife) {
+            if($record->parentsFamily->wife && ($data['mother_first_name'] ?? null)) {
                 $record->parentsFamily->wife->update([
                     'first_name' => $data['mother_first_name'],
                 ]);

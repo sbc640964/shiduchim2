@@ -52,11 +52,11 @@ class Family extends Model
             ->toArray() ?? [];
     }
 
-    static public function filamentSelect(string $name)
+    static public function filamentSelect(string $name, ?Family $currentValue = null)
     {
         return \Filament\Forms\Components\Select::make($name)
             ->getOptionLabelFromRecordUsing(fn (Family $record) => $record->option_select)
-            ->getSearchResultsUsing(fn ($search, $record) => Family::searchToSelect($search))
+            ->getSearchResultsUsing(fn ($search, $record) => Family::searchToSelect($search) + [$currentValue->id => $currentValue->option_select])
             ->allowHtml()
             ->extraAttributes(['class' => 'option-select-w-full'])
             ->searchable();

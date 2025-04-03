@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Spatie\Tags\HasTags;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
@@ -156,6 +157,9 @@ class Person extends Model
         );
     }
 
+    /**
+     * @return BelongsToMany<Family>
+     */
     public function families(): BelongsToMany
     {
         return $this->belongsToMany(Family::class, 'family_person');
@@ -294,12 +298,19 @@ class Person extends Model
 
     /**************** Scopes ****************/
 
-    public function scopeSearchName($query, $search, ?string $gender = null)
+    public function scopeSearchName($query, $search, ?string $gender = null, ?bool $inParents = false)
     {
         foreach (explode(' ', $search) as $word) {
-            $query->where(function ($query) use ($word) {
+            $query->where(function ($query) use ($inParents, $word) {
                 $query->where('first_name', 'like', "%$word%")
                     ->orWhere('last_name', 'like', "%$word%");
+
+                if ($inParents) {
+                    $query->orWhereRelation('father', 'first_name', 'like', "%$word%")
+                        ->orWhereRelation('father', 'last_name', 'like', "%$word%")
+                        ->orWhereRelation('mother', 'first_name', 'like', "%$word%")
+                        ->orWhereRelation('mother', 'last_name', 'like', "%$word%");
+                }
             });
         }
 
@@ -345,7 +356,7 @@ class Person extends Model
 
     public function getSelectOptionHtmlAttribute(?bool $withPivotSide = false, ?bool $withAddress = false): string
     {
-        $fatherName = $this->relationLoaded('father') ? $this->father?->first_name ?? '' : '';
+        $fatherName = $this->relationLoaded('father') ? $this->father?->{$this->gender === 'G' ? 'full_name' : 'first_name'} ?? '' : '';
         $fatherInLawName = $this->relationLoaded('fatherInLaw') ? $this->fatherInLaw?->reverse_full_name ?? '' : '';
 
         $fatherInLawName = $fatherInLawName ? "חתן ר' ".$fatherInLawName : null;
@@ -358,13 +369,19 @@ class Person extends Model
             $this->city?->name ?? $this->family?->city?->name ?? null,
         ])->filter(fn ($str) => filled(trim($str)))->join(', ') : '';
 
+        $subText = trim($parentsNames . ' '. $address);
+
+        if($subText === ',') {
+            $subText = '';
+        }
+
         return <<<HTML
             <div>
                 <div>
                     $this->full_name
                 </div>
                 <div class='text-xs text-gray-400'>
-                     $parentsNames $address,
+                     $subText
                 </div>
             </div>
         HTML;
@@ -818,4 +835,66 @@ class Person extends Model
         }
         return null;
     }
+
+    public function mergePerson(self $person, bool $deleteAfterMerge = true): static
+    {
+        $oldId = $person->id;
+        $newId = $this->id;
+
+        DB::beginTransaction();
+
+        $schemaName = config('database.connections.mysql.database');
+
+        try {
+            $tables = DB::select("
+                SELECT TABLE_NAME, COLUMN_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE REFERENCED_TABLE_NAME = 'people'
+                AND CONSTRAINT_SCHEMA = '$schemaName'
+                AND REFERENCED_COLUMN_NAME = 'id'
+            ");
+
+            dump($tables);
+
+            collect($tables)->each(function ($table) use ($oldId, $newId) {
+                DB::table($table->TABLE_NAME)
+                    ->where($table->COLUMN_NAME, $oldId)
+                    ->update([$table->COLUMN_NAME => $newId]);
+            });
+
+            $tableMorph = DB::select("
+                SELECT TABLE_NAME, COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE COLUMN_NAME in ('model_id', 'model_type')
+                and TABLE_SCHEMA = '$schemaName'
+            ");
+
+            collect($tableMorph)
+                ->groupBy('TABLE_NAME')
+                ->each(function (\Illuminate\Support\Collection $items, $table) use ($oldId, $newId) {
+                    if($items->count() === 2){
+                        DB::table($table)
+                            ->where('model_id', $oldId)
+                            ->where('model_type', Relation::getMorphAlias(static::class))
+                            ->update(['model_id' => $newId]);
+                    }
+                });
+
+            if($deleteAfterMerge) {
+//                \Schema::disableForeignKeyConstraints();
+                $person->delete();
+//                \Schema::enableForeignKeyConstraints();
+            }
+
+
+
+            DB::commit();
+
+            return $this;
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
+        }
+    }
+
 }

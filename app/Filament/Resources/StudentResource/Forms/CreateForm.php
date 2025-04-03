@@ -62,7 +62,7 @@ class CreateForm
             ->collapsible()
             ->columns(2)
             ->inlineLabel()
-            ->schema([
+            ->schema(fn (?Person $record = null) => [
                 Components\Select::make('gender')
                     ->label('מין')
                     ->options(
@@ -74,9 +74,10 @@ class CreateForm
                     ->live()
                     ->required(),
 
-                Family::filamentSelect('parents_family_id')
+                Family::filamentSelect('parents_family_id', $record?->parentsFamily)
                     ->label('משפחת הורים')
                     ->live()
+                    ->getOptionLabelUsing(fn ($value) => $value ? Family::find($value)?->option_select : null)
                     ->afterStateUpdated(function (Set $set, $old, $state) {
                         $family = Family::with('city', 'people')->find($state);
 
@@ -215,7 +216,7 @@ class CreateForm
                         ->native(false)
                         ->searchable()
                         ->preload()
-                        ->formatStateUsing(fn (Person $record) => $parentFamily?->city->id)
+                        ->formatStateUsing(fn (Person $record) => $parentFamily?->city?->id)
                         ->label('עיר'),
 
                     Components\Select::make('father_synagogue_id')
