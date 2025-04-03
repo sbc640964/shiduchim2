@@ -15,6 +15,8 @@ use Filament\Tables\Columns;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
 use Filament\Widgets\TableWidget as BaseWidget;
 use IbrahimBougaoua\FilaProgress\Tables\Columns\ProgressBar;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -23,6 +25,15 @@ class GoldListWidget extends BaseWidget
     protected static ?int $sort = -3;
 
     protected static ?string $heading = 'רשימת הזהב שלך';
+
+    protected function paginateTableQuery(Builder $query): Paginator|CursorPaginator
+    {
+        return $query->paginate(
+            perPage: ($this->getTableRecordsPerPage() === 'all') ? $query->count() : $this->getTableRecordsPerPage(),
+            pageName: $this->getTablePaginationPageName(),
+        );
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -32,31 +43,56 @@ class GoldListWidget extends BaseWidget
             ->defaultSort('work_day')
             ->query(
                 Subscriber::query()
+                    ->addSelect([
+                        'last_proposal' => DB::table('proposals')
+                            ->join('person_proposal', 'proposals.id', '=', 'person_proposal.proposal_id')
+                            ->whereColumn('proposals.created_by', 'subscribers.user_id')
+                            ->whereColumn('person_proposal.person_id', 'subscribers.person_id')
+                            ->whereNull('hidden_at')
+                            ->where('status', '!=', 'סגור')
+                            ->selectRaw('MAX(proposals.created_at)'),
+                        'last_call' => DB::table('proposals')
+                            ->join('person_proposal', 'proposals.id', '=', 'person_proposal.proposal_id')
+                            ->leftJoin('diaries', function ($join) {
+                                $join->on('proposals.id', '=', 'diaries.proposal_id')
+                                    ->where('diaries.type', 'call');
+                            })
+                            ->whereColumn('diaries.created_by', 'subscribers.user_id')
+                            ->whereNull('hidden_at')
+                            ->where('status', '!=', 'סגור')
+                            ->selectRaw('MAX(diaries.created_at)'),
+                    ])
                     ->with(['student' => function (BelongsTo $query) {
-                        $query
-                            ->withMax(['proposals as last_proposal' => function (Builder $q) {
-                                $q->where('created_by', auth()->user()->id);
-                            }], 'created_at')
-                            ->addSelect([
-                                'last_call' => DB::table('proposals')
-                                    ->join('person_proposal', 'proposals.id', '=', 'person_proposal.proposal_id')
-                                    ->leftJoin('diaries', function ($join) {
-                                        $join->on('proposals.id', '=', 'diaries.proposal_id')
-                                            ->where('diaries.type', 'call');
-                                    })
-                                    ->whereColumn('people.id', 'person_proposal.person_id')
-                                    ->where('diaries.created_by', auth()->user()->id)
-                                    ->whereNull('hidden_at')
-                                    ->where('status', '!=', 'סגור')
-                                    ->selectRaw('MAX(diaries.created_at)')
-                            ]);
+//                        $query
+//                            ->withMax(['proposals as last_proposal' => function (Builder $q) {
+//                                $q->whereColumn('proposals.created_by', 'subscribers.user_id');
+//                            }], 'created_at')
+//                            ->addSelect([
+//                                'last_call' => DB::table('proposals')
+//                                    ->join('person_proposal', 'proposals.id', '=', 'person_proposal.proposal_id')
+//                                    ->leftJoin('diaries', function ($join) {
+//                                        $join->on('proposals.id', '=', 'diaries.proposal_id')
+//                                            ->where('diaries.type', 'call');
+//                                    })
+//                                    ->whereColumn('people.id', 'person_proposal.person_id')
+//                                    ->whereColumn('diaries.created_by', 'subscribers.user_id')
+//                                    ->whereNull('hidden_at')
+//                                    ->where('status', '!=', 'סגור')
+//                                    ->selectRaw('MAX(diaries.created_at)')
+//                            ]);
                     }])
-                    ->where('user_id', auth()->user()->id)
+                    ->when(
+                        value: auth()->user()->can('manage_reports'),
+                        callback: fn () => null,
+                        default: fn (Builder $query) => $query->where('user_id', auth()->user()->id)
+                    )
                     ->whereIn('status', ['active'])
             )
-            ->recordUrl(fn (Subscriber $record) => StudentResource::getUrl('proposals', [
-                'record' => $record->person_id,
-            ]))
+            ->recordUrl(fn (Subscriber $record) =>
+                auth()->user()->can('manage_reports')
+                    ? StudentResource::getUrl('subscription', ['record' => $record->person_id,])
+                    : StudentResource::getUrl('proposals', ['record' => $record->person_id,])
+            )
             ->recordClasses(fn (Subscriber $record) => $record->work_day === (now()->weekday() + 1) ? 'bg-green-50' : '')
             ->columns([
                 Columns\TextColumn::make('work_day')
@@ -81,7 +117,7 @@ class GoldListWidget extends BaseWidget
                     ->label('שם מלא')
                     ->searchable(['last_name', 'first_name'])
                     ->sortable(['last_name', 'first_name']),
-                Columns\TextColumn::make('student.last_proposal')
+                Columns\TextColumn::make('last_proposal')
                     ->dateTimeTooltip()
                     ->icon('heroicon-s-clock')
                     ->iconColor(function ($state) {
@@ -91,7 +127,7 @@ class GoldListWidget extends BaseWidget
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
                     })
                     ->label('יצירת הצעה אחרונה'),
-                Columns\TextColumn::make('student.last_call')
+                Columns\TextColumn::make('last_call')
                     ->dateTimeTooltip()
                     ->icon('heroicon-s-clock')
                     ->iconColor(function ($state) {
@@ -124,11 +160,21 @@ class GoldListWidget extends BaseWidget
                             $text = 'נשארו ' . ceil($diff / 7) . ' שבועות';
                         }
 
-                        $text .= ' עד לסיום התקופה (' . $record->end_date->format('d/m/Y') . ')';
+                        if($diff < 0) {
+                            $text .= ' (' . $record->end_date->format('d/m/Y') . ')';
+                        } else {
+                            $text .= ' עד לסיום התקופה (' . $record->end_date->format('d/m/Y') . ')';
+                        }
 
                         return $text;
                     })
                     ->getStateUsing(function (Subscriber $record) {
+                        if(!$record->end_date) {
+                            return [
+                                'total' => 0,
+                                'progress' => 0,
+                            ];
+                        }
                         return [
                             'total' => $record->start_date->diffInDays($record->end_date),
                             'progress' => now()->diffInDays($record->end_date),
