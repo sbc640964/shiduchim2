@@ -39,6 +39,8 @@ class OpenProposals extends \Filament\Pages\Dashboard
         return $form
             ->schema([
                 DateRangePicker::make('dates')
+                    ->icon('heroicon-s-x-mark')
+                    ->disableClear(false)
                     ->placeholder('כל התאריכים')
                     ->label('טווח תאריכים'),
                 Select::make('matchmaker')

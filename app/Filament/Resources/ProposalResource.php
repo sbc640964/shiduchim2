@@ -282,6 +282,8 @@ class ProposalResource extends Resource
 
                             DateRangePicker::make('created_at')
                                 ->label('תאריך יצירה')
+                                ->icon('heroicon-s-x-mark')
+                                ->disableClear(false)
                                 ->firstDayOfWeek(0)
                                 ->format('d/m/Y'),
 
