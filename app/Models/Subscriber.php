@@ -5,7 +5,8 @@ namespace App\Models;
 use App\Models\Traits\HasActivities;
 use App\Services\Nedarim;
 use Carbon\Carbon;
-use Carbon\Traits\Localization;
+use DB;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -120,6 +121,16 @@ class Subscriber extends Model
             'next_payment_date' => $this->next_payment_date ? $this->next_payment_date->copy()->addMonth() : null,
         ]);
 
+    }
+
+    function scopeWithWorkMonth(Builder $query): Builder
+    {
+        $currentMonth = now()->startOfMonth();
+
+        return $query->addSelect([
+            'subscribers.*',
+            DB::raw("TIMESTAMPDIFF(MONTH, start_date, '$currentMonth') + 1 as work_month"),
+        ]);
     }
 
     public function getToOptionsSelect()

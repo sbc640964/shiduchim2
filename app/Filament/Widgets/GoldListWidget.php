@@ -36,15 +36,15 @@ class GoldListWidget extends BaseWidget
 
     public function table(Table $table): Table
     {
-        $currentMonth = Carbon::now()->startOfMonth(); // תאריך תחילת החודש הנוכחי
-
         return $table
+            ->queryStringIdentifier('subscribers')
             ->emptyStateHeading('אין לך תלמידים ברשימת הזהב')
             ->emptyStateIcon('heroicon-o-list-bullet')
             ->emptyStateDescription('המנהל עדיין לא ייחד לך תלמידים')
             ->defaultSort('work_day')
             ->query(
                 Subscriber::query()
+                    ->withWorkMonth()
                     ->addSelect([
                         'last_proposal' => DB::table('proposals')
                             ->join('person_proposal', 'proposals.id', '=', 'person_proposal.proposal_id')
@@ -63,7 +63,6 @@ class GoldListWidget extends BaseWidget
                             ->whereNull('hidden_at')
                             ->where('status', '!=', 'סגור')
                             ->selectRaw('MAX(diaries.created_at)'),
-                        DB::raw("TIMESTAMPDIFF(MONTH, start_date, '$currentMonth') + 1 as work_month"),
                     ])
                     ->with(['student' => function (BelongsTo $query) {
 //                        $query

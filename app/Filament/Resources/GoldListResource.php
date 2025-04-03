@@ -41,19 +41,13 @@ class GoldListResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $currentMonth = Carbon::now()->startOfMonth(); // תאריך תחילת החודש הנוכחי
-
         return parent::getEloquentQuery()
             ->with('matchmaker', 'student.lastDiary', 'payer', 'student.father', 'student.mother', 'referrer')
-            ->addSelect([
-                'subscribers.*',
-                DB::raw("TIMESTAMPDIFF(MONTH, start_date, '$currentMonth') + 1 as work_month"),
-            ])
+            ->withWorkMonth()
             ->when(!static::isManager(), function (Builder $query) {
                 $query
                     ->where('user_id', auth()->user()->id)
                     ->whereStatus('active');
-                ;
             });
     }
 
