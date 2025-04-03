@@ -17,7 +17,7 @@ class RunPayments
             });
 
         Subscriber::query()
-            ->whereStatus('active')
+            ->whereIn('status', ['active', 'completed-active'])
             ->whereDate('next_payment_date', '<=', now())
             ->each(function (Subscriber $subscriber) {
                 $subscriber->charge();

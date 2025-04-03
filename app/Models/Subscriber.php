@@ -142,6 +142,9 @@ class Subscriber extends Model
             'next_payment_date' => $this->next_payment_date ? $this->next_payment_date->copy()->addMonth() : null,
         ]) && $this->recordActivity('charge');
 
+        if($this->balance_payments <= 0 && $this->end_date->isPast()) {
+            $this->completeWork();
+        }
     }
 
     function scopeWithWorkMonth(Builder $query): Builder
