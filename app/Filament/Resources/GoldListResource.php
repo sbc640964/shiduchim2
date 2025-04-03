@@ -6,23 +6,17 @@ use App\Filament\Resources\GoldListResource\Pages;
 use App\Models\Subscriber;
 use App\Models\User;
 use Carbon\Carbon;
-use Faker\Provider\Text;
+use DB;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
-use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Number;
-use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class GoldListResource extends Resource
@@ -47,8 +41,14 @@ class GoldListResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $currentMonth = Carbon::now()->startOfMonth(); // תאריך תחילת החודש הנוכחי
+
         return parent::getEloquentQuery()
             ->with('matchmaker', 'student.lastDiary', 'payer', 'student.father', 'student.mother', 'referrer')
+            ->addSelect([
+                'subscribers.*',
+                DB::raw("TIMESTAMPDIFF(MONTH, start_date, '$currentMonth') + 1 as work_month"),
+            ])
             ->when(!static::isManager(), function (Builder $query) {
                 $query
                     ->where('user_id', auth()->user()->id)
@@ -255,7 +255,7 @@ class GoldListResource extends Resource
                 ->date('d/m/Y')
                 ->description(fn (Subscriber $record) => 'רישום: ' .$record->created_at->diffForHumans())
                 ->sortable(),
-            TextColumn::make('payments')
+            TextColumn::make('work_month')
                 ->label('חודש פעילות')
                 ->badge()
                 ->color(fn (Subscriber $record) => match ($record->balance_payments) {
@@ -264,7 +264,7 @@ class GoldListResource extends Resource
                     3,4 => 'success',
                     default => 'gray',
                 })
-                ->formatStateUsing(fn (Subscriber $record) => $record->balance_payments . '/' . $record->payments . ' חודשים')
+                ->formatStateUsing(fn (Subscriber $record) => $record->work_month . '/' . $record->payments . ' חודשים')
                 ->sortable(['balance_payments', 'payments']),
             Tables\Columns\Layout\Stack::make([
                 TextColumn::make('status')
