@@ -83,7 +83,7 @@ class GoldListWidget extends BaseWidget
                     }])
                     ->when(
                         value: auth()->user()->can('manage_reports'),
-                        callback: fn () => null,
+                        callback: fn (Builder $query) => $query->with('matchmaker'),
                         default: fn (Builder $query) => $query->where('user_id', auth()->user()->id)
                     )
                     ->whereIn('status', ['active'])
@@ -95,6 +95,10 @@ class GoldListWidget extends BaseWidget
             )
             ->recordClasses(fn (Subscriber $record) => $record->work_day === (now()->weekday() + 1) ? 'bg-green-50' : '')
             ->columns([
+                Columns\TextColumn::make('matchmaker.name')
+                    ->label('שדכן')
+                    ->visible(auth()->user()->can('manage_reports'))
+                    ->sortable(),
                 Columns\TextColumn::make('work_day')
                     ->label('יום')
                     ->badge()
@@ -123,6 +127,7 @@ class GoldListWidget extends BaseWidget
                     ->iconColor(function ($state) {
                         return Carbon::make($state)->isBetween(Carbon::now()->subDays(7), now()) ? 'gray' : 'danger';
                     })
+                    ->sortable()
                     ->formatStateUsing(function (?string $state = null) {
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
                     })
@@ -136,6 +141,7 @@ class GoldListWidget extends BaseWidget
                     ->formatStateUsing(function (?string $state = null) {
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
                     })
+                    ->sortable()
                     ->label('שיחה אחרונה'),
                 Columns\TextColumn::make('payments')
                     ->formatStateUsing(function (Subscriber $record) {
@@ -144,6 +150,7 @@ class GoldListWidget extends BaseWidget
                     ->label('חודש')
                     ->color(Color::Fuchsia)
                     ->alignCenter()
+                    ->sortable()
                     ->badge(),
                 ProgressBar::make('balance_payments')
                     ->label('מצב התקופה')
