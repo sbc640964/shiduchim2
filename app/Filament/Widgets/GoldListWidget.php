@@ -60,6 +60,7 @@ class GoldListWidget extends BaseWidget
                                     ->where('diaries.type', 'call');
                             })
                             ->whereColumn('diaries.created_by', 'subscribers.user_id')
+                            ->whereColumn('person_proposal.person_id', 'subscribers.person_id')
                             ->whereNull('hidden_at')
                             ->where('status', '!=', 'סגור')
                             ->selectRaw('MAX(diaries.created_at)'),
