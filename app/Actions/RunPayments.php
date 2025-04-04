@@ -11,7 +11,7 @@ class RunPayments
         // complete all active subscribers that end date is yesterday
         Subscriber::query()
             ->whereStatus('active')
-            ->whereDate('end_date', '<', now())
+            ->whereDate('end_date', '>', now())
             ->each(function (Subscriber $subscriber) {
                 $subscriber->completeWork();
             });
