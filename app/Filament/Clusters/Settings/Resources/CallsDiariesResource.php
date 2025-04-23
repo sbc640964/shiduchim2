@@ -221,7 +221,7 @@ class CallsDiariesResource extends Resource
                                 ->tooltip('נתח מחדש את הטקסט של השיחה')
                                 ->color('gray')
                                 ->successNotificationTitle('ההקלטה נשלחה לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
-                                ->action(function (Call $call, Action $action) {
+                                ->action(function (Call $call, Action|InfolistComponents\Actions\Action $action) {
                                     TranscriptionCallJob::dispatch($call);
                                     $action->success();
                                 })
