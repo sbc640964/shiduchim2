@@ -240,7 +240,7 @@ HTML
             ]);
 
             $response = $client->models()->generateContent([
-                "model" => "models/gemini-2.0-flash-exp",
+                "model" => "models/gemini-2.0-flash",
                 "systemInstruction" =>
                     "אני מצרף לך קובץ שמע של שיחה ששדכן מתקשר להורה להציע שידוכ/ים לבנו או בתו, תמלל את השיחה'",
                 "generationConfig" => new GenerationConfig(
@@ -267,7 +267,7 @@ HTML
                             'required' => ['spoken', 'text', 'time', 'duration']
                         ],
                     ]),
-                    maxOutputTokens: 8192,
+                    maxOutputTokens: null,
                     temperature: 1,
                     topP: 0.95,
                     topK: 40,
