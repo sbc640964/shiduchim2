@@ -280,7 +280,7 @@ HTML
                     ),
                     Content::createTextContent(
                         \Arr::join([
-                                "השדכן: $this->user->name",
+                                $this->user ?  "השדכן: ". $this->user->name : '',
                                 $this->phoneModel?->model ? "ההורה: ".$this->phoneModel->model->full_name : '',
                                  $this->diaries->count() ? "ההצעות אליהם נידון בשיחה: ".$this->diaries->map(function (Diary $diary) {
                                     return $diary->proposal->people->map(function (Person $person) {
