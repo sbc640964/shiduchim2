@@ -242,7 +242,7 @@ HTML
             $response = $client->models()->generateContent([
                 "model" => "models/gemini-2.5-flash-preview-04-17",
                 "systemInstruction" =>
-                    "אני מצרף לך קובץ שמע של שיחה ששדכן מתקשר להורה להציע שידוכ/ים לבנו או בתו, תמלל את השיחה'",
+                    "אני מצרף לך קובץ שמע של שיחה ששדכן מתקשר להורה להציע שידוכ/ים לבנו או בתו, תמלל את השיחה, שים לב אם השיחה היא באנגלית או בעברית",
                 "generationConfig" => new GenerationConfig(
                     responseMimeType: "application/json",
                     responseSchema: Schema::fromArray([

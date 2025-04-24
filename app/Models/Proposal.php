@@ -512,7 +512,7 @@ class Proposal extends Model
         )?->value ?? [])
             ->firstWhere('is_default', true)['name'] ?? 'UNKNOWN';
 
-        $proposal = self::create(array_merge([
+        $proposal = Proposal::query()->create(array_merge([
             'guy_id' => $people->firstWhere('gender', 'B')->id,
             'girl_id' => $people->firstWhere('gender', 'G')->id,
             'status' => $defaultStatus,

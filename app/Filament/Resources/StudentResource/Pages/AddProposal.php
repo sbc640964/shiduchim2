@@ -7,6 +7,8 @@ use App\Filament\Resources\StudentResource;
 use App\Models\Form as FormModel;
 use App\Models\Person as Student;
 use App\Models\Proposal;
+use DB;
+use Exception;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -24,6 +26,7 @@ use Filament\Tables\Filters\QueryBuilder\Constraints;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Throwable;
 
 class AddProposal extends ListRecords
 {
@@ -227,7 +230,7 @@ class AddProposal extends ListRecords
             return;
         }
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             $proposal = Proposal::createWithPeopleAndContacts([
@@ -237,7 +240,7 @@ class AddProposal extends ListRecords
                 $student,
             ]));
 
-            if(auth()->user()->hasAnyRole(config('app.auto_role_access_proposal'))) {
+            if (auth()->user()->hasAnyRole(config('app.auto_role_access_proposal'))) {
                 $proposal->users()->syncWithoutDetaching([auth()->id()]);
             }
 
@@ -246,16 +249,26 @@ class AddProposal extends ListRecords
                 $action->success();
             }
 
-            \DB::commit();
-        } catch (\Exception $e) {
-
-            \DB::rollBack();
+            DB::commit();
+        } catch (Exception|Throwable $e) {
+            DB::rollBack();
 
             if ($action) {
                 $action->failureNotificationTitle('הוספת הצעה נכשלה');
-                $action->failureNotification(fn (Notification $notification) => $notification->body($e->getMessage()));
+                $action->failureNotification(fn(Notification $notification) => $notification->body($e->getMessage()));
                 $action->failure();
             }
+
+            context([
+                'record' => $this->getRecord(),
+                'student' => $student,
+                'exception' => $e,
+                'action' => $action,
+            ]);
+
+            throw $e;
+        } finally {
+            $lock->release();
         }
     }
 }
