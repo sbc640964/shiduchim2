@@ -123,6 +123,10 @@ class GoldListResource extends Resource
                                 'active' => 'פעיל',
                                 'hold' => 'מושהה',
                                 'pending' => 'ממתין',
+                                'married' => 'נשוי',
+                                'canceled' => 'בוטל',
+                                'completed-active' => 'הושלם (תשלום פעיל)',
+                                'completed' => 'הושלם',
                             ])
                             ->searchable(),
                         Forms\Components\Select::make('lastTransactionStatus')
