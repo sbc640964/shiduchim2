@@ -481,12 +481,13 @@ class Person extends Model
             $person->save();
 
             if($person->lastSubscription) {
+                $oldStatus = $person->lastSubscription->status;
                 $person->lastSubscription->status = 'married';
                 $person->lastSubscription->save() && $person
                     ->lastSubscription->recordActivity(
                         'married',
                         [
-                            'hold_status' => $person->lastSubscription->status,
+                            'hold_status' => $oldStatus,
                             'person_id' => $thisPerson->id
                         ],
                     );
@@ -519,42 +520,53 @@ class Person extends Model
     /**
      * @throws \Throwable
      */
-    public function reMarried(?Proposal $proposal = null): Family
+    public function reMarried(?Proposal $proposal = null, ?Family $family = null): Family
     {
         DB::beginTransaction();
 
         try {
-            $spouse = $this->spouse;
-            $family = $this->family;
+            $spouse = $family ? $family->wife : $this->spouse;
+            $family = $family ?? $this->family;
 
-            $this->current_family_id = null;
-            $this->spouse_id = null;
-            $this->father_in_law_id = null;
-            $this->mother_in_law_id = null;
+            if($family->getKey() === $this->current_family_id) {
+                $this->current_family_id = null;
+                $this->spouse_id = null;
+                $this->father_in_law_id = null;
+                $this->mother_in_law_id = null;
+            }
 
-            $spouse->current_family_id = null;
-            $spouse->spouse_id = null;
-            $spouse->father_in_law_id = null;
-            $spouse->mother_in_law_id = null;
+            if ($family->getKey() === $spouse->current_family_id) {
+                $spouse->current_family_id = null;
+                $spouse->spouse_id = null;
+                $spouse->father_in_law_id = null;
+                $spouse->mother_in_law_id = null;
+            }
 
             $this->save() && $this->reBackStatusInMarriedLastSubscription();
             $spouse->save() && $spouse->reBackStatusInMarriedLastSubscription();
 
             $family->people()->detach([$this->id, $spouse->id]);
 
+            $peopleIdsToOpenProposals = collect([$this, $spouse])
+                ->reject(fn (Person $person) => filled($person->current_family_id))
+                ->pluck('id')
+                ->toArray();
+
             $proposals = Proposal::query()
                 ->withoutGlobalScope('withoutClosed')
-                ->with('lastDiary')
+                ->with('lastDiary', 'people')
                 ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
                 ->whereHas('people', fn (Builder $query) => $query
-                    ->whereIn('id', [$this->id, $spouse->id])
+                    ->whereIn('id', $peopleIdsToOpenProposals)
                 )->get();
 
             $proposals->each(function (Proposal $proposal) {
-                $proposal->reopen(
-                    status: $proposal->lastDiary->data['statuses']['proposal'] ?? null,
-                    changeStatusOnly: true
-                );
+                if(!$proposal->guy->current_family_id && !$proposal->girl->current_family_id) {
+                    $proposal->reopen(
+                        status: $proposal->lastDiary->data['statuses']['proposal'] ?? null,
+                        changeStatusOnly: true
+                    );
+                }
             });
 
             DB::commit();

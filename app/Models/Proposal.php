@@ -370,7 +370,7 @@ class Proposal extends Model
         \DB::transaction(function () use ($reason, $status) {
 
             $family = $this->getSpoken('guy')
-                ->reMarried($this);
+                ->reMarried($this, $this->family);
 
             if($family) {
                 $this->update([
@@ -379,6 +379,8 @@ class Proposal extends Model
                     'reason_status' => $reason,
                     'family_id' => null,
                 ]);
+
+                dump($family->load('people')->toArray(), $this->toArray());
 
                 $family->delete();
             }
