@@ -19,6 +19,10 @@ class WebhookGisController extends Controller
 {
     public function __invoke(Request $request)
     {
+        context([
+            'gis_api' => true,
+        ]);
+
         $validate = \Validator::make($request->all(), [
             'key' => 'required|in:'.config('app.phonecall.in_api_key'),
             'action' => 'required',

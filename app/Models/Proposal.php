@@ -212,7 +212,10 @@ class Proposal extends Model
 
     public function scopeWhereAccess(Builder $query): Builder
     {
-        if (app()->runningInConsole() || auth()->user()->hasAnyRole('admin', 'super_admin', 'developer')) {
+        if (app()->runningInConsole()
+            || context('gis_api')
+            || auth()->user()->hasAnyRole('admin', 'super_admin', 'developer')
+        ) {
             return $query;
         }
 
