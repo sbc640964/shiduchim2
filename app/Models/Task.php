@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Guava\Calendar\Contracts\Eventable;
+use Guava\Calendar\ValueObjects\CalendarEvent;
 use Guava\Calendar\ValueObjects\Event;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -107,4 +108,8 @@ class Task extends Model implements Eventable
             ->end($this->due_date);
     }
 
+    public function toCalendarEvent(): array|CalendarEvent
+    {
+        return [];
+    }
 }
