@@ -16,7 +16,7 @@ trait HasActivities
     public function recordActivity(string $type, ?array $data = [], ?string $description = null): void
     {
         $this->activities()->create([
-            'user_id' => auth()->id(),
+            'user_id' => auth()->id() ?? null,
             'type' => $type,
             'description' => $description ?? $this->getDefaultActivityDescription($type),
             'data' => $data,
