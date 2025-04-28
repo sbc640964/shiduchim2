@@ -34,6 +34,7 @@
         "malzariey/filament-daterangepicker-filter": "^3.1",
         "saade/blade-iconsax": "^1.1",
         "saade/filament-fullcalendar": "^3.2",
+        "sentry/sentry-laravel": "^4.13",
         "spatie/laravel-ignition": "^2.9",
         "staudenmeir/eloquent-has-many-deep": "^1.7",
         "staudenmeir/eloquent-json-relations": "^1.1",
