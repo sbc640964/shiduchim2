@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\User;
+use Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Sentry\State\Scope;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,5 +26,18 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('banner-manager', function (User $user) {
             return $user->can('banner_manager');
         });
+
+        if (app()->bound('sentry')) {
+            \Sentry\configureScope(function (Scope $scope): void {
+                if (Auth::check()) {
+                    $user = Auth::user();
+                    $scope->setUser([
+                        'id' => $user->id,
+                        'email' => $user->email,
+                        'username' => $user->name, // כאן תוודא שהשדה הוא 'name' או השם המתאים במודל
+                    ]);
+                }
+            });
+        }
     }
 }
