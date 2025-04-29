@@ -5,8 +5,6 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\GoldListResource\Pages;
 use App\Models\Subscriber;
 use App\Models\User;
-use Carbon\Carbon;
-use DB;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -71,8 +69,8 @@ class GoldListResource extends Resource
                         ->label('שם')
                         ->html()
                         ->searchable(['first_name', 'last_name'])
-                        ->formatStateUsing(fn (Subscriber $record) => str($record->student->full_name . " <span class='opacity-50 text-xs'>({$record->student->external_code_students})</span>")->toHtmlString())
-                        ->description(fn (Subscriber $record) => \Arr::join([
+                        ->formatStateUsing(fn(Subscriber $record) => str($record->student->full_name . " <span class='opacity-50 text-xs'>({$record->student->external_code_students})</span>")->toHtmlString())
+                        ->description(fn(Subscriber $record) => \Arr::join([
                             'ב"ר ',
                             $record->student->father->first_name,
                             $record->student->mother ? ' ו' : '',
@@ -113,12 +111,11 @@ class GoldListResource extends Resource
                             ->label('שדכן')
                             ->relationship('matchmaker', 'name')
                             ->preload()
-                            ->hidden(fn (Forms\Get $get) => $get('no_select_matchmaker'))
+                            ->hidden(fn(Forms\Get $get) => $get('no_select_matchmaker'))
                             ->searchable(),
 
                         Forms\Components\Select::make('status')
                             ->label('סטטוס')
-
                             ->options([
                                 'active' => 'פעיל',
                                 'hold' => 'מושהה',
@@ -165,32 +162,37 @@ class GoldListResource extends Resource
 
                         if ($data['status'] ?? null) {
                             $indicators[] = 'סטטוס: ' . match ($data['status']) {
-                                'active' => 'פעיל',
-                                'hold' => 'מושהה',
-                                'pending' => 'ממתין',
-                            };
+                                    'active' => 'פעיל',
+                                    'hold' => 'מושהה',
+                                    'pending' => 'ממתין',
+                                    'married' => 'נשוי',
+                                    'canceled' => 'בוטל',
+                                    'completed-active' => 'הושלם (תשלום פעיל)',
+                                    'completed' => 'הושלם',
+                                    default => $data['status'],
+                                };
                         }
 
                         if ($data['work_day'] ?? null) {
                             $indicators[] = 'יום: ' . match ($data['work_day']) {
-                                '1' => 'ראשון',
-                                '2' => 'שני',
-                                '3' => 'שלישי',
-                                '4' => 'רביעי',
-                                '5' => 'חמישי',
-                                '6' => 'שישי',
-                                '7' => 'מוצ"ש',
-                                'none' => 'לא נבחר',
-                            };
+                                    '1' => 'ראשון',
+                                    '2' => 'שני',
+                                    '3' => 'שלישי',
+                                    '4' => 'רביעי',
+                                    '5' => 'חמישי',
+                                    '6' => 'שישי',
+                                    '7' => 'מוצ"ש',
+                                    'none' => 'לא נבחר',
+                                };
                         }
 
                         if ($data['lastTransactionStatus'] ?? null) {
                             $indicators[] = 'סטטוס תשלום: ' . match ($data['lastTransactionStatus']) {
-                                'OK' => 'הצליח',
-                                'pending' => 'ממתין',
-                                'Error' => 'נכשל',
-                                'refunded' => 'הוחזר',
-                            };
+                                    'OK' => 'הצליח',
+                                    'pending' => 'ממתין',
+                                    'Error' => 'נכשל',
+                                    'refunded' => 'הוחזר',
+                                };
                         }
 
                         return $indicators;
@@ -198,19 +200,19 @@ class GoldListResource extends Resource
                     ->query(function (Builder $query, array $data) {
                         $query
                             ->when($data['no_select_matchmaker'] ?? null,
-                                fn (Builder $query) => $query->whereNull('user_id'),
-                                fn (Builder $query) => $query
-                                    ->when($data['matchmaker'] ?? null, fn (Builder $query) => $query
+                                fn(Builder $query) => $query->whereNull('user_id'),
+                                fn(Builder $query) => $query
+                                    ->when($data['matchmaker'] ?? null, fn(Builder $query) => $query
                                         ->where('user_id', $data['matchmaker'])
                                     )
                             )
-                            ->when($data['status'] ?? null, fn (Builder $query, $value) => $query->where('status', $value))
+                            ->when($data['status'] ?? null, fn(Builder $query, $value) => $query->where('status', $value))
                             ->when($data['work_day'] ?? null, function (Builder $query, $value) {
                                 $value === 'none'
                                     ? $query->whereNull('work_day')
                                     : $query->where('work_day', $value);
                             })
-                            ->when($data['lastTransactionStatus'] ?? null, fn (Builder $query, $value) => $query->whereRelation('lastTransaction', 'status', $value));
+                            ->when($data['lastTransactionStatus'] ?? null, fn(Builder $query, $value) => $query->whereRelation('lastTransaction', 'status', $value));
                     }),
             ])
             ->filtersLayout(Tables\Enums\FiltersLayout::AboveContent)
@@ -219,10 +221,9 @@ class GoldListResource extends Resource
                 Tables\Actions\Action::make('view')
                     ->iconButton()
                     ->icon('heroicon-o-eye')
-                    ->url(fn (Subscriber $record) =>
-                        static::isManager()
-                            ? StudentResource::getUrl('subscription', ['record' => $record->student->id])
-                            : StudentResource::getUrl('proposals', ['record' => $record->student->id])
+                    ->url(fn(Subscriber $record) => static::isManager()
+                        ? StudentResource::getUrl('subscription', ['record' => $record->student->id])
+                        : StudentResource::getUrl('proposals', ['record' => $record->student->id])
                     ),
             ])
             ->bulkActions([
@@ -251,29 +252,29 @@ class GoldListResource extends Resource
             TextColumn::make('created_at')
                 ->label('תאריך רישום')
                 ->date('d/m/Y')
-                ->description(fn (Subscriber $record) => 'רישום: ' .$record->created_at->diffForHumans())
+                ->description(fn(Subscriber $record) => 'רישום: ' . $record->created_at->diffForHumans())
                 ->sortable(),
             TextColumn::make('work_month')
                 ->label('חודש פעילות')
                 ->badge()
-                ->color(fn (Subscriber $record) => match ($record->balance_payments) {
+                ->color(fn(Subscriber $record) => match ($record->balance_payments) {
                     1 => 'danger',
                     2 => 'warning',
-                    3,4 => 'success',
+                    3, 4 => 'success',
                     default => 'gray',
                 })
-                ->formatStateUsing(fn (Subscriber $record) => $record->work_month . '/' . $record->payments . ' חודשים')
+                ->formatStateUsing(fn(Subscriber $record) => $record->work_month . '/' . $record->payments . ' חודשים')
                 ->sortable(['balance_payments', 'payments']),
             Tables\Columns\Layout\Stack::make([
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
+                    ->color(fn($state) => match ($state) {
                         'active' => 'success',
                         'hold' => 'warning',
                         default => 'gray',
                     })
                     ->grow(false)
-                    ->formatStateUsing(fn ($state) => match (\Str::trim($state)) {
+                    ->formatStateUsing(fn($state) => match (\Str::trim($state)) {
                         'active' => 'פעיל',
                         'hold' => 'מושהה',
                         'pending' => 'ממתין',
@@ -291,17 +292,17 @@ class GoldListResource extends Resource
                     ->tooltip(fn($state, Subscriber $record) => \Str::trim($record->status) === 'pending' ? ($state ? 'פורסם לשדכנים' : 'לא פורסם') : 'מוקצא לשדכן')
                     ->offIcon('heroicon-o-x-mark')
                     ->sortable()
-                    ->getStateUsing(fn (Subscriber $record) => \Str::trim($record->status) === 'pending' ? $record->is_published : null)
-                    ->disabled(fn (Subscriber $record) => \Str::trim($record->status) !== 'pending')
+                    ->getStateUsing(fn(Subscriber $record) => \Str::trim($record->status) === 'pending' ? $record->is_published : null)
+                    ->disabled(fn(Subscriber $record) => \Str::trim($record->status) !== 'pending')
             ]),
             Tables\Columns\Layout\Stack::make([
                 TextColumn::make('label_matchmaker')
-                ->state(fn(Subscriber $record) => $record->matchmaker ? 'מוקצא לשדכן:' : 'לא הוקצא')
-                ->color(fn(Subscriber $record) => $record->matchmaker ? 'success' : Color::Gray)
-                ->weight('bold'),
+                    ->state(fn(Subscriber $record) => $record->matchmaker ? 'מוקצא לשדכן:' : 'לא הוקצא')
+                    ->color(fn(Subscriber $record) => $record->matchmaker ? 'success' : Color::Gray)
+                    ->weight('bold'),
                 TextColumn::make('matchmaker.name')
                     ->label('שדכן')
-                    ->description(fn (Subscriber $record) => 'יום: '.match ($record->work_day) {
+                    ->description(fn(Subscriber $record) => 'יום: ' . match ($record->work_day) {
                             1 => 'ראשון',
                             2 => 'שני',
                             3 => 'שלישי',
@@ -315,11 +316,11 @@ class GoldListResource extends Resource
             TextColumn::make('amount')
                 ->label('סכום')
                 ->money('ILS')
-                ->formatStateUsing(fn ($state) => Number::currency($state, 'ILS') . ' לחודש')
-                ->description(fn (Subscriber $record) => $record->balance_payments ? str(\Arr::join([
+                ->formatStateUsing(fn($state) => Number::currency($state, 'ILS') . ' לחודש')
+                ->description(fn(Subscriber $record) => $record->balance_payments ? str(\Arr::join([
                     "נותרו $record->balance_payments חודשים",
                     '<br/>',
-                    '<span class="font-bold">תשלום הבא: '.($record->next_payment_date?->format('d/m/Y') ?? '---') .'</span>',
+                    '<span class="font-bold">תשלום הבא: ' . ($record->next_payment_date?->format('d/m/Y') ?? '---') . '</span>',
                 ], ''))->toHtmlString() : null),
 
             Tables\Columns\Layout\Stack::make([
@@ -328,8 +329,8 @@ class GoldListResource extends Resource
                     ->weight('bold'),
                 TextColumn::make('student.lastDiary.created_at')
                     ->sortable()
-                    ->description(fn (Subscriber $record) => $record->student->lastDiary ? $record->student->lastDiary->created_at->diffForHumans() : null)
-                    ->tooltip(fn (Subscriber $record) => $record->student->lastDiary ? $record->student->lastDiary->label_type.': '.$record->student->lastDiary->data['description'] : null)
+                    ->description(fn(Subscriber $record) => $record->student->lastDiary ? $record->student->lastDiary->created_at->diffForHumans() : null)
+                    ->tooltip(fn(Subscriber $record) => $record->student->lastDiary ? $record->student->lastDiary->label_type . ': ' . $record->student->lastDiary->data['description'] : null)
                     ->label('פעילות אחרונה')
                     ->date('d/m/Y'),
             ]),
@@ -357,7 +358,7 @@ class GoldListResource extends Resource
                     'refunded' => 'warning',
                     default => 'gray',
                 })
-                ->formatStateUsing(fn ($state) => match ($state) {
+                ->formatStateUsing(fn($state) => match ($state) {
                     'OK' => 'הצליח',
                     'pending' => 'ממתין',
                     'Error' => 'נכשל',
@@ -372,17 +373,17 @@ class GoldListResource extends Resource
         return [
             TextColumn::make('work_day')
                 ->badge()
-                ->color(fn ($state) => now()->day === $state ? 'success' : 'gray')
-                ->formatStateUsing(fn ($state) => 'יום: '.match ($state) {
-                    1 => 'ראשון',
-                    2 => 'שני',
-                    3 => 'שלישי',
-                    4 => 'רביעי',
-                    5 => 'חמישי',
-                    6 => 'שישי',
-                    7 => 'מוצ"ש',
-                    default => $state,
-                }),
+                ->color(fn($state) => now()->day === $state ? 'success' : 'gray')
+                ->formatStateUsing(fn($state) => 'יום: ' . match ($state) {
+                        1 => 'ראשון',
+                        2 => 'שני',
+                        3 => 'שלישי',
+                        4 => 'רביעי',
+                        5 => 'חמישי',
+                        6 => 'שישי',
+                        7 => 'מוצ"ש',
+                        default => $state,
+                    }),
         ];
     }
 }
