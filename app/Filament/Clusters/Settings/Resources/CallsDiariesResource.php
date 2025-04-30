@@ -17,6 +17,7 @@ use App\Models\Proposal;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
@@ -37,6 +38,7 @@ use Filament\Tables\Table;
 use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Stringable;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class CallsDiariesResource extends Resource
@@ -188,6 +190,17 @@ class CallsDiariesResource extends Resource
                 DateRangeFilter::make('created_at')
                     ->label('תאריך')
                     ->placeholder('בחר תאריך'),
+                Tables\Filters\Filter::make('filters')
+                    ->form([
+                        TextInput::make('target_phone')
+                            ->label('מספר שחוייג')
+                    ])
+                    ->modifyQueryUsing(function (Builder $query, array $data) {
+                        if(filled($data['target_phone'])) {
+                            $phone = str($data['target_phone'])->whenStartsWith('0', fn (Stringable $str) => $str->substr(1));
+                            $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data_raw, '$.events[0].target_phone')) LIKE ?", ["%{$phone}%"]);
+                        }
+                    })
             ])
             ->defaultSort('calls.created_at', 'desc')
             ->actions([
