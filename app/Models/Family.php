@@ -56,7 +56,12 @@ class Family extends Model
     {
         return \Filament\Forms\Components\Select::make($name)
             ->getOptionLabelFromRecordUsing(fn (Family $record) => $record->option_select)
-            ->getSearchResultsUsing(fn ($search, $record) => Family::searchToSelect($search) + [$currentValue->id => $currentValue->option_select])
+            ->getSearchResultsUsing(fn ($search, $record) =>
+                array_merge(
+                    Family::searchToSelect($search),
+                    $currentValue ? [$currentValue->id => $currentValue->option_select] : []
+                )
+            )
             ->allowHtml()
             ->extraAttributes(['class' => 'option-select-w-full'])
             ->searchable();
