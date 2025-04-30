@@ -419,14 +419,14 @@ Blade;
         $model = $this->phoneModel?->model;
 
         if (! $model) {
-            return $this->phone;
+            return $this->phone ?? 'אין מספר';
         }
 
         if ($model instanceof Family) {
             return "משפ' ".$model->name;
         }
 
-        return $model->full_name;
+        return $model->full_name ?? 'אין שם';
     }
 
     public function getStatusLabel(): ?string
