@@ -344,7 +344,7 @@ class CallsDiariesResource extends Resource
                                 ->columns(4),
                         ]);
                     })
-                    ->action(function (Call $call, $livewire, $data) {
+                    ->action(function (Call $call, $livewire, $data, Tables\Actions\Action $action) {
 
                         $phone = $call->phoneModel;
 
@@ -364,8 +364,16 @@ class CallsDiariesResource extends Resource
                             }
                         }
 
+                        if(! $phone) {
+                            $action->failureNotificationTitle('לא הצלחנו לחייג למספר, יכול להיות שלא קיים המספר במאגר שלנו.');
+                            $action->failure();
+                        }
+
                         $phone->call();
                         $livewire->dispatch('refresh-calls-box');
+
+                        $action->successNotificationTitle('השיחה נשלחה לשלוחה');
+                        $action->success();
                     })
                     ->button(),
                     Tables\Actions\Action::make('diary_2')
