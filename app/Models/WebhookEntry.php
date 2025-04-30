@@ -34,4 +34,9 @@ class WebhookEntry extends Model
         $this->error = $error;
         $this->save();
     }
+
+    public function getHeadersStackAttribute($value): array
+    {
+        return array_map(fn ($item) => $item[0], $this->headers);
+    }
 }

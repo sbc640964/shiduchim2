@@ -181,3 +181,7 @@ td.description-diary p{
 .fi-main-ctn {
     transition: margin-inline-end 0.3s;
 }
+
+pre.prettyjson{
+    direction: ltr;
+}
