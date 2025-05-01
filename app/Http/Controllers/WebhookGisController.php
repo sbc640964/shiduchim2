@@ -104,6 +104,7 @@ class WebhookGisController extends Controller
                     ]);
                 } else {
                     $this->createCall($data, $extension, $phoneNumber, $phone, $user);
+                    $webhook->completed();
                     return 'Call created';
                 }
 
@@ -131,6 +132,10 @@ class WebhookGisController extends Controller
             }
 
             if (! $call) {
+                $webhook->setError([
+                    'error' => 'Call not found',
+                ]);
+
                 return 'Error: Call not found';
             }
 
