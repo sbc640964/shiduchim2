@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Infolists;
+use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Novadaemon\FilamentPrettyJson\Infolist\PrettyJsonEntry;
@@ -83,11 +84,15 @@ class WebhookEntryResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('error')),
                 Tables\Filters\Filter::make('filters')
                 ->form([
-                    Forms\Components\TextInput::make('body')
+                    Forms\Components\KeyValue::make('body')
                         ->label('גוף הבקשה')
-                        ->placeholder('חפש בגוף הבקשה')
                 ])
-                    ->query(fn (Builder $query, array $data): Builder => $data['body'] ? $query->where('body', 'like', "%{$data['body']}%") : $query),
+                    ->query(fn (Builder $query, array $data): Builder => $data['body'] ? $query->where(function ($q) use ($data) {
+                        foreach ($data['body'] as $key => $value) {
+                            if(filled($value) && filled($key))
+                                $q->where('body->' . $key, 'like', '%' . $value . '%');
+                        }
+                    }) : $query),
             ])
             ->headerActions([
                 Tables\Actions\Action::make('refresh')
