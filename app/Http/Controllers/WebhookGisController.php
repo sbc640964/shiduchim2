@@ -90,7 +90,7 @@ class WebhookGisController extends Controller
             );
 
 
-            if ($action === 'ring' && ! $isOutgoing) {
+            if ($action === 'ring') {
                 $lockKey = 'lock:call:' . $data['original_call_id'] . ':' . $data['action'];
 
                 $lock = Cache::lock($lockKey, 3)->block(3);
