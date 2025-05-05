@@ -75,6 +75,7 @@ class ImportsResource extends Resource
                     ]),
                 Forms\Components\FileUpload::make('file')
                     ->label('קובץ')
+                    ->hiddenOn('edit')
                     ->storeFiles(false)
                     ->acceptedFileTypes([
                         'text/csv',
@@ -87,13 +88,22 @@ class ImportsResource extends Resource
                     ->label('מיפוי עמודות')
                     ->schema(function (Forms\Get $get, $livewire) {
 
-                        if(! $get('file')) {
-                            return [];
+                        if($livewire instanceof Pages\ViewImports) {
+                            $headers = $livewire->getRecord()->headers ?? [];
+                        } else {
+                            $file = $get('file');
+
+                            if(! $file || (is_array($file) && count($file) === 0)) {
+                                return [];
+                            }
+
+                            HeadingRowFormatter::default('none');
+                            $headers = (new HeadingRowImport)->toArray(\Arr::first($file))[0][0];
                         }
 
-                        HeadingRowFormatter::default('none');
-
-                        $headers = (new HeadingRowImport)->toArray(\Arr::first($get('file')))[0][0];
+                        if(count($headers) === 0) {
+                            return [];
+                        }
 
                         $selectOptions = array_combine($headers, $headers);
 
@@ -102,14 +112,18 @@ class ImportsResource extends Resource
                             default => [],
                         });
 
-                        return $fields->map(function ($field) use ($selectOptions, $fields) {
+                        return $fields->map(function ($field) use ($livewire, $selectOptions, $fields) {
                             return Forms\Components\Select::make($field['name'])
                                 ->label($field['label'])
+                                ->when($livewire instanceof Pages\ViewImports, fn (Forms\Components\Select $component) =>
+                                    $component->statePath(
+                                    'options.mapping.' . $field['name']
+                                    ))
                                 ->options($selectOptions)
                                 ->required($field['required'] ?? false);
                         })->toArray();
                     })
-                    ->hidden(fn (Forms\Get $get) => ! $get('file'))
+                    ->hidden(fn (Forms\Get $get, $livewire) => ! $get('file') && !($livewire instanceof Pages\ViewImports))
             ]);
     }
 
@@ -165,7 +179,7 @@ class ImportsResource extends Resource
         return [
             'index' => Pages\ListImports::route('/'),
 //            'create' => Pages\CreateImports::route('/create'),
-            'edit' => Pages\EditImports::route('/{record}/edit'),
+//            'edit' => Pages\EditImports::route('/{record}/edit'),
             'view' => Pages\ViewImports::route('/{record}'),
         ];
     }
