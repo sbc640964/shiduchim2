@@ -110,7 +110,7 @@ class RunRow
                 'error' => $e->getMessage(),
                 'error_stack' => [
                     'message' => $e->getMessage(),
-//                    'trace' => Arr::take($e->getTrace(), 5),
+                    'trace' => $e->getTraceAsString(),
                     'line' => $e->getLine(),
                     'file' => $e->getFile(),
                     'code' => $e->getCode(),

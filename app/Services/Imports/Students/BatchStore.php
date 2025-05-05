@@ -6,6 +6,8 @@ use App\Models\ImportBatch;
 use App\Models\ImportRow;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\HeadingRowImport;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 class BatchStore
 {
@@ -38,6 +40,7 @@ class BatchStore
             'status' => 'pending',
             'options' => $this->getOptions(),
             'file_path' => $path,
+            'headers' => $this->getHeaders(),
         ]);
 
         $rows = $rows->map(function ($row) use ($batch) {
@@ -63,5 +66,11 @@ class BatchStore
         return [
             'mapping' => $this->mapping,
         ];
+    }
+
+    private function getHeaders(): array
+    {
+        HeadingRowFormatter::default('none');
+        return (new HeadingRowImport)->toArray($this->file)[0][0];
     }
 }

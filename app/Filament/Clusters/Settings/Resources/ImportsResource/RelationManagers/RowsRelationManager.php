@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Settings\Resources\ImportsResource\RelationManagers;
 
+use App\Helpers\LivewireDotStateFix;
 use App\Models\ImportRow;
 use App\Services\Imports\Students\Importer;
 use Arr;
@@ -30,6 +31,7 @@ class RowsRelationManager extends RelationManager
             ->columns(1)
             ->schema([
                 Forms\Components\KeyValue::make('data')
+                    ->dehydrateStateUsing(fn (?array $state) => LivewireDotStateFix::fix($state))
                     ->label('נתונים')
                     ->deleteAction(fn ($action) => $action->icon('heroicon-o-trash'))
             ]);

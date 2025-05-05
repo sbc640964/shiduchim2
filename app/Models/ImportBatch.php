@@ -8,6 +8,7 @@ use App\Services\Imports\Students\RunRow;
 use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ImportBatch extends Model
 {
@@ -24,12 +25,14 @@ class ImportBatch extends Model
         'started_at',
         'finished_at',
         'type',
+        'headers',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'options' => 'array',
+        'headers' => 'array',
     ];
 
     public function rows(): HasMany

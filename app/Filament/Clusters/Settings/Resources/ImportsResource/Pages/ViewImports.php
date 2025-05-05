@@ -14,6 +14,7 @@ class ViewImports extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\EditAction::make(),
             Actions\Action::make('run')
                 ->label('הפעל')
                 ->requiresConfirmation()
