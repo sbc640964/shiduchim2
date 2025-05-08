@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Guava\Calendar\Contracts\Eventable;
 use Guava\Calendar\ValueObjects\CalendarEvent;
-use Guava\Calendar\ValueObjects\Event;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Log;
@@ -82,9 +81,9 @@ class Task extends Model implements Eventable
         ], ' | ');
     }
 
-    public function toEvent(): array|Event
+    public function toEvent(): array|CalendarEvent
     {
-        return Event::make()
+        return CalendarEvent::make()
             ->styles([
                 'background-color' => '#fff',
                 'color' => '#000',
