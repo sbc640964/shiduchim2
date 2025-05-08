@@ -16,7 +16,7 @@
                 <div class="flex justify-center items-center flex-col mt-auto border-t pt-1">
                     <p class="text-sm text-gray-500">סה"כ שידוכים פתוחים</p>
                     <p class="text-xl font-bold text-gray-500 mt-2">
-                        <span class="text-xl font-bold text-gray-500">{{ $this->otherUsersProposals()->sum('open_proposals') }}</span>
+                        <span class="text-xl font-bold text-gray-500">{{ $this->openProposals->sum('open_proposals') }}</span>
                     </p>
                 </div>
             </x-filament::section>
