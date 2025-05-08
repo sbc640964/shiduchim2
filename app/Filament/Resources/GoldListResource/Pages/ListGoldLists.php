@@ -34,6 +34,9 @@ class ListGoldLists extends ListRecords
                         ->body('אנחנו נעדכן אותך ברגע שהוא יהיה מוכן')
                         ->success()
                     )->action(function (Action $action) {
+
+                        return Excel::download(new SubscriptionsExport(auth()->user()), 'subscriptions.xlsx');
+                        /*
                         $fileName = 'subscriptions-'.now()->format('Y-m-d-His-').auth()->user()->id.'.xlsx';
 
                         Excel::queue(
@@ -43,7 +46,7 @@ class ListGoldLists extends ListRecords
                         )->chain([
                             new SendNotificationsAfterExportDataJob(auth()->user(), $fileName)
                         ]);
-
+                        */
                         $action->success();
                     })
                     ->icon('iconsax-bul-document-download')
