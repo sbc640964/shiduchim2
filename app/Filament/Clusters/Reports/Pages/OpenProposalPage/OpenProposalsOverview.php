@@ -16,23 +16,23 @@ class OpenProposalsOverview extends BaseWidget
         return [
             Stat::make(
                 label: 'פתוחות עכשיו',
-                value: $this->baseQuery()->whereNotNull('opened_at')
+                value: $this->baseQuery()
                     ->whereNull('closed_at')
                     ->count()
             )
                 ->color('success'),
             Stat::make(
                 label: 'נפתחו',
-                value: $this->baseQuery()->when($dates, fn($query) => $query->whereBetween('opened_at', $dates))->count()
+                value: $this->baseQueryWithClosed()->when($dates, fn($query) => $query->whereBetween('opened_at', $dates))->count()
             ),
             Stat::make(
                 label: 'נסגרו',
-                value: $this->baseQuery()
+                value: $this->baseQueryWithClosed()
                     ->when($dates, fn($query) => $query->whereBetween('closed_at', $dates))->count()
             ),
             Stat::make(
                 label: 'הסתיימו',
-                value: $this->baseQuery()
+                value: $this->baseQueryWithClosed()
                     ->whereNotNull('family_id')
                     ->when($dates, fn($query) => $query->whereRelation('family', 'created_at', 'between', $dates))
                     ->count(),
