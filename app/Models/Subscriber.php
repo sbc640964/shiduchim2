@@ -266,7 +266,7 @@ class Subscriber extends Model
         ]);
     }
 
-    public function statusLabel()
+    public function statusLabel(): string
     {
         return match ($this->status) {
             'active' => 'פעיל',

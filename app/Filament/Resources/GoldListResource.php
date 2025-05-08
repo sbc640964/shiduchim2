@@ -27,6 +27,16 @@ class GoldListResource extends Resource
 
     protected static ?string $pluralLabel = "תלמידים";
 
+    public static function getPluralModelLabel(): string
+    {
+        return static::isManager() ? 'מנויים' : 'תלמידים';
+    }
+
+    public static function getLabel(): string
+    {
+        return static::isManager() ? 'מנוי' : 'תלמיד';
+    }
+
     public static function getNavigationLabel(): string
     {
         return static::isManager() ? 'מנויים' : 'רשימת הזהב שלי';
