@@ -17,6 +17,7 @@
 >
     <div
         x-ignore
+        x-load
         @if (\Filament\Support\Facades\FilamentView::hasSpaMode())
             ax-load="visible || event (ax-modal-opened)"
         @else
@@ -87,6 +88,7 @@
                 showDropdowns: @js($getShowDropdowns()),
                 minYear: @js($getMinYear()),
                 maxYear: @js($getMaxYear()),
+                timezone: @js($getTimezone())
             })"
         id="date-range-picker-{{ $name }}"
         wire:key="date-range-picker-{{ $name }}"
