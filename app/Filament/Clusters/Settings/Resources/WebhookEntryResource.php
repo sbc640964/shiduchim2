@@ -38,6 +38,9 @@ class WebhookEntryResource extends Resource
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist->schema([
+            Infolists\Components\TextEntry::make('created_at')
+                ->label('נוצר בתאריך')
+                ->dateTime('d/m/Y H:i:s'),
             Infolists\Components\Fieldset::make('כללי')->schema([
                 TextEntry::make('url')->label('כתובת'),
                 Infolists\Components\IconEntry::make('is_completed')
@@ -67,6 +70,10 @@ class WebhookEntryResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()
                     ->label('מזהה'),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->sortable()
+                    ->label('נוצר בתאריך')
+                    ->dateTime('d/m/Y H:i:s'),
                 Tables\Columns\TextColumn::make('url')
                     ->sortable()
                     ->label('כתובת'),
