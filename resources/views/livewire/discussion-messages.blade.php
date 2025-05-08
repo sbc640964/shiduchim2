@@ -113,8 +113,23 @@
                 showAlertHasNewMessages = true;
             }
         }, 100)"
-
+        x-on:load-more-messages.window="setTimeout(() => {
+        console.log($event.detail.scrollPosition, $el, $el.scrollHeight, $el.scrollTop);
+       $el.scrollTo({
+            top: $el.scrollHeight - $event.detail.scrollPosition,
+            behavior: 'auto'
+        })
+        });"
     >
+        @if($this->perPage < $this->total)
+            <div x-intersect.margin.200px="$wire.loadMore($root.scrollHeight)" class="flex justify-center items-center p-4">
+                <x-filament::loading-indicator
+                    class="size-6"
+                    wire:target="loadMore"
+                    wire:loading.inline-block="true"
+                />
+            </div>
+        @endif
         @if($this->discussionMessages->isEmpty())
             <div class="flex items-center justify-center h-full">
                 <p class="text-gray-500">אין הודעות</p>

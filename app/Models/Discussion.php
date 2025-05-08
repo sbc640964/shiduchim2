@@ -36,6 +36,16 @@ class Discussion extends Model
         return $this->hasMany(Discussion::class, 'parent_id');
     }
 
+    public function lastReadAt(): HasOne
+    {
+        return $this->children()
+            ->readAt()
+            ->latest()
+            ->havingNull('read_at')
+            ->one();
+
+    }
+
     public function lastChildren(): HasOne
     {
         return $this->hasOne(Discussion::class, 'parent_id')->ofMany('created_at', 'max');

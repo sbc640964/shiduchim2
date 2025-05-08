@@ -13,6 +13,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
@@ -28,6 +29,8 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
 
     #[Reactive]
     public int $discussionId;
+
+    public int $perPage = 20;
 
     public array $usersTyping = [];
 
@@ -54,15 +57,21 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
     public function discussionMessages(): Collection
     {
         return $this->discussion->children()
+            ->when(($this->perPage + 20) > $this->total,
+                fn ($q) => $q->union(
+                    $this->discussion->newQuery()
+                        ->where('id', $this->discussion->id)
+                        ->with('user')
+                        ->readAt()
+                )
+            )
             ->withTrashed()
             ->with('user', 'otherUsersAsRead')
+            ->latest()
+            ->take($this->perPage)
             ->readAt()
-            ->oldest()
-//            ->take(100)
             ->get()
-            ->prepend(
-                $this->discussion
-            );
+            ->reverse();
     }
 
     #[Computed(persist: true)]
@@ -82,6 +91,19 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
         return Discussion::readAt()
             ->with('user')
             ->findOrFail($this->discussionId);
+    }
+
+    #[Computed(persist: true)]
+    public function total()
+    {
+        return $this->discussion->children()->count();
+    }
+
+    public function loadMore(int $scrollPosition): void
+    {
+        unset($this->discussionMessages);
+        $this->perPage += 20;
+        $this->dispatch('load-more-messages', scrollPosition: $scrollPosition);
     }
 
     public function updateLastReadMessageId(): void
