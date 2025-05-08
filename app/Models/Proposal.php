@@ -383,8 +383,6 @@ class Proposal extends Model
                     'family_id' => null,
                 ]);
 
-                dump($family->load('people')->toArray(), $this->toArray());
-
                 $family->delete();
             }
         });

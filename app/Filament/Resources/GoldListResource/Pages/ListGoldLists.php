@@ -35,18 +35,17 @@ class ListGoldLists extends ListRecords
                         ->success()
                     )->action(function (Action $action) {
 
-                        return Excel::download(new SubscriptionsExport(auth()->user()), 'subscriptions.xlsx');
-                        /*
+//                        return Excel::download(new SubscriptionsExport(auth()->user()), 'subscriptions.xlsx');
                         $fileName = 'subscriptions-'.now()->format('Y-m-d-His-').auth()->user()->id.'.xlsx';
 
                         Excel::queue(
                             new SubscriptionsExport(auth()->user()),
-                            "exports\\$fileName",
+                            "exports/$fileName",
                             's3'
                         )->chain([
                             new SendNotificationsAfterExportDataJob(auth()->user(), $fileName)
                         ]);
-                        */
+
                         $action->success();
                     })
                     ->icon('iconsax-bul-document-download')

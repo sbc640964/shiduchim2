@@ -48,6 +48,11 @@ class NotifyUserOfCompletedExportNotification extends Notification implements Sh
 
         $date = Carbon::make($this->endDatetimeToDownload);
 
+        $url = Storage::disk('s3')->temporaryUrl(
+            'exports/'.$this->filePath,
+            now()->addHour(),
+        );
+
         return FilamentNotification::make()
             ->title('קובץ הייצוא - מנויים - מוכן')
             ->success()
@@ -56,11 +61,7 @@ class NotifyUserOfCompletedExportNotification extends Notification implements Sh
                 Action::make('download')
                     ->label('הורד')
                     ->hidden(now()->gt($date->format('H:i')))
-                    ->openUrlInNewTab()
-                    ->url(Storage::disk('s3')->temporaryUrl(
-                        'exports/'.$this->filePath,
-                        now()->addHour(),
-                    ))
+                    ->url($url, true)
             ]);
     }
 
