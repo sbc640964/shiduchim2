@@ -41,6 +41,9 @@ class RunRow
         return $this->row;
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function handle($pendingOnly = true): void
     {
         if($pendingOnly && $this->row->status !== 'pending') {
@@ -144,16 +147,16 @@ class RunRow
 
         $person = null;
 
-        if (! blank($studentExternalId) || ! blank($externalId)) {
+        if (filled($studentExternalId) || filled($externalId)) {
             $person =
                 Person::query()
                     ->when(
-                        ! blank($studentExternalId),
+                        filled($studentExternalId),
                         fn ($query) => $query
                             ->where('external_code_students', $studentExternalId)
                     )
                     ->when(
-                        ! blank($externalId) && blank($studentExternalId),
+                        filled($externalId) && blank($studentExternalId),
                         fn ($query) => $query
                             ->where('external_code', $externalId)
                     )
@@ -335,6 +338,9 @@ class RunRow
 
     private function fillRecord(): void
     {
+        if($this->data['external_code'] ?? null) {
+            $this->record->external_code_students = $this->data['external_code'];
+        }
 
         if ($this->data['mothers_father_code_ichud'] == $this->record->father->fatherInLaw?->external_code) {
             $this->record->mother_id = $father?->spouse_id ?? null;
