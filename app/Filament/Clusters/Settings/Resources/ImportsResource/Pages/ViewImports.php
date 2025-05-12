@@ -18,7 +18,7 @@ class ViewImports extends ViewRecord
             Actions\Action::make('run')
                 ->label('הפעל')
                 ->requiresConfirmation()
-                ->hidden(fn () => $this->getRecord()->status !== 'pending')
+                ->visible(fn () => $this->getRecord()->status === 'pending' || $this->getRecord()->rows()->whereStatus('pending')->exists())
                 ->modalHeading('האם אתה בטוח שברצונך להפעיל את הייבוא?')
                 ->modalDescription('הפעולה תפעיל את הייבוא ותתחיל בעיבוד הנתונים ברקע.')
                 ->action(fn () => $this->getRecord()->run()),

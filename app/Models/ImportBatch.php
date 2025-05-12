@@ -42,10 +42,14 @@ class ImportBatch extends Model
 
     public function run(): void
     {
-        $this->update(['status' => 'running', 'started_at' => now()]);
+        $this->update(array_merge([
+            'status' => 'running'
+        ], $this->started_at ? [] : [
+            'started_at' => now()
+        ]));
 
         try {
-            $this->rows()
+            $this->rows()->whereStatus('pending')
                 ->chunk(150, function ($rows) {
                     $rows->each(fn ($row) => RunImportRowJob::dispatch($row));
                 });
