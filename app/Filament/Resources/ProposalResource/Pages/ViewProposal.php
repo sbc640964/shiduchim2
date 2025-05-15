@@ -18,7 +18,6 @@ use Filament\Support\Enums\MaxWidth;
 class ViewProposal extends ViewRecord
 {
     protected static string $resource = ProposalResource::class;
-
     protected static ?string $navigationLabel = 'מבט כללי';
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-pie';

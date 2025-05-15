@@ -47,7 +47,7 @@ class ProposalPolicy
      */
     public function delete(User $user, Proposal $proposal): bool
     {
-        return $proposal->userCanAccess($user);
+        return $proposal->userCanAccess($user) && $user->can('delete_proposal');
     }
 
     /**
