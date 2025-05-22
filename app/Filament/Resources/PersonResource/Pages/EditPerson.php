@@ -50,6 +50,7 @@ class EditPerson extends EditRecord
                             ->getSearchResultsUsing(fn (string $search) =>
                                 Person::query()->searchName($search, inParents: true)
                                     ->with('father', 'father.city')
+                                    ->where('id', '!=', $this->getRecord()->getKey())
                                     ->limit(60)
                                     ->get()
                                     ->mapWithKeys(fn (Person $person) => [$person->id => $person->getSelectOptionHtmlAttribute()]),
