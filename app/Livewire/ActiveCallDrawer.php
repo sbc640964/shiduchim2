@@ -29,6 +29,8 @@ class ActiveCallDrawer extends Component implements HasForms
 
     public array $data = [];
 
+    public bool $showHiddenProposals = false;
+
     public string $sideFamilyParent = 'G';
 
     public function setActiveTab(string $tab): void
@@ -79,7 +81,8 @@ class ActiveCallDrawer extends Component implements HasForms
             return collect();
         }
 
-        return $this->person->proposalContacts;
+        return $this->person->proposalContacts()
+            ->when($this->showHiddenProposals, fn ($query) => $query->withoutGlobalScope('withoutHidden'))->get();
     }
 
     #[Computed]
@@ -101,6 +104,13 @@ class ActiveCallDrawer extends Component implements HasForms
     public function isFamilyPhone(): bool
     {
         return $this->call?->phoneModel?->model instanceof Family;
+    }
+
+    public function toggleHiddenProposals()
+    {
+        $this->showHiddenProposals = !$this->showHiddenProposals;
+
+        unset($this->proposals);
     }
 
     function getForms(): array

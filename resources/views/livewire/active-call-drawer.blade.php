@@ -56,7 +56,19 @@
 
             @if($activeTab === 'proposals')
                 <div>
-                    <h2 class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">הצעות</h2>
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">
+                            הצעות
+                        </h2>
+                        <div>
+                            <x-filament::badge
+                                wire:click="toggleHiddenProposals"
+                                :spa-mode="true"
+                            >
+                                {{ $this->showHiddenProposals ? 'הסתר הצעות מוסתרות' : 'הצג הצעות מוסתרות' }}
+                            </x-filament::badge>
+                        </div>
+                    </div>
 
                     <p class="text-gray-500 text-sm mt-2">
                         כאן תוכלו לתעד את השיחות שלכם עבור כל אחת מהצעות הקיימות עבור צאצאי נשוא השיחה
@@ -118,7 +130,7 @@
 
                                                 <div class="mt-8 flex justify-end">
                                                     <x-filament::button
-                                                        size="sm"
+                                                        size="xs"
                                                         wire:click="saveProposalDiary({{$proposal->getKey()}})"
                                                         class="w-full"
                                                         type="button">
@@ -174,6 +186,7 @@
                     <h2 class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">שיחות</h2>
                 </div>
 
+                <livewire:active-call-last-calls :current-call="$this->call" />
                 <p class="text-gray-500 text-sm mt-4 text-center">
                     בקרוב תוכלו לראות כאן את השיחות האחרונות שלכם עם נשוא השיחה...
                 </p>
