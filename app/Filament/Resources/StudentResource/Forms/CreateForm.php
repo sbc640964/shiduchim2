@@ -16,7 +16,6 @@ use Filament\Forms\Set;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Infolist;
 use Illuminate\Support\HtmlString;
-use function Termwind\render;
 
 class CreateForm
 {
@@ -75,12 +74,12 @@ class CreateForm
                     ->required(),
 
                 Family::filamentSelect('parents_family_id', $record?->parentsFamily)
+                    ->relationship('parentsFamily', 'name')
                     ->label('משפחת הורים')
                     ->live()
                     ->getOptionLabelUsing(fn ($value) => $value ? Family::find($value)?->option_select : null)
-                    ->afterStateUpdated(function (Set $set, $old, $state) {
-                        $family = Family::with('city', 'people')->find($state);
-
+                    ->afterStateUpdated(function (Set $set, $old, $state, $component, $livewire) {
+                        $family = Family::with(['city', 'people'])->find($state);
                         if($family) {
                             $set('last_name', $family->name);
                             $set('father_id', $family->husband?->id ?? null);
