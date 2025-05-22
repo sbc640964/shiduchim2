@@ -63,7 +63,7 @@ class Call extends Model
             ->whereNull('finished_at')
             ->whereNotNull('extension')
             ->with('user')
-            ->where('created_at', '>', now()->subMinutes(2))
+            ->where('created_at', '<', now()->subMinutes(2))
             ->get()->each->checkAndFinish();
     }
 
