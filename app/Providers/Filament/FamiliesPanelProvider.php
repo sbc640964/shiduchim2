@@ -19,6 +19,7 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\VerticalAlignment;
+use Filament\Tables\Table;
 use Filament\Tables\View\TablesRenderHook;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -35,6 +36,19 @@ use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 
 class FamiliesPanelProvider extends PanelProvider
 {
+    public function boot()
+    {
+        Table::configureUsing(function (Table $table) {
+            $table->paginationPageOptions([
+                10,
+                25,
+                50,
+                100,
+            ]);
+        });
+    }
+
+
     public function panel(Panel $panel): Panel
     {
         return $panel
