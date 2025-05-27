@@ -14,7 +14,7 @@
         @foreach($activities as $activity)
             <tr class="last:border-b">
                 <td class="text-gray-800 text-sm px-3 py-2 border-t">{{ $activity->created_at->format('d/m/Y H:i') }}</td>
-                <td class="text-gray-800 text-sm px-3 py-2 border-t">{{ $activity->user->name }}</td>
+                <td class="text-gray-800 text-sm px-3 py-2 border-t">{{ $activity->user?->name ?? 'פעולה אוטומטית' }}</td>
                 <td class="text-gray-800 text-sm px-3 py-2 border-t">{{ $activity->description }}</td>
                 <td class="text-gray-800 text-sm px-3 py-2 border-t">
                     @switch($activity->type)
