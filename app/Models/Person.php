@@ -10,7 +10,6 @@ use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -487,19 +486,20 @@ class Person extends Model
                     ->lastSubscription->recordActivity(
                         'married',
                         [
-                            'hold_status' => $oldStatus,
+                            'old_status' => $oldStatus,
                             'person_id' => $thisPerson->id
                         ],
                     );
             }
 
             if($thisPerson->lastSubscription) {
+                $oldStatus = $thisPerson->lastSubscription->status;
                 $thisPerson->lastSubscription->status = 'married';
                 $thisPerson->lastSubscription->save() && $thisPerson
                     ->lastSubscription->recordActivity(
                         'married',
                         [
-                            'hold_status' => $thisPerson->lastSubscription->status,
+                            'old_status' => $oldStatus,
                             'person_id' => $person->id
                         ],
                     );
@@ -585,7 +585,7 @@ class Person extends Model
     private function reBackStatusInMarriedLastSubscription(): void
     {
         if ($this->lastSubscription && $this->lastSubscription->status === 'married') {
-            $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()->first()?->data['hold_status'] ?? 'hold';
+            $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()->first()?->data['old_status'] ?? 'hold';
             $this->lastSubscription->status = $lastSubscriptionStatus;
             $this->lastSubscription->save() &&
             $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
