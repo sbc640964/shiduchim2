@@ -13,7 +13,7 @@ use Filament\Forms;
 use Filament\Infolists\Components;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Enums\MaxWidth;
+use Illuminate\Database\Eloquent\Model;
 
 class ViewProposal extends ViewRecord
 {
@@ -21,6 +21,26 @@ class ViewProposal extends ViewRecord
     protected static ?string $navigationLabel = 'מבט כללי';
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
+
+    protected function resolveRecord(int|string $key): Model
+    {
+        $record = parent::resolveRecord($key);
+
+        if (! $record instanceof Proposal) {
+            abort(404);
+        }
+
+        $record->loadMissing([
+            'people.father.mother',
+            'people.father.father',
+            'people.mother.father',
+            'people.mother.mother',
+            'people.city'
+        ]);
+
+        return $record;
+
+    }
 
     public static function canAccess(array $parameters = []): bool
     {

@@ -443,6 +443,19 @@ class Person extends Model
      * @throws \Throwable
      */
 
+    public function olderSiblings(): Collection
+    {
+        return \Cache::remember(
+            'older_siblings_'.$this->id,
+            now()->addMinutes(10),
+            fn() => Person::query()
+                ->where('parents_family_id', $this->parents_family_id)
+                ->where('id', '!=', $this->id)
+                ->whereDate('born_at', '<', $this->born_at)
+                ->get()
+        );
+    }
+
     public function married(Person $person, Carbon $date, ?Proposal $proposal = null): ?Family
     {
         if ($this->gender === 'G') {
@@ -856,7 +869,6 @@ class Person extends Model
         DB::beginTransaction();
 
         $schemaName = config('database.connections.mysql.database');
-
         try {
             $tables = DB::select("
                 SELECT TABLE_NAME, COLUMN_NAME
