@@ -21,6 +21,7 @@ class TodayPayments extends BaseWidget
     {
         $notPay = Subscriber::whereDate('next_payment_date', "<=", today())
             ->whereIn('status', ['active', 'completed-active'])
+            ->where('method', 'credit_card')
             ->sum('amount');
 
         $pay = Payment::query()
