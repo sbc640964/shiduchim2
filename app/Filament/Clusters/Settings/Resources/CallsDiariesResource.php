@@ -93,17 +93,13 @@ class CallsDiariesResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                Tables\Columns\TextColumn::make('user.name')
                     ->weight(FontWeight::Bold)
                     ->formatStateUsing(fn (Call $call) => $call->user?->name ?? 'לא ידוע')
                     ->description(fn (Call $call) => $call->extensionWithTarget(true))
                     ->label('משתמש')
-                    ->visible(auth()->user()->canAccessAllCalls())
-                    ->searchable(
-                        query: function (Builder $query, $search) {
-                            $query->whereHas('user', fn (Builder $query) => $query->where('name', 'like', "%$search%"));
-                        }
-                    ),
+                    ->searchable()
+                    ->visible(auth()->user()->canAccessAllCalls()),
                 Tables\Columns\IconColumn::make('group')
                     ->icons([
                         'iconsax-bul-call-incoming' => 'incoming',
@@ -144,7 +140,12 @@ class CallsDiariesResource extends Resource
                         return 'לא ידוע';
                     })
                     ->searchable(query: function (Builder $query, $search) {
-                        $query->where('phone', 'like', "%$search%")
+                        $query
+                            ->when(
+                                str($search)->test('/^\d+$/'),
+                                fn (Builder $query) => $query->where('phone', 'like', "%$search%"),
+                            )
+                            ->where('phone', 'like', "%$search%")
                             ->orWhereHas(
                                 'phoneModel',
                                 function (Builder $query) use ($search) {
@@ -163,12 +164,10 @@ class CallsDiariesResource extends Resource
                     ->label('תאריך')
                     ->formatStateUsing(fn (Carbon $state) => $state->diffForHumans())
                     ->description(fn (Carbon $state) => $state->format('H:i:s d/m/y'))
-                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('duration')
                     ->label('משך')
                     ->formatStateUsing(fn ($state) => gmdate('H:i:s', $state))
-                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('proposals')
                     ->label('הצעות קשורות')
