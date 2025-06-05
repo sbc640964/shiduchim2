@@ -91,19 +91,17 @@
         </div>
     </button>
 
+
     <!-- Expanded content -->
     @if($diaries->isNotEmpty())
         <div x-show="isExpended" class="px-4 pb-3 pt-1 pl-14 animate-fadeIn">
             @foreach($diaries as $proposal)
-                <div class="mb-2" x-data="{tooltip: `<div class='text-xs'>
-                            <div class='font-semibold'>הבחור</div>
-                            <p>{{$proposal->first()['guy_info']}}</p>
-                            <div class='font-semibold mt-2'>הבחורה</div>
-                            <p>{{$proposal->first()['girl_info']}}</p>
-                        </div>`}">
-                    <h4 class="text-xs font-medium text-gray-500 uppercase mb-1"
-                        x-tooltip.html.max-width.350="tooltip">
+                <div class="mb-2" x-data="{tooltip: `{{ $this->getTooltip($proposal->first()) }}`}">
+                    <h4 class="text-xs font-medium text-gray-500 uppercase mb-1">
                         {{ $proposal->first()['proposal_name'] }}
+                        <span x-tooltip.html.max-width.350.interactive.placement.bottom.theme.light="tooltip">
+                            <x-icon name="lucide-info" class="inline size-3.5 text-gray-400 cursor-pointer" />
+                        </span>
                     </h4>
                     <p class="text-xs text-gray-700 pb-1">
                         {{$proposal->pluck('description')->join(', ')}}

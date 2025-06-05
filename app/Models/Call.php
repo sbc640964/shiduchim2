@@ -464,6 +464,7 @@ Blade;
                 'proposal_name' => $guy->full_name.' - '.$girl->full_name,
                 'guy_info' => $guy->full_name.' ('.$guy->father?->full_name.' ו'.$guy->mother?->full_name.')',
                 'girl_info' => $girl->full_name.' ('.$girl->father?->full_name.' ו'.$girl->mother?->full_name.')',
+                'status' => $item->proposal->status,
             ];
         });
 

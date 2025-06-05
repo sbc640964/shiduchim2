@@ -103,4 +103,33 @@ class ActiveCallLastCalls extends Component implements HasForms, HasTable
                 // ...
             ]);
     }
+
+    public function getTooltip($proposal): string
+    {
+        $route = route('filament.families.resources.proposals.view', ['record' => $proposal['proposal_id']]);
+
+        return <<<HTML
+        <div class='text-xs grid grid-cols-2 divide-x rtl:divide-x-reverse gap-x-4 gap-y-1'>
+            <div class='p-1 pe-2'>
+                <div class='font-semibold'>הבחור</div>
+                <p class='font-normal'>{$proposal['guy_info']}</p>
+            </div>
+            <div class='p-1 ps-2'>
+                <div class='font-semibold'>הבחורה</div>
+                <p class='font-normal'>{$proposal['girl_info']}</p>
+            </div>
+            <div class="col-span-2 text-center text-xs text-gray-500 !border-s-0">
+                <span class="font-semibold">סטטוס:</span> {$proposal['status']}
+                <a
+                    href='$route'
+                    wire:navigate
+                    class='text-xs text-blue-600 hover:text-blue-800 flex items-center'
+                >
+                    <x-icon name='lucide-eye' class='inline size-4 me-1' />
+                    הצג פרטים
+                </a>
+        </div>
+    </div>
+HTML;
+    }
 }
