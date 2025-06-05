@@ -12,6 +12,9 @@ class TodayPayments extends BaseWidget
 {
 
     protected static ?int $sort = -200;
+
+    protected static ?string $pollingInterval = null;
+
     public static function canView(): bool
     {
         return Subscription::canAccess();
