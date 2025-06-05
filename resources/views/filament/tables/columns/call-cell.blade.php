@@ -72,7 +72,7 @@
                     @if ($diaries->isNotEmpty())
                         <span class="ms-2 text-xs text-gray-500 truncate max-w-[200px]">
                             @if($diaries->count() === 1)
-                                • {{ strlen($diaries->first()->first()['description']) > 25 ? \Illuminate\Support\Str::limit($diaries->first()['description'], 25) : $diaries->first()['description'] }}
+                                • {{ strlen($diaries->first()->first()['description']) > 25 ? \Illuminate\Support\Str::limit($diaries->first()->first()['description'], 25) : $diaries->first()->first()['description'] }}
                             @else
                                 • {{ $diaries->count() }} תיעודים
                             @endif

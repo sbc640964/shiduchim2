@@ -53,7 +53,7 @@ class ActiveCallLastCalls extends Component implements HasForms, HasTable
                         )
                         );
                     } elseif ($type === Family::class) {
-                        $people = $this->currentCall->phoneModel->people()->pluck('id')->toArray();
+                        $people = $this->currentCall->phoneModel->model->people()->pluck('id')->toArray();
                         $query->whereHasMorph('model', [Person::class], fn($query) => $query->whereIn('id', $people)
                         )->orWhereHasMorph('model', [Family::class], fn($query) => $query->where('id', $id)
                         );
