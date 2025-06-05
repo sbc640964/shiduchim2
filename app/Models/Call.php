@@ -450,6 +450,10 @@ Blade;
     {
         $diaries = $this->diaries->collect()->map(function (Diary $item) {
 
+            if(!$item->proposal) {
+                return null;
+            }
+
             $girl = $item->proposal->girl;
             $guy = $item->proposal->guy;
 
@@ -464,6 +468,7 @@ Blade;
         });
 
         return $diaries
+            ->filter()
             ->whereNotNull('description')
             ->groupBy('proposal_id');
     }
