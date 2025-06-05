@@ -183,13 +183,11 @@
 
             @if($activeTab === 'calls')
                 <div>
-                    <h2 class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">שיחות</h2>
+                    <h2 class="mb-4 text-xl font-bold tracking-tight text-gray-950 dark:text-white">שיחות</h2>
                 </div>
 
                 <livewire:active-call-last-calls :current-call="$this->call" />
-                <p class="text-gray-500 text-sm mt-4 text-center">
-                    בקרוב תוכלו לראות כאן את השיחות האחרונות שלכם עם נשוא השיחה...
-                </p>
+
             @endif
         </div>
     </div>

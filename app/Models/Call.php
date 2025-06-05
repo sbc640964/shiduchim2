@@ -445,4 +445,26 @@ Blade;
 
         return 'השיחה הסתיימה';
     }
+
+    public function getDiaries(): \Illuminate\Support\Collection
+    {
+        $diaries = $this->diaries->collect()->map(function (Diary $item) {
+
+            $girl = $item->proposal->girl;
+            $guy = $item->proposal->guy;
+
+            return [
+                'id' => $item->id,
+                'proposal_id' => $item->proposal_id,
+                'description' => $item->data['description'] ?? null,
+                'proposal_name' => $guy->full_name.' - '.$girl->full_name,
+                'guy_info' => $guy->full_name.' ('.$guy->father?->full_name.' ו'.$guy->mother?->full_name.')',
+                'girl_info' => $girl->full_name.' ('.$girl->father?->full_name.' ו'.$girl->mother?->full_name.')',
+            ];
+        });
+
+        return $diaries
+            ->whereNotNull('description')
+            ->groupBy('proposal_id');
+    }
 }
