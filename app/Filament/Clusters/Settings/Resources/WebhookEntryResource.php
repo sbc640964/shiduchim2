@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\Settings\Resources;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\WebhookEnrtyResource\Pages;
 use App\Filament\Clusters\Settings\Resources\WebhookEnrtyResource\RelationManagers;
+use App\Models\Call;
 use App\Models\WebhookEntry;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -58,6 +59,23 @@ class WebhookEntryResource extends Resource
                 PrettyJsonEntry::make('error')
                     ->label('שגיאה'),
             ])->hidden(fn ($record) => $record->is_completed),
+
+            Infolists\Components\Section::make('מודל משוייך')
+                ->columns(2)
+                ->schema([
+                    Infolists\Components\TextEntry::make('model_type')
+                        ->label('סוג מודל'),
+                    Infolists\Components\TextEntry::make('model_id')
+                        ->label('מזהה מודל'),
+                    PrettyJsonEntry::make('model')->label('מודל')
+                        ->getStateUsing(function (Call $state, $record) {
+                            match ($state::class) {
+                                 Call::class => $state->load('user:id,name', 'phoneModel.model'),
+                            };
+
+                            return $state->toArray();
+                        })
+                ])->hidden(fn ($record) => !$record->model_type || !$record->model_id),
         ]);
     }
 
