@@ -10,7 +10,7 @@
         </div>
         <div class="flex flex-col items-center text-sm px-4">
             <span class="text-sm text-gray-500">כתובת:</span>
-            <span>{{ collect([$sideRecord->city->name, $sideRecord->address])->filter()->join(', ') }}</span>
+            <span>{{ collect([$sideRecord->city?->name ?? null, $sideRecord->address])->filter()->join(', ') }}</span>
         </div>
         <div class="flex flex-col items-center text-sm px-4">
             <span class="text-gray-500">מוסד נוכחי:</span>
