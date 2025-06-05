@@ -38,26 +38,14 @@ class EditStudent extends EditRecord
                 'parents_family_id',
                 'born_at',
                 'gender',
+                'father_id',
+                'mother_id',
                 'info'
             ]));
 
             $record->info_private = array_merge(($record->info_private ?? []), $data['info_private']);
 
-            $changeParentsFamily = false;
-
-            if($record->isDirty('parents_family_id')) {
-                $changeParentsFamily = true;
-            }
-
             $record->save();
-
-            if ($changeParentsFamily) {
-                $record->load('parentsFamily');
-                $record->update([
-                    'father_id' => $record->parentsFamily->husband?->id ?? null,
-                    'mother_id' => $record->parentsFamily->wife?->id ?? null,
-                ]);
-            }
 
             $record->refresh();
 
