@@ -4,10 +4,8 @@ namespace App\Filament\Resources\StudentResource\Pages;
 
 use App\Filament\Resources\StudentResource;
 use App\Models\Person;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
-use phpDocumentor\Reflection\Types\Boolean;
 
 class EditStudent extends EditRecord
 {
