@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Settings\Resources\ImportsResource\RelationManagers;
 
+use App\Filament\Resources\StudentResource;
 use App\Helpers\LivewireDotStateFix;
 use App\Models\ImportRow;
 use App\Services\Imports\Students\Importer;
@@ -147,6 +148,13 @@ class RowsRelationManager extends RelationManager
                     ->iconButton()
                     ->icon('heroicon-o-pencil')
                     ->slideOver(),
+                Tables\Actions\Action::make('go_to_model')
+                    ->label('עבור למודל')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->iconButton()
+                    ->url(fn (ImportRow $record) => StudentResource::getUrl('edit', ['record' => $record->import_model_id]))
+                    ->openUrlInNewTab()
+                    ->visible(fn (ImportRow $record) => $record->status === 'success'),
                 Tables\Actions\DeleteAction::make()
                     ->icon('heroicon-o-trash')
                     ->iconButton(),
