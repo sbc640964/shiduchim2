@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Filament\Resources\PersonResource;
 use App\Models\Pivot\PersonFamily;
+use App\Models\Traits\HasActivities;
 use App\Services\Nedarim;
 use Carbon\Carbon;
 use DB;
@@ -31,7 +32,17 @@ class Person extends Model
         HasTags,
         Traits\HasFormEntries,
         Traits\HasPersonFormFields,
-        Traits\HasPersonFilamentTableColumns;
+        Traits\HasPersonFilamentTableColumns,
+        HasActivities;
+
+
+    protected static array $defaultActivityDescription = [
+        'married' => 'נישואין',
+        'reMarried' => 'חזרה מטעות נישואין',
+        'divorce' => 'גירושין',
+        'rollbackDivorces' => 'ביטול גירושין',
+        'update' => 'עדכון פרטים',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -456,6 +467,33 @@ class Person extends Model
                 ->get()
         );
     }
+    private function updateMarriageFields(Person $spouse, int $familyId): void
+    {
+        $this->recordActivity('married', [
+            'spouse_id' => $spouse->id,
+            'old_status_family' => $this->status_family,
+        ]);
+
+        $this->current_family_id = $familyId;
+        $this->spouse_id = $spouse->id;
+        $this->father_in_law_id = $spouse->father_id;
+        $this->mother_in_law_id = $spouse->mother_id;
+        $this->status_family = 'married';
+
+        $this->save();
+
+        if($this->lastSubscription->isActive()) {
+            $this->lastSubscription->status = 'married';
+            $this->lastSubscription->save()
+            && $this->lastSubscription->recordActivity(
+                    'married',
+                    [
+                        'old_status' => 'active',
+                        'person_id' => $spouse->id
+                    ],
+                );
+        }
+    }
 
     public function married(Person $person, Carbon $date, ?Proposal $proposal = null): ?Family
     {
@@ -477,47 +515,8 @@ class Person extends Model
 
             $proposal && $proposal->update(['family_id' => $newFamily->id]);
 
-            $thisPerson->current_family_id = $newFamily->id;
-            $thisPerson->spouse_id = $person->id;
-            $thisPerson->father_in_law_id = $person->father_id;
-            $thisPerson->mother_in_law_id = $person->mother_id;
-            $thisPerson->billing_status = 'married';
-
-            $person->current_family_id = $newFamily->id;
-            $person->spouse_id = $this->id;
-            $person->father_in_law_id = $this->father_id;
-            $person->mother_in_law_id = $this->mother_id;
-            $person->billing_status = 'married';
-
-
-            $thisPerson->save();
-            $person->save();
-
-            if($person->lastSubscription) {
-                $oldStatus = $person->lastSubscription->status;
-                $person->lastSubscription->status = 'married';
-                $person->lastSubscription->save() && $person
-                    ->lastSubscription->recordActivity(
-                        'married',
-                        [
-                            'old_status' => $oldStatus,
-                            'person_id' => $thisPerson->id
-                        ],
-                    );
-            }
-
-            if($thisPerson->lastSubscription) {
-                $oldStatus = $thisPerson->lastSubscription->status;
-                $thisPerson->lastSubscription->status = 'married';
-                $thisPerson->lastSubscription->save() && $thisPerson
-                    ->lastSubscription->recordActivity(
-                        'married',
-                        [
-                            'old_status' => $oldStatus,
-                            'person_id' => $person->id
-                        ],
-                    );
-            }
+            $this->updateMarriageFields($person, $newFamily->id);
+            $person->updateMarriageFields($this, $newFamily->id);
 
             $otherProposals = Proposal::query()
                 ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
@@ -542,22 +541,8 @@ class Person extends Model
             $spouse = $family ? $family->wife : $this->spouse;
             $family = $family ?? $this->family;
 
-            if($family->getKey() === $this->current_family_id) {
-                $this->current_family_id = null;
-                $this->spouse_id = null;
-                $this->father_in_law_id = null;
-                $this->mother_in_law_id = null;
-            }
-
-            if ($family->getKey() === $spouse->current_family_id) {
-                $spouse->current_family_id = null;
-                $spouse->spouse_id = null;
-                $spouse->father_in_law_id = null;
-                $spouse->mother_in_law_id = null;
-            }
-
-            $this->save() && $this->reBackStatusInMarriedLastSubscription();
-            $spouse->save() && $spouse->reBackStatusInMarriedLastSubscription();
+            $this->updateRollbackMarriageFields($family);
+            $spouse->updateRollbackMarriageFields($family);
 
             $family->people()->detach([$this->id, $spouse->id]);
 
@@ -599,7 +584,8 @@ class Person extends Model
     private function reBackStatusInMarriedLastSubscription(): void
     {
         if ($this->lastSubscription && $this->lastSubscription->status === 'married') {
-            $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()->first()?->data['old_status'] ?? 'hold';
+            $lastSubscriptionStatus = $this->lastSubscription->activities()->latest()
+                ->firstWhere('type', 'married')?->data['old_status'] ?? 'hold';
             $this->lastSubscription->status = $lastSubscriptionStatus;
             $this->lastSubscription->save() &&
             $this->lastSubscription->recordActivity('run', description: 'הופעל מחדש אחרי שנרשם בטעות נישואין');
@@ -920,6 +906,27 @@ class Person extends Model
             DB::rollBack();
             throw $th;
         }
+    }
+
+    /**
+     * @param mixed $family
+     * @param mixed $spouse
+     * @return void
+     */
+    protected function updateRollbackMarriageFields(Family $family): void
+    {
+        if ($family->getKey() === $this->current_family_id) {
+            $this->current_family_id = null;
+            $this->spouse_id = null;
+            $this->father_in_law_id = null;
+            $this->mother_in_law_id = null;
+
+            $lastStatusFamily = $this->activities()->latest()->firstWhere('type', 'married')?->data['old_status'] ?? 'single';
+
+            $this->status_family = $lastStatusFamily;
+        }
+
+        $this->save() && $this->reBackStatusInMarriedLastSubscription();
     }
 
 }
