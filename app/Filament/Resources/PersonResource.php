@@ -3,16 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PersonResource\Pages;
-use App\Filament\Resources\PersonResource\RelationManagers\RelativesFatherRelationManager;
-use App\Filament\Resources\PersonResource\RelationManagers\RelativesMatherRelationManager;
-use App\Filament\Resources\PersonResource\RelationManagers\RelativesNuclearRelationManager;
 use App\Models\Family;
 use App\Models\Matchmaker;
 use App\Models\Person;
-use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Form;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Infolist;
@@ -21,7 +16,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\ActionSize;
-use Filament\Support\Enums\IconSize;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -265,8 +259,9 @@ class PersonResource extends Resource
 
             Person::childrenColumn(),
 
-            Tables\Columns\TextColumn::make('status_family')
+            Tables\Columns\TextColumn::make('family.status')
                 ->badge()
+                ->sortable()
                 ->color(fn ($state) => match ($state) {
                     'single' => 'danger',
                     'married' => 'success',
@@ -275,11 +270,10 @@ class PersonResource extends Resource
                     default => 'gray',
                 })
                 ->formatStateUsing(fn ($state, Person $record) => match ($state) {
-                    'single' => $record->gender === 'G' ? 'רווקה' : 'רווק',
                     'married' => $record->gender === 'G' ? 'נשואה' : 'נשוי',
                     'divorced' => $record->gender === 'G' ? 'גרושה' : 'גרוש',
                     'widower' => $record->gender === 'G' ? 'אלמנה' : 'אלמן',
-                    default => 'לא ידוע',
+                    default => $record->gender === 'G' ? 'רווקה' : 'רווק',
                 })
                 ->label('מצב משפחתי'),
         ];
