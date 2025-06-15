@@ -103,7 +103,7 @@ class WebhookGisController extends Controller
                         'user_id' => $user?->id ?? null,
                     ]);
                 } else {
-                    $this->createCall($data, $extension, $phoneNumber, $phone, $user);
+                    $this->createCall($data, $extension, $phoneNumber, $phone, $user, $isOutgoing);
                     $webhook->completed();
                     return 'Call created';
                 }
