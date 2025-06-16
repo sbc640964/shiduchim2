@@ -40,18 +40,39 @@ class ImportBatch extends Model
         return $this->hasMany(ImportRow::class)->chaperone('batch');
     }
 
-    public function run(): void
+    public function allowRun(): bool
+    {
+        return $this->status === 'pending'
+            || $this->rows()->whereStatus('pending')->exists();
+    }
+
+    public function allowRerun(): bool
+    {
+        return $this->finished_at && $this->finished_at->lt($this->updated_at);
+    }
+
+    public function rerun()
+    {
+        if($this->allowRerun()) {
+
+            $this->rows()->update(['status' => 'pending']);
+            $this->run(false);
+        }
+    }
+
+    public function run($pendingOnly = true): void
     {
         $this->update(array_merge([
-            'status' => 'running'
+            'status' => 'running',
+            'finished_at' => null,
         ], $this->started_at ? [] : [
             'started_at' => now()
         ]));
 
         try {
             $this->rows()->whereStatus('pending')
-                ->chunk(150, function ($rows) {
-                    $rows->each(fn ($row) => RunImportRowJob::dispatch($row));
+                ->chunk(150, function ($rows) use ($pendingOnly) {
+                    $rows->each(fn ($row) => RunImportRowJob::dispatch($row, $pendingOnly));
                 });
 
         } catch (\Throwable $e) {

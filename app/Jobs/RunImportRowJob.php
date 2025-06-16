@@ -15,13 +15,14 @@ class RunImportRowJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public function __construct(
-        protected ImportRow $row
+        protected ImportRow $row,
+        protected bool $pendingOnly = true
     )
     {
     }
 
     public function handle(): void
     {
-        $this->row->run();
+        $this->row->run($this->pendingOnly);
     }
 }
