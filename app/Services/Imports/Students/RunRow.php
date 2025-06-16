@@ -163,7 +163,7 @@ class RunRow
                     ->first() ?? null;
         }
 
-        return $person ?? Person::firstOrNew([
+        return $person->fill(['father_id' => $father?->id ?? null]) ?? Person::firstOrNew([
             'first_name' => $this->data['first_name'] ?? null,
             'last_name' => $this->data['last_name'] ?? null,
             'gender' => match (trim($this->data['gender']) ?? null) {
@@ -342,19 +342,21 @@ class RunRow
             $this->record->external_code_students = $this->data['external_code'];
         }
 
-        if ($this->data['mothers_father_code_ichud'] == $this->record->father->fatherInLaw?->external_code) {
+        $father = $this->record->father;
+
+        if ($this->data['mothers_father_code_ichud'] == $father->fatherInLaw?->external_code) {
             $this->record->mother_id = $father?->spouse_id ?? null;
             $this->record->parents_family_id = $father?->current_family_id ?? null;
-            if(($data['mother_name'] ?? null) && $this->record->father->spouse && blank($this->record->father->spouse->first_name)) {
-                $this->record->father->spouse->update([
+            if(($data['mother_name'] ?? null) && $father->spouse && blank($father->spouse->first_name)) {
+                $father->spouse->update([
                     'first_name' => $this->data['mother_name'],
                 ]);
             }
         }
 
-        if($this->record->father->current_family_id) {
-            $this->record->parents_family_id = $this->record->father->current_family_id;
-            $this->record->mother_id = $this->record->father->spouse_id;
+        if($father->current_family_id) {
+            $this->record->parents_family_id = $father->current_family_id;
+            $this->record->mother_id = $father->spouse_id;
         }
 
         filled($this->data['city']) && $this->record->city()
