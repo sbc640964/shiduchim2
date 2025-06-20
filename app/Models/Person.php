@@ -478,7 +478,7 @@ class Person extends Model
         $this->spouse_id = $spouse->id;
         $this->father_in_law_id = $spouse->father_id;
         $this->mother_in_law_id = $spouse->mother_id;
-        $this->status_family = 'married';
+//        $this->status_family = 'married';
 
         $this->save();
 
@@ -923,7 +923,7 @@ class Person extends Model
 
             $lastStatusFamily = $this->activities()->latest()->firstWhere('type', 'married')?->data['old_status'] ?? 'single';
 
-            $this->status_family = $lastStatusFamily;
+//            $this->status_family = $lastStatusFamily;
         }
 
         $this->save() && $this->reBackStatusInMarriedLastSubscription();
