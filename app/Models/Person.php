@@ -462,7 +462,9 @@ class Person extends Model
             fn() => Person::query()
                 ->where('parents_family_id', $this->parents_family_id)
                 ->where('id', '!=', $this->id)
-                ->whereDate('born_at', '<', $this->born_at)
+                ->when($this->born_at, fn (Builder $query) => $query
+                    ->whereDate('born_at', '<', $this->born_at)
+                )
                 ->whereDoesntHave('family')
                 ->get()
         );

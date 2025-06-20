@@ -2,11 +2,15 @@
     <div class="flex divide-x gap-y-4 rtl:divide-x-reverse rounded-lg flex-wrap border p-4 whitespace-nowrap">
         <div class="flex flex-col items-center text-sm px-4">
             <span class="inline-block text-sm text-gray-500">גיל:</span>
-            <span class="inline-block text-sm">{{ $sideRecord->age }}</span>
+            <span class="inline-block text-sm">{{ $sideRecord->born_at ? $sideRecord->age :  'חסר מידע' }}</span>
         </div>
         <div class="flex flex-col items-center text-sm px-4">
             <span class="text-gray-500">תאריך לידה:</span>
-            <span x-tooltip.raw="{{ $sideRecord->born_at->format('d/m/Y') }}" class="text-sm">{{ $sideRecord->born_at->hebcal()->hebrewDate(false, true)}}</span>
+            @if($sideRecord->born_at)
+                <span x-tooltip.raw="{{ $sideRecord->born_at->format('d/m/Y') ?? null }}" class="text-sm">{{ $sideRecord->born_at->hebcal()->hebrewDate(false, true)}}</span>
+            @else
+                <span class="text-sm">לא עודכן</span>
+            @endif
         </div>
         <div class="flex flex-col items-center text-sm px-4">
             <span class="text-sm text-gray-500">כתובת:</span>
@@ -22,7 +26,7 @@
         </div>
         <div class="flex flex-col items-center text-sm px-4">
             <span class="text-gray-500">אחים מעל:</span>
-            <span>{{ $sideRecord->olderSiblings()->count() }}</span>
+            <span>{{ $sideRecord->born_at ? $sideRecord->olderSiblings()->count(): 'חסר מידע' }}</span>
         </div>
     </div>
     <div class="mt-4">
