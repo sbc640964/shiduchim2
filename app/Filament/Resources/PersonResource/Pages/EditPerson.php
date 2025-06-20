@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PersonResource\Pages;
 
 use App\Filament\Resources\PersonResource;
+use App\Filament\Resources\StudentResource;
 use App\Models\Call;
 use App\Models\Person;
 use App\Models\Phone;
@@ -10,6 +11,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -90,6 +92,9 @@ class EditPerson extends EditRecord
                         $record = $this->getRecord();
 
                         $transaction = \DB::transaction(function () use ($data, $record, $action) {
+
+                            $otherRecord = Person::find($data['prev_wife_id']);
+
                             $family = $record->families()->create([
                                 'status' => 'divorced',
                                 'name' => $record->last_name,
@@ -100,6 +105,14 @@ class EditPerson extends EditRecord
                                     $record->id,
                                     $data['prev_wife_id'],
                                 ]);
+
+                                if( !$record->current_family_id )  {
+                                    $record->update(['current_family_id' => $family->id]);
+                                }
+
+                                if( !$otherRecord->current_family_id ) {
+                                    $otherRecord->update(['current_family_id' => $family->id]);
+                                }
                             }
 
                             return true;
@@ -127,6 +140,33 @@ class EditPerson extends EditRecord
                     ->action(function (array $data, Person $person) {
                         $data['died_at'] = $data['died_at'] . '1970-01-02 00:00:00';
                         $person->update($data);
+                    })
+                    ->requiresConfirmation(),
+
+                Action::make('add_to_students')
+                    ->label('הוספה למערכת תלמידים')
+                    ->form(function (Form $form) {
+                        //change the students_external_code with numeric code
+                        return $form->schema([
+                            TextInput::make('external_code_students')
+                                ->label('קוד תלמידים חיצוני')
+                                ->numeric()
+                                ->unique('people')
+                                ->required(),
+                        ]);
+                    })
+                    ->visible(fn (Person $person) => !$person->external_code_students
+                        && auth()->user()->can('management_people_without_families')
+                        && $person->family?->status !== 'married'
+                    )
+                    ->action(function (array $data, Person $person, Action $action) {
+                        if($person->update(['external_code_students' => $data['external_code_students']])) {
+                            $action->success();
+                            $action->redirect(StudentResource::getUrl('edit', ['record' => $person->id]));
+                            return;
+                        }
+
+                        $action->failure('לא ניתן להוסיף תלמיד למערכת תלמידים, אנא נסה שנית.');
                     })
                     ->requiresConfirmation(),
             ])

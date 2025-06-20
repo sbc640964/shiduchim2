@@ -139,15 +139,28 @@ class PersonResource extends Resource
         return $table->columns(static::tableColumns())
             ->modifyQueryUsing(function ($query) {
                 $query
-                    ->with(['family', 'spouse', 'families' => fn ($query) => $query->withCount('children')])
-                    ->where(fn ($query) => $query
-                        ->whereHas('families')
-                        ->where(fn ($query) => $query
-                            ->whereRelation('family', fn (Builder $query) => $query->where('status', '!=', 'married'))
-                            ->orWhere('gender', 'B')
-                        ));
+                    ->with([
+                        'family',
+                        'spouse',
+                        'families' => fn ($query) => $query->withCount('children')
+                    ]);
             })
             ->filters([
+                Tables\Filters\TernaryFilter::make('without_families')
+                    ->label('סינון מצב רשומה')
+                    ->default(true)
+                    ->selectablePlaceholder(false)
+                    ->trueLabel('רק נשואים בעבר או בהווה')
+                    ->falseLabel('הצג גם מי שלא היה נשוי')
+                    ->visible(fn () => auth()->user()->can('management_people_without_families'))
+                    ->queries(
+                        true: fn ($query) => $query->whereHas('families')
+                            ->where(fn ($query) => $query
+                                ->whereRelation('family', fn (Builder $query) => $query->where('status', '!=', 'married'))
+                                ->orWhere('gender', 'B')
+                            ),
+                        false: fn ($query) => $query
+                    ),
                 Tables\Filters\SelectFilter::make('city')
                     ->relationship('city', 'name')
                     ->label('עיר')
