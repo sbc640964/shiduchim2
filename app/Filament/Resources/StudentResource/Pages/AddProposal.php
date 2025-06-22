@@ -206,6 +206,10 @@ class AddProposal extends ListRecords
 
     public function addProposal(Student $student, null|Action|BulkAction $action = null): void
     {
+        $student->loadExists(['proposals' => function (Builder $query) use ($student) {
+            $query->where('created_by', auth()->id())
+                ->where($student->gender === 'G' ? 'guy_id' : 'girl_id', $this->getRecord()->id);
+        }]);
 
         //A lock that will not allow the same offer (both people) to be created within 10 seconds
 
