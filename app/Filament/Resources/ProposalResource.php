@@ -593,11 +593,17 @@ class ProposalResource extends Resource
             ->action(function (Proposal $proposal, Action $action, array $data) {
                 try {
                     $proposal->close();
+
+                    $action->success();
                 } catch (\Throwable $e) {
-                    $action->failureNotificationTitle($e->getMessage());
+
+                    $action->failureNotification(fn (Notification $notification) => $notification
+                        ->title('סגירת הצעה נכשלה')
+                        ->body($e->getMessage() . " - " . $e->getFile() . ':' . $e->getLine())
+                    );
+
                     $action->failure();
                 }
-                $action->success();
             });
     }
 

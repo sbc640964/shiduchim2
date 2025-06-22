@@ -491,7 +491,7 @@ class Person extends Model
 
         $this->save();
 
-        if($this->lastSubscription->isActive()) {
+        if($this->lastSubscription?->isActive()) {
             $this->lastSubscription->status = 'married';
             $this->lastSubscription->save()
             && $this->lastSubscription->recordActivity(
