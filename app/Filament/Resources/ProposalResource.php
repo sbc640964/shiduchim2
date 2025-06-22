@@ -590,7 +590,15 @@ class ProposalResource extends Resource
             ->iconButton()
             ->hidden(fn (Proposal $proposal) => $proposal->status === Statuses::getClosedProposalStatus())
             ->modalHeading('מזל טוב!!!')
-            ->action(fn (Proposal $proposal) => $proposal->close());
+            ->action(function (Proposal $proposal, Action $action, array $data) {
+                try {
+                    $proposal->close();
+                } catch (\Throwable $e) {
+                    $action->failureNotificationTitle($e->getMessage());
+                    $action->failure();
+                }
+                $action->success();
+            });
     }
 
     public static function getOpenProposalAction(): Action

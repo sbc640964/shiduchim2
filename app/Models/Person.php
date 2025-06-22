@@ -510,6 +510,10 @@ class Person extends Model
             return null;
         }
 
+        if($this->current_family_id || $person->current_family_id) {
+            throw new \Exception('לא יכול להתחתן, אחד האנשים כבר נשוי.');
+        }
+
         $thisPerson = $this;
 
         return DB::transaction(function () use ($proposal, $person, $date, $thisPerson) {

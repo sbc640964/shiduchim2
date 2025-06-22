@@ -83,8 +83,11 @@ class Proposal extends Model
     ];
 
     protected static array $defaultActivityDescription = [
-        'open' => 'פתיחת הצעת שידוך',
-        'close' => 'סגירת הצעת שידוך',
+        'open' => '(מהצעות פתוחות) פתיחת הצעת שידוך',
+        'close' => 'סגירת הצעת שידוך (מהצעות פתוחות)',
+        'close-married' => 'סגירת הצעת שידוך עם נישואין - מזל טוב!',
+        'close-married-other' => 'סגירת הצעת שידוך - ע"י נישאוין בהצעה אחרת',
+        'reopen' => 'נפתח אחרי סגירת שידוך בטעות'
     ];
 
     protected static function booted()
@@ -338,17 +341,23 @@ class Proposal extends Model
                     'finished_at' => $data['finished_at'] ?? now(),
                     'reason_status' => $data['reason_status'] ?? null,
                     'family_id' => $family->id,
-                ]);
+                ]) && $this->recordActivity('close-married');
             }
         } elseif (is_int($data)) {
             $this->update([
                 'status' => $closeStatus,
                 'reason_status' => 'נסגר בשידוך '.$data,
+            ]) && $this->recordActivity('close-married-other', [
+                'closed_proposal_id' => $data
             ]);
+
+
         } else {
             $this->update([
                 'status' => $closeStatus,
                 'reason_status' => 'נסגר ע"י שדכן חיצוני',
+            ]) && $this->recordActivity('close-married', [
+                'note' => 'ע"י שדכן חיצוני'
             ]);
         }
 
@@ -365,7 +374,7 @@ class Proposal extends Model
             $this->update([
                 'status' => $status ?? Statuses::getDefaultProposalStatus(),
                 'reason_status' => $reason,
-            ]);
+            ]) &&  $this->recordActivity('reopen');
 
             return;
         }
