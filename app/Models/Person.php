@@ -364,7 +364,7 @@ class Person extends Model
         return $this->gender === 'G' ? $this->childrenM : $this->childrenF;
     }
 
-    public function getSelectOptionHtmlAttribute(?bool $withPivotSide = false, ?bool $withAddress = false): string
+    public function renderPivotSideAndAddress(?bool $withAddress = false)
     {
         $fatherName = $this->relationLoaded('father') ? $this->father?->{$this->gender === 'G' ? 'full_name' : 'first_name'} ?? '' : '';
         $fatherInLawName = $this->relationLoaded('fatherInLaw') ? $this->fatherInLaw?->reverse_full_name ?? '' : '';
@@ -375,15 +375,22 @@ class Person extends Model
         $parentsNames = collect([$fatherName, $fatherInLawName])->filter()->join(' | ');
 
         $address = $withAddress ? (filled($parentsNames) ? ' | ' : ''). collect([
-            $this->address ?? $this->family?->address ?? null,
-            $this->city?->name ?? $this->family?->city?->name ?? null,
-        ])->filter(fn ($str) => filled(trim($str)))->join(', ') : '';
+                $this->address ?? $this->family?->address ?? null,
+                $this->city?->name ?? $this->family?->city?->name ?? null,
+            ])->filter(fn ($str) => filled(trim($str)))->join(', ') : '';
 
         $subText = trim($parentsNames . ' '. $address);
 
         if($subText === ',') {
             $subText = '';
         }
+
+        return $subText;
+    }
+
+    public function getSelectOptionHtmlAttribute(?bool $withPivotSide = false, ?bool $withAddress = false): string
+    {
+        $subText = $this->renderPivotSideAndAddress($withAddress);
 
         return <<<HTML
             <div>

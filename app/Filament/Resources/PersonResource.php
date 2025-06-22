@@ -67,8 +67,7 @@ class PersonResource extends Resource
 //                                        ->label('מין')
 //                                        ->required(),
                                     Family::filamentSelect('parents_family_id')
-                                        ->label('משפחת הורים')
-                                        ->relationship('parentsFamily'),
+                                        ->label('משפחת הורים'),
 
                                     Forms\Components\TextInput::make('first_name')
                                         ->label('שם פרטי')

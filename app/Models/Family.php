@@ -171,13 +171,20 @@ class Family extends Model
             default => 'gray',
         };
 
+        $parentNames = $this->husband->renderPivotSideAndAddress(false);
+
         return \Blade::render(
 <<<'HTML'
 
 <div class="flex justify-between">
-<div class="flex gap-2">
-    <div class="font-bold text-gray-800">{{ $name }}</div>
-    <div class="text-gray-500">{{ $father }} ו{{ $mother }} - {{ $city }}</div>
+<div>
+    <div class="flex gap-2">
+        <div class="font-bold text-gray-800">{{ $name }}</div>
+        <div class="text-gray-500">{{ $father }} ו{{ $mother }} - {{ $city }}</div>
+    </div>
+    <div class="text-gray-400 text-xs mt-0.5">
+        {{ $parentNames }}
+    </div>
 </div>
 
 <div>
@@ -194,7 +201,8 @@ HTML
                 'name',
                 'status',
                 'city',
-                'colorBadge'
+                'colorBadge',
+                'parentNames',
             )
         );
     }
