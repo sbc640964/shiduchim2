@@ -21,6 +21,11 @@ class Reports extends \Filament\Pages\Dashboard
 {
     use HasFiltersForm;
 
+    public function persistsFiltersInSession(): bool
+    {
+        return false;
+    }
+
     #[Url]
     public ?int $proposal = null;
 
@@ -80,7 +85,7 @@ class Reports extends \Filament\Pages\Dashboard
                             ->label('תאריכים')
                             ->defaultThisMonth()
                             ->displayFormat('DD/MM/YYYY')
-                            ->format('Y-m-d')
+                            ->format('d/m/Y')
                             ->disableClear(false)
                             ->icon('heroicon-o-calendar')
                             ->placeholder('בחר תאריכים'),
@@ -98,7 +103,6 @@ class Reports extends \Filament\Pages\Dashboard
                             ->options(fn (Forms\Get $get) =>
                                 Person::query()
                                     ->whereHas('subscriptions', function (Builder $query) use ($get) {
-
                                         $dates = collect(explode(' - ', $get('dates_range')))
                                             ->map(fn ($date) => $date ? now()->createFromFormat('d/m/Y', $date) : null)
                                             ->filter()
