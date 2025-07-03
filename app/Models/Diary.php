@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use App\Filament\Resources\ProposalResource;
+use App\Models\Traits\HasActivities;
 use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -16,7 +16,7 @@ use wapmorgan\Mp3Info\Mp3Info;
 
 class Diary extends Model
 {
-    use HasFactory,
+    use HasActivities,
         HasJsonRelationships;
 
     /**
