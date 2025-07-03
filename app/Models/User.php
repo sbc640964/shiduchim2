@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Traits\HasActivities;
 use Awcodes\FilamentGravatar\Gravatar;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
@@ -20,6 +21,7 @@ class User extends Authenticatable implements FilamentUser
         HasFactory,
         HasPanelShield,
         HasRoles,
+        HasActivities,
         Notifiable;
 
     /**
@@ -53,6 +55,17 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    protected static array $defaultActivityDescription = [
+        'login' => 'התחבר למערכת',
+        'logout' => 'התנתק מהמערכת',
+        'update' => 'עדכן את הפרופיל שלו',
+    ];
+
+    public function getModelLabel(): string
+    {
+        return $this->name;
+    }
 
     public function proposals()
     {
