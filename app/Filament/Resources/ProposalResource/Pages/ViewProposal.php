@@ -30,6 +30,12 @@ class ViewProposal extends ViewRecord
             abort(404);
         }
 
+        if(!session("proposal_{$record->id}_viewed")){
+            session()->put("proposal_{$record->id}_viewed", true);
+            $record->recordActivity('viewed');
+        }
+
+
         $record->loadMissing([
             'people.father.mother',
             'people.father.father',

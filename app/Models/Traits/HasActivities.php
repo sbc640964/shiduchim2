@@ -31,4 +31,12 @@ trait HasActivities
 
         return null;
     }
+
+    public function getModelActivityLabel(): string
+    {
+        if (method_exists($this, 'getModelLabel')) {
+            return $this->getModelLabel();
+        }
+        return "You need add public getModelLabel() method to your model to use this method.";
+    }
 }

@@ -44,6 +44,11 @@ class Person extends Model
         'update' => 'עדכון פרטים',
     ];
 
+    public function getModelLabel(): string
+    {
+        return $this->full_name;
+    }
+
     /**
      * The attributes that are mass assignable.
      *

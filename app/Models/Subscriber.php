@@ -54,6 +54,11 @@ class Subscriber extends Model
         'replace_matchmaker' => 'החלפת שדכן',
     ];
 
+    public function getModelLabel(): string
+    {
+        return $this->student->full_name . ' - ' . ($this->matchmaker?->name ?? 'שדכן לא מוגדר');
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Subscriber $subscriber) {

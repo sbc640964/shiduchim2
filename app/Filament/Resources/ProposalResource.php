@@ -558,10 +558,6 @@ class ProposalResource extends Resource
         ];
     }
 
-    public static function count()
-    {
-    }
-
     private static function getCloseProposalForm(Form $form): Form
     {
         return $form->schema([

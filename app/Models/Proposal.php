@@ -87,11 +87,27 @@ class Proposal extends Model
         'close' => 'סגירת הצעת שידוך (מהצעות פתוחות)',
         'close-married' => 'סגירת הצעת שידוך עם נישואין - מזל טוב!',
         'close-married-other' => 'סגירת הצעת שידוך - ע"י נישאוין בהצעה אחרת',
-        'reopen' => 'נפתח אחרי סגירת שידוך בטעות'
+        'reopen' => 'נפתח אחרי סגירת שידוך בטעות',
+        'create' => 'יצירת הצעת שידוך חדשה',
+        'update' => 'עדכון הצעת שידוך',
+        'delete' => 'מחיקת הצעת שידוך',
+        'share' => 'שיתוף הצעת שידוך עם משתמש אחר',
+        'remarried' => 'חזרת הצעה עקב טעות בסגירת נישואין',
+        'add-diary' => 'הוספת יומן הצעה',
+        'viewed' => 'צפייה בהצעת שידוך',
     ];
+
+    public function getModelLabel(): string
+    {
+        return $this->guy?->fullName . ' ו' . $this->girl?->fullName;
+    }
 
     protected static function booted()
     {
+        static::created(function ($proposal) {
+            $proposal->recordActivity('create');
+        });
+
         static::addGlobalScope('accessByUser', function (Builder $builder) {
             $builder->whereAccess();
         });
