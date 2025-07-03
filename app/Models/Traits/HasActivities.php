@@ -23,13 +23,18 @@ trait HasActivities
         ]);
     }
 
-    static public function getDefaultActivityDescription(string $type)
+    static public function getDefaultsActivityDescription()
     {
-        if(isset(static::$defaultActivityDescription)) {
-            return static::$defaultActivityDescription[$type] ?? null;
+        if (isset(static::$defaultActivityDescription)) {
+            return static::$defaultActivityDescription;
         }
 
-        return null;
+        return [];
+    }
+
+    static public function getDefaultActivityDescription(string $type)
+    {
+        return static::getDefaultsActivityDescription()[$type] ?? null;
     }
 
     public function getModelActivityLabel(): string

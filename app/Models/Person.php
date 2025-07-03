@@ -499,8 +499,7 @@ class Person extends Model
         if($this->lastSubscription?->isActive()) {
             $this->lastSubscription->status = 'married';
             $this->lastSubscription->save()
-            && $this->lastSubscription->recordActivity(
-                    'married',
+            && $this->lastSubscription->recordActivity('married',
                     [
                         'old_status' => 'active',
                         'person_id' => $spouse->id
@@ -882,8 +881,6 @@ class Person extends Model
                 AND CONSTRAINT_SCHEMA = '$schemaName'
                 AND REFERENCED_COLUMN_NAME = 'id'
             ");
-
-            dump($tables);
 
             collect($tables)->each(function ($table) use ($oldId, $newId) {
                 DB::table($table->TABLE_NAME)

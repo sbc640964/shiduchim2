@@ -67,6 +67,15 @@ class User extends Authenticatable implements FilamentUser
         return $this->name;
     }
 
+    public function getActivityDataTranslateKey(string $key)
+    {
+        return match ($key) {
+            'ip' => 'כתובת IP',
+            'user_agent' => 'סוכן משתמש/דפדפן',
+            default => $key,
+        };
+    }
+
     public function proposals()
     {
         return $this->belongsToMany(Proposal::class, 'user_proposal')

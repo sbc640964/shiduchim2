@@ -24,8 +24,7 @@ class LogSuccessfulLogin
         $user = $event->user;
 
         // Log the successful login activity
-        $user->recordActivity(
-            'login',
+        $user->recordActivity('login',
             [
                 'ip' => request()->ip(),
                 'user_agent' => request()->userAgent(),

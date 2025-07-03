@@ -6,6 +6,7 @@ use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\ActivityResource\Pages;
 use App\Filament\Clusters\Settings\Resources\ActivityResource\RelationManagers;
 use App\Models\Activity;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 
 class ActivityResource extends Resource
 {
@@ -61,13 +63,7 @@ class ActivityResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('subject_type')
-                    ->formatStateUsing(fn ($state, Activity $record) => match ($state) {
-                        'App\Models\Proposal' => 'הצעה',
-                        'App\Models\Person' => 'אדם',
-                        'App\Models\Diary' => 'יומן',
-                        'App\Models\Subscriber' => 'מנוי',
-                        default => $state,
-                    } . ($record->subject ? " ({$record->subject->id})" : ''))
+                    ->formatStateUsing(fn ($state, Activity $record) => $record->getSubjectTypeLabel() . ($record->subject ? " ({$record->subject->id})" : ''))
                     ->description(fn (Activity $record) => $record->getSubjectLabel())
                     ->label('פעילות')
                     ->sortable()
@@ -87,7 +83,71 @@ class ActivityResource extends Resource
                     ->searchable(),
             ])
             ->filters([
-                //
+                DateRangeFilter::make('created_at')
+                    ->withIndicator()
+                    ->label('טווח תאריכים'),
+                Tables\Filters\Filter::make('filter')
+                    ->modifyQueryUsing(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['subject_type'] ?? null, function (Builder $query, $value) {
+                            $query->where('subject_type', $value);
+                        })
+                        ->when($data['type'] ?? null, function (Builder $query, $value) {
+                            $query->where('type', $value);
+                        })
+                        ->when($data['user'] ?? null, function (Builder $query, $value) {
+                            $query->where('user_id', $value);
+                        })
+                    )
+                    ->indicateUsing(function (array $data, $livewire): array {
+                        $indicators = [];
+
+                        if ($data['user']) {
+                            $indicators[] = Tables\Filters\Indicator::make('משתמש: ' . User::find($data['user'])?->name ?? 'לא נמצא');
+                        }
+
+                        if ($data['subject_type']) {
+                            $indicators[] = Tables\Filters\Indicator::make('מודל: ' . static::$model::mapSubjectTypeLabel($data['subject_type']));
+                        }
+
+                        if ($data['type']) {
+                            $indicators[] = Tables\Filters\Indicator::make('סוג פעילות: ' . ($data['subject_type']
+                                ? app($data['subject_type'])::getDefaultsActivityDescription()[$data['type']] ?? $data['type'] : $data['type']));
+                        }
+
+                        return $indicators;
+                    })
+                    ->form([
+                        Forms\Components\Select::make('user')
+                            ->relationship('user', 'name')
+                            ->label('משתמש'),
+                        Forms\Components\Select::make('subject_type')
+                            ->live()
+                            ->placeholder('כל המודלים')
+                            ->options([
+                                'App\Models\Proposal' => 'הצעה',
+                                'App\Models\Person' => 'אדם',
+                                'App\Models\Diary' => 'תיעוד',
+                                'App\Models\Subscriber' => 'מנוי',
+                                'App\Models\User' => 'משתמש',
+                            ])
+                            ->afterStateUpdated(function (Forms\Set $set) {
+                                $set('type', null);
+                            })
+                            ->label('מודל'),
+                        Forms\Components\Select::make('type')
+                            ->placeholder('כל סוגי הפעילויות')
+                            ->helperText('סוג הפעילות תלוי במודל שנבחר')
+                            ->options(function (Forms\Get $get) {
+                                $subjectType = $get('subject_type') ?? null;
+                                if ($subjectType) {
+                                    return app($subjectType)::getDefaultsActivityDescription();
+                                }
+
+                                return [];
+                            })
+                            ->label('סוג פעילות'),
+                    ])
+
             ])
             ->actions([
 

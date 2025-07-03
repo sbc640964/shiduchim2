@@ -33,8 +33,29 @@ class Activity extends Model
         return $this->subject?->getModelActivityLabel() ?? 'Unknown Subject';
     }
 
+    function getSubjectTypeLabel(): string
+    {
+        return self::mapSubjectTypeLabel($this->subject_type);
+    }
+
+    static function mapSubjectTypeLabel($subjectType): string
+    {
+        return match ($subjectType) {
+            'App\Models\Proposal' => 'הצעה',
+            'App\Models\Person' => 'אדם',
+            'App\Models\Diary' => 'יומן',
+            'App\Models\Subscriber' => 'מנוי',
+            'App\Models\User' => 'משתמש',
+            default => $subjectType,
+        };
+    }
+
     function renderDataToTable(array|string|null $data = null, ?string $key = null): ?string
     {
+        if(!$data && method_exists($this->subject, 'renderColumnActivityData')) {
+            return $this->subject->renderColumnActivityData($this);
+        }
+
         $isFirstData = $data ? 'ps-2' : '';
         $data = $data ?? $this->data;
 
@@ -55,6 +76,14 @@ class Activity extends Model
 
     public function getTranslateKey(string $key): string
     {
+        if(! $key) {
+            return '';
+        }
+
+        if(method_exists($this->subject, 'getActivityDataTranslateKey')) {
+            return $this->subject->getActivityDataTranslateKey($key);
+        }
+
         $keys = [
             'start_date' => 'תאריך התחלה',
             'end_date' => 'תאריך סיום',
