@@ -6,7 +6,6 @@ use Guava\Calendar\Contracts\Eventable;
 use Guava\Calendar\ValueObjects\CalendarEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Log;
 use Staudenmeir\EloquentJsonRelations\HasJsonRelationships;
 
 class Task extends Model implements Eventable
@@ -65,7 +64,6 @@ class Task extends Model implements Eventable
             return null;
         }
 
-        Log::error('debug', [$this]);
         return $this->proposal->guy->last_name . ' - ' . $this->proposal->girl->last_name;
     }
 
