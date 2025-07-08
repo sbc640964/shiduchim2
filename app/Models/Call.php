@@ -117,6 +117,10 @@ class Call extends Model
     {
         $extension = $extension ?: auth()->user()->ext;
 
+        if(!$extension) {
+            return null;
+        }
+
         $call = self::whereNull('finished_at')
             ->when($onlyStart, fn ($query) => $query->whereNotNull('started_at'))
             ->where('extension', $extension)

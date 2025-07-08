@@ -52,6 +52,10 @@ class CallsBox extends Component implements HasActions, HasForms
             $this->call = Call::activeCall(false);
         }
 
+        if(! $this->call) {
+            return null;
+        }
+
         //if there are a call that started, return this call
         //else return the first call
         return $this->call->whereNotNull('started_at')
