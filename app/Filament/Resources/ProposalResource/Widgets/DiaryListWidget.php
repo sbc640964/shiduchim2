@@ -52,6 +52,10 @@ class DiaryListWidget extends BaseWidget
 
     public function table(Tables\Table $table): Tables\Table
     {
+        if(!$this->record->guy || !$this->record->girl) {
+            return $table;
+        }
+
         return $this->tableComponent($table)
             ->heading('יומן פעילות')
             ->modifyQueryUsing(function (Builder $query) {

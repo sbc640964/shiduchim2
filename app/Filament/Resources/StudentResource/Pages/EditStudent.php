@@ -6,6 +6,7 @@ use App\Filament\Resources\StudentResource;
 use App\Models\Person;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 
 class EditStudent extends EditRecord
 {
@@ -43,6 +44,10 @@ class EditStudent extends EditRecord
 
             $record->info_private = array_merge(($record->info_private ?? []), $data['info_private']);
 
+            $patentsFamilyChanged = $record->isDirty('patents_family_id') ||
+                $record->isDirty('father_id') ||
+                $record->isDirty('mother_id');
+
             $record->save();
 
             $record->refresh();
@@ -70,6 +75,24 @@ class EditStudent extends EditRecord
                 $record->parentsFamily->wife->update([
                     'first_name' => $data['mother_first_name'],
                 ]);
+            }
+
+
+            if($patentsFamilyChanged) {
+                $record->load(['proposals' => fn ($q) => $q->with(['contacts' => fn(MorphToMany $query) =>
+                    $query
+                        ->wherePivotIn('type', ['אמא', 'אבא'])
+                        ->wherePivot('side', $record->gender === 'G' ? 'girl' : 'guy')
+                ])]);
+
+                $record->proposals->each(function ($proposal) use ($record) {
+                    $proposal->contacts->each(function ($contact) use ($record) {
+                        $contact->pivot->person_id = $contact->pivot->type === 'אמא'
+                            ? $record->mother_id
+                            : $record->father_id;
+                        $contact->pivot->save();
+                    });
+                });
             }
 
             \DB::commit();
