@@ -66,6 +66,7 @@ class ManageProposals extends ManageRelatedRecords
                 "bg-red-50 hover:bg-red-100" => $proposal->hidden_at,
 //                "relative before:content-[''] before:border-s-[6px] before:z-20 before:border-red-600 before:h-full before:absolute before:start-0" => $proposal->hidden_at,
             ])
+            ->bulkActions(ProposalResource::getBulkActions())
             ->actions([
                 ActionGroup::make([
                     ProposalResource::getAddDiaryAction(),

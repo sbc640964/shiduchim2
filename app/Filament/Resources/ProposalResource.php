@@ -99,6 +99,19 @@ class ProposalResource extends Resource
                             ->withoutGlobalScope('withoutClosed')
                         );
                     }),
+                Filters\Filter::make('shares-proposals')
+                    ->label('הצג רק שיתופי פעולה')
+                    ->toggle()
+                    ->baseQuery(function (Builder $query, array $data) {
+                        return $query->when($data['isActive'] ?? false, fn (Builder $query) =>
+                            $query->whereIn('id', function ($sub) {
+                                $sub->select('proposal_id') // שנה ל-id של הטבלה הראשית שלך
+                                    ->from('user_proposal') // טבלת הפיבוט
+                                    ->groupBy('proposal_id')
+                                    ->havingRaw('COUNT(user_id) >= 2');
+                            })
+                        );
+                    }),
                 Filters\Filter::make('show-hidden')
                     ->label('הצג הצעות מוסתרות')
                     ->toggle()
@@ -324,39 +337,44 @@ class ProposalResource extends Resource
                     ->before(fn (Proposal $record) => $record->deleteDependencies())
                     ->tooltip('מחק הצעה'),
             ])
-            ->bulkActions([
-                BulkAction::make('hidden')
-                    ->label('הסתר הצעות')
-                    ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->hide()),
-                BulkAction::make('hidden')
-                    ->label('ביטול הסתרה להצעות')
-                    ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->show()),
-                BulkAction::make('share')
-                    ->label('שתף הצעות')
-                    ->modalWidth(MaxWidth::Small)
-                    ->form([
-                        Forms\Components\Select::make('users')
-                            ->label('שדכנים')
-                            ->options(User::orderBy('name')->pluck('name', 'id'))
-                            ->multiple()
-                    ])
-                    ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
-                        $users = $records->map->share($data['users'])
-                            ->flatten(1)->unique('id');
-
-                        Notification::make()
-                            ->title(auth()->user()->name . " שיתף איתך {$records->count()} הצעות")
-                            ->icon('iconsax-bul-notification-bing')
-                            ->iconColor('primary')
-                            ->body('עבור כל אחת מהם קיבלת הודעה בתיבת ההתראות, על מנת להציג אותם עליך ללחוץ על הפעמון בצד שמאל של המסך למעלה')
-                            ->broadcast($users);
-                    }),
-            ])
+            ->bulkActions(static::getBulkActions())
             ->recordClasses(fn (Proposal $proposal) => [
                 "bg-red-50 hover:bg-red-100" => $proposal->hidden_at,
 //                "relative before:content-[''] before:border-s-[6px] before:z-20 before:border-red-600 before:h-full before:absolute before:start-0" => $proposal->hidden_at,
             ])
             ->columns(static::getColumns());
+    }
+
+    static public function getBulkActions(): array
+    {
+        return [
+            BulkAction::make('hidden')
+                ->label('הסתר הצעות')
+                ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->hide()),
+            BulkAction::make('re-hidden')
+                ->label('ביטול הסתרה להצעות')
+                ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->show()),
+            BulkAction::make('share')
+                ->label('שתף הצעות')
+                ->modalWidth(MaxWidth::Small)
+                ->form([
+                    Forms\Components\Select::make('users')
+                        ->label('שדכנים')
+                        ->options(User::orderBy('name')->pluck('name', 'id'))
+                        ->multiple()
+                ])
+                ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
+                    $users = $records->map->share($data['users'])
+                        ->flatten(1)->unique('id');
+
+                    Notification::make()
+                        ->title(auth()->user()->name . " שיתף איתך {$records->count()} הצעות")
+                        ->icon('iconsax-bul-notification-bing')
+                        ->iconColor('primary')
+                        ->body('עבור כל אחת מהם קיבלת הודעה בתיבת ההתראות, על מנת להציג אותם עליך ללחוץ על הפעמון בצד שמאל של המסך למעלה')
+                        ->broadcast($users);
+                }),
+        ];
     }
 
     public static function getGloballySearchableAttributes(): array
