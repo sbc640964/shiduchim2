@@ -94,13 +94,7 @@ class ManageProposals extends ManageRelatedRecords
                 $query
                     ->withAccess()
                     ->with('lastGuyDiary', 'lastGirlDiary', 'people.schools');
-            })
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    //                    Tables\Actions\DissociateBulkAction::make(),
-                    //                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            });
     }
 
     public function inverseGender(): string
