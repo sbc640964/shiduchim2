@@ -7,4 +7,10 @@ Route::get('/', function () {
 });
 
 
+
+Route::get('/test-pm', function () {
+    sleep(3); // מדמה עבודה של FPM
+    return 'ok';
+});
+
 Route::get('webhook/gis', \App\Http\Controllers\WebhookGisController::class);
