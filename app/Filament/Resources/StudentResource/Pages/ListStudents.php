@@ -59,6 +59,7 @@ class ListStudents extends ListRecords
                 ->modifyQueryUsing(function (Builder $query) {
                     return $query->whereHas('lastSubscription', function ($query) {
                         return $query
+                            ->where('status', 'pending')
                             ->whereNull('user_id')
                             ->where('is_published', true);
                     });
