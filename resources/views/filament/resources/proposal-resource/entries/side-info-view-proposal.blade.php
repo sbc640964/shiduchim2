@@ -28,6 +28,10 @@
             <span class="text-gray-500">אחים מעל:</span>
             <span>{{ $sideRecord->born_at ? $sideRecord->olderSiblings()->count(): 'חסר מידע' }}</span>
         </div>
+        <div class="flex flex-col items-center text-sm px-4">
+            <span class="text-gray-500">שטיבל:</span>
+            <span>{{ $sideRecord->father?->school->first() ? $sideRecord->father?->school->first()?->name : 'חסר מידע' }}</span>
+        </div>
     </div>
     <div class="mt-4">
         @foreach(['father' => 'אבא', 'mother' => 'אמא'] as $relation => $label)

@@ -7,8 +7,10 @@ use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\ProposalResource\Widgets;
 use App\Filament\Resources\StudentResource;
 use App\Models\Proposal;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Infolists\Components;
 use Filament\Infolists\Infolist;
@@ -94,6 +96,26 @@ class ViewProposal extends ViewRecord
                 ->action(fn (Proposal $proposal, array $data) => $proposal->closeProposal($data['description']))
                 ->visible(fn (Proposal $proposal) => auth()->user()->can('open_proposals')
                     && $proposal->opened_at !== null && $proposal->closed_at === null),
+
+            \Filament\Actions\ActionGroup::make([
+                Action::make('activities')
+                    ->visible(auth()->user()->can('activity_log'))
+                    ->label('היסטוריית מנוי')
+                    ->icon('heroicon-o-clock')
+                    ->slideOver()
+                    ->modalHeading('היסטוריית הצעה')
+                    ->modalContent(function () {
+                        $activities = $this->getRecord()->activities()->with('user')->get();
+                        $users = User::findMany([
+                            ...$activities->pluck('data.old'),
+                            ...$activities->pluck('data.new'),
+                        ]);
+                        return view('filament.resources.student-resource.widgets.subscription-activities', [
+                            'activities' => $activities,
+                            'users' => $users,
+                        ]);
+                    })
+            ])
         ];
     }
 
@@ -133,10 +155,11 @@ class ViewProposal extends ViewRecord
         return $infolist->schema([
             Components\Section::make()
                 ->schema([
-                    Components\TextEntry::make('status')
-                        ->label('סטטוס')
-                        ->formatStateUsing(fn (Proposal $proposal, $state) => \Blade::render(
-                            <<<'HTML'
+                    Components\Grid::make(4)->schema([
+                        Components\TextEntry::make('status')
+                            ->label('סטטוס')
+                            ->formatStateUsing(fn (Proposal $proposal, $state) => \Blade::render(
+                                <<<'HTML'
 <span class="flex gap-2 justify-between w-full">
 <span>סטטוס:</span>
 <span>
@@ -148,11 +171,17 @@ class ViewProposal extends ViewRecord
 </span>
 HTML
 
-                            , ['proposal' => $proposal, 'state' => $state])
-                        )
-                        ->hiddenLabel()
+                                , ['proposal' => $proposal, 'state' => $state])
+                            )
+                            ->hiddenLabel()
 //                        ->inlineLabel()
-                        ->html(),
+                            ->html(),
+                        Components\TextEntry::make('created_at')
+                            ->date('d/m/Y')
+                            ->label('תאריך יצירה'),
+                        Components\TextEntry::make('createdByUser.name')
+                            ->label('נוצר על ידי')
+                    ]),
                     Components\TextEntry::make('description')
                         ->hintAction(Components\Actions\Action::make('edit-proposal')
                             ->label('ערוך')
@@ -180,6 +209,14 @@ HTML
 
         $label = $side === 'guy' ? 'בחור' : 'בחורה';
         $ucFirst = ucfirst($side);
+
+        if(! $this->record->{$side}) {
+            return Components\Section::make("ה$label")
+                ->columnSpan(1)
+                ->columns(1)
+                ->statePath($side)
+                ->schema([]);
+        }
 
         return Components\Section::make("ה$label")
             ->columnSpan(1)
