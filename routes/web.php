@@ -9,7 +9,7 @@ Route::get('/', function () {
 
 
 Route::get('/test-pm', function () {
-    sleep(3); // מדמה עבודה של FPM
+    sleep(10); // מדמה עבודה של FPM
     return 'ok';
 });
 
