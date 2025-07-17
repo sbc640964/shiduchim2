@@ -313,8 +313,19 @@ class Person extends Model
 
     /**************** Scopes ****************/
 
-    public function scopeSearchName($query, $search, ?string $gender = null, ?bool $inParents = false)
+    public function scopeSearchName($query, $search, ?string $gender = null, ?bool $inParents = false, ?bool $isStudent = false): Builder
     {
+        $search = trim($search);
+
+        if ($gender) {
+            $query->where('gender', $gender);
+        }
+
+        if(is_numeric($search)) {
+            $query->searchExternalCode($search, $isStudent);
+            return $query;
+        }
+
         foreach (explode(' ', $search) as $word) {
             $query->where(function ($query) use ($inParents, $word) {
                 $query->where('people.first_name', 'like', "%$word%")
@@ -328,8 +339,13 @@ class Person extends Model
             });
         }
 
-        if ($gender) {
-            $query->where('gender', $gender);
+        return $query;
+    }
+
+    public function scopeSearchExternalCode(Builder $query, string $search, ?bool $student = false): Builder
+    {
+        if(is_numeric($search)) {
+            $query->where($student ? 'external_code_students' :'external_code', $search);
         }
 
         return $query;
