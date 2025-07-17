@@ -352,27 +352,25 @@ class Proposal extends Model
                     $this
                 )
             ) {
-                $this->update([
+                $this->fill([
                     'status' => $closeStatus,
                     'finished_at' => $data['finished_at'] ?? now(),
                     'reason_status' => $data['reason_status'] ?? null,
                     'family_id' => $family->id,
-                ]) && $this->recordActivity('close-married');
+                ])->saveOrFail() && $this->recordActivity('close-married');
             }
         } elseif (is_int($data)) {
-            $this->update([
+            $this->fill([
                 'status' => $closeStatus,
                 'reason_status' => 'נסגר בשידוך '.$data,
-            ]) && $this->recordActivity('close-married-other', [
+            ])->saveOrFail() && $this->recordActivity('close-married-other', [
                 'closed_proposal_id' => $data
             ]);
-
-
         } else {
-            $this->update([
+            $this->fill([
                 'status' => $closeStatus,
                 'reason_status' => 'נסגר ע"י שדכן חיצוני',
-            ]) && $this->recordActivity('close-married', [
+            ])->saveOrFail() && $this->recordActivity('close-married', [
                 'note' => 'ע"י שדכן חיצוני'
             ]);
         }

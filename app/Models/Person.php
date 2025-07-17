@@ -508,7 +508,7 @@ class Person extends Model
         }
     }
 
-    public function married(Person $person, Carbon $date, ?Proposal $proposal = null): ?Family
+    public function married(Person $person, Carbon $date, Proposal $proposal = null): ?Family
     {
         if ($this->gender === 'G') {
             return null;
@@ -541,7 +541,7 @@ class Person extends Model
                     $query->whereIn('id', [$thisPerson->id, $person->id]);
                 })->get();
 
-            $otherProposals->each->close($proposal?->id ?? null);
+            $otherProposals->each->close($proposal->id ?? null);
 
             return $newFamily;
         });
