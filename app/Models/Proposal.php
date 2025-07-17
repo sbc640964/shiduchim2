@@ -731,4 +731,10 @@ class Proposal extends Model
         return $users;
     }
 
+    public function scopeOpenProposals(Builder $query): Builder
+    {
+        return $query
+            ->whereNotNull('opened_at')
+            ->whereNull('closed_at');
+    }
 }

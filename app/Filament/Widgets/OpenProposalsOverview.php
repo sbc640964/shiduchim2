@@ -28,8 +28,7 @@ class OpenProposalsOverview extends Widget
             ->withCount(['proposals as open_proposals' =>
                     fn (Builder $query) => $query
                         ->withoutGlobalScope('accessByUser')
-                        ->whereNotNull('opened_at')
-                        ->whereNull('closed_at')
+                        ->openProposals()
             ])->get();
     }
 
@@ -52,8 +51,7 @@ class OpenProposalsOverview extends Widget
     {
         return $user
             ->proposals()
-            ->whereNotNull('opened_at')
-            ->whereNull('closed_at')
+            ->openProposals()
             ->with('people.lastSubscription')
             ->get();
     }
