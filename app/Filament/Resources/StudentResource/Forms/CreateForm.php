@@ -74,14 +74,17 @@ class CreateForm
                     ->required(),
 
                 Family::filamentSelect('parents_family_id', $record?->parentsFamily)
-                    ->relationship('parentsFamily', titleAttribute: 'name', modifyQueryUsing: function ($query, $search) {
-                        return $query->searchNames($search)
-                            ->orderBy('name')
-                            ->with(['people.father', 'people.fatherInLaw']);
-                    })
+                    ->relationship('parentsFamily', 'name')
+                    ->getSearchResultsUsing(fn ($search) => Family::searchNames($search)
+                        ->orderBy('name')
+                        ->with(['people.father', 'people.fatherInLaw'])
+                        ->get()
+                        ->pluck('option_select', 'id')
+                    )
                     ->label('משפחת הורים')
+                    ->allowHtml()
                     ->live()
-                    ->getOptionLabelUsing(fn ($value) => $value ? Family::find($value)?->option_select : null)
+//                    ->getOptionLabelUsing(fn ($value) => $value ? Family::find($value)?->option_select : null)
                     ->afterStateUpdated(function (Set $set, $old, $state) {
                         $family = Family::with(['city', 'people'])->find($state);
                         if($family) {

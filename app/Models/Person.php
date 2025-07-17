@@ -317,9 +317,8 @@ class Person extends Model
     {
         foreach (explode(' ', $search) as $word) {
             $query->where(function ($query) use ($inParents, $word) {
-                $query->where('first_name', 'like', "%$word%")
-                    ->orWhere('last_name', 'like', "%$word%");
-
+                $query->where('people.first_name', 'like', "%$word%")
+                    ->orWhere('people.last_name', 'like', "%$word%");
                 if ($inParents) {
                     $query->orWhereRelation('father', 'first_name', 'like', "%$word%")
                         ->orWhereRelation('father', 'last_name', 'like', "%$word%")
