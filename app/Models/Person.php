@@ -42,6 +42,7 @@ class Person extends Model
         'divorce' => 'גירושין',
         'rollbackDivorces' => 'ביטול גירושין',
         'update' => 'עדכון פרטים',
+        'merge' => 'מיזוג עם אדם אחר',
     ];
 
     public function getModelLabel(): string
@@ -927,6 +928,10 @@ class Person extends Model
 //                \Schema::enableForeignKeyConstraints();
             }
 
+            $this->recordActivity('merge', [
+                'old_person_id' => $oldId,
+                'is_delete_after_merge' => $deleteAfterMerge,
+            ]);
 
 
             DB::commit();
