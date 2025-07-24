@@ -635,8 +635,9 @@ class Person extends Model
         $proposal->people()->attach([$this->id, $with]);
 
         $proposal->close([
+            'external' => true,
             'finished_at' => $date,
-            'reason_status' => '',
+            'reason_status' => 'נסגר ע"י שדכן חיצוני',
         ]);
 
         return $proposal;

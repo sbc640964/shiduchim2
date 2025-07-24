@@ -606,7 +606,7 @@ class ProposalResource extends Resource
             ->modalHeading('מזל טוב!!!')
             ->action(function (Proposal $proposal, Action $action, array $data) {
                 try {
-                    $proposal->close();
+                    $proposal->close($data);
 
                     $action->success();
                 } catch (\Throwable $e) {

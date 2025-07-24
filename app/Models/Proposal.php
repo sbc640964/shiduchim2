@@ -340,7 +340,7 @@ class Proposal extends Model
         return $this->people->firstWhere('gender', $gender === 'guy' ? 'B' : 'G');
     }
 
-    public function close(null|int|array $data = []): self
+    public function close(int|array $data = []): self
     {
         $closeStatus = Statuses::getClosedProposalStatus();
 
@@ -357,7 +357,9 @@ class Proposal extends Model
                     'finished_at' => $data['finished_at'] ?? now(),
                     'reason_status' => $data['reason_status'] ?? null,
                     'family_id' => $family->id,
-                ])->saveOrFail() && $this->recordActivity('close-married');
+                ])->saveOrFail() && $this->recordActivity('close-married', $data['external'] ?? false ? [
+                    'note' => 'ע"י שדכן חיצוני'
+                ] : []);
             }
         } elseif (is_int($data)) {
             $this->fill([
@@ -365,13 +367,6 @@ class Proposal extends Model
                 'reason_status' => 'נסגר בשידוך '.$data,
             ])->saveOrFail() && $this->recordActivity('close-married-other', [
                 'closed_proposal_id' => $data
-            ]);
-        } else {
-            $this->fill([
-                'status' => $closeStatus,
-                'reason_status' => 'נסגר ע"י שדכן חיצוני',
-            ])->saveOrFail() && $this->recordActivity('close-married', [
-                'note' => 'ע"י שדכן חיצוני'
             ]);
         }
 
