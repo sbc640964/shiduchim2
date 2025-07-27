@@ -670,7 +670,7 @@ class ProposalResource extends Resource
     {
         return app(static::getModel())
             ->resolveRouteBindingQuery(static::getEloquentQuery(), $key, static::getRecordRouteKeyName())
-            ->withoutGlobalScope('withoutHidden')
+            ->withoutGlobalScope('withoutHidden', 'withoutClosed')
             ->first();
     }
 }
