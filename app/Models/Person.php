@@ -390,7 +390,9 @@ class Person extends Model
         $fatherName = $this->relationLoaded('father') ? $this->father?->{$this->gender === 'G' ? 'full_name' : 'first_name'} ?? '' : '';
         $fatherInLawName = $this->relationLoaded('fatherInLaw') ? $this->fatherInLaw?->reverse_full_name ?? '' : '';
 
-        $fatherInLawName = $fatherInLawName ? "חתן ר' ".$fatherInLawName : null;
+        $relationFatherInLawContext = $this->gender === 'G' ? 'כלת' : 'חתן';
+
+        $fatherInLawName = $fatherInLawName ? "$relationFatherInLawContext ר' ".$fatherInLawName : null;
         $fatherName = $fatherName ? "ב'ר ".$fatherName : null;
 
         $parentsNames = collect([$fatherName, $fatherInLawName])->filter()->join(' | ');
@@ -407,6 +409,11 @@ class Person extends Model
         }
 
         return $subText;
+    }
+
+    public function getSelectOptionHtmlWithPivotSideAttribute()
+    {
+        return $this->getSelectOptionHtmlAttribute(true);
     }
 
     public function getSelectOptionHtmlAttribute(?bool $withPivotSide = false, ?bool $withAddress = false): string

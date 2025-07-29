@@ -37,9 +37,9 @@ class MatchmakerResource extends Resource
                 Select::make('person_id')
                     ->label('אדם')
                     ->disabledOn('edit')
-                    ->relationship('person', 'full_name', fn ($query) => $query->with('father')->limit(50))
-                    ->getOptionLabelFromRecordUsing(fn (Person $person) => $person->select_option_html)
-                    ->getSearchResultsUsing(fn ($search) => Person::searchName($search)->with('father')->get()->pluck('select_option_html', 'id')->toArray())
+                    ->relationship('person', 'full_name', fn ($query) => $query->with('father', 'fatherInLaw', 'spouse')->limit(50))
+                    ->getOptionLabelFromRecordUsing(fn (Person $person) => $person->select_option_html_with_pivot_side)
+                    ->getSearchResultsUsing(fn ($search) => Person::searchName($search)->with('father', 'fatherInLaw', 'spouse')->get()->pluck('select_option_html_with_pivot_side', 'id')->toArray())
                     ->searchable()
                     ->allowHtml()
                     ->required(),
