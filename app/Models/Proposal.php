@@ -348,7 +348,7 @@ class Proposal extends Model
             if ($family = $this->getSpoken('guy')
                 ->married(
                     $this->getSpoken('girl'),
-                    $data['finished_at'] ?? now(),
+                    ($data['finished_at'] ?? null) ? Carbon::make($data['finished_at']) : now(),
                     $this
                 )
             ) {
