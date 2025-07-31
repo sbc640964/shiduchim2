@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Events\CallActivityEvent;
+use App\Http\Controllers\WebhookGisController;
 use App\Models\Call;
 use App\Models\CallDiary;
 use App\Models\Diary;
@@ -242,26 +243,9 @@ class ProcessGisWebhookJob implements ShouldQueue
         return null;
     }
 
-    private function updateAllDiaries(Call $call)
+    private function updateAllDiaries(Call $call): void
     {
-        $diaries = Diary::where('data->call_id', $call->id)
-            ->where('type', 'call')
-            ->get();
-
-        $duration = 0;
-
-        if($call->duration > 0 && $diaries->isNotEmpty()){
-            $duration = (int) ($call->duration / $diaries->count());
-        }
-
-        foreach ($diaries as $diary) {
-            $diary->update([
-                'data' => array_merge($diary->data, [
-                    'file' => $call->audio_url,
-                    'duration' => $duration,
-                ]),
-            ]);
-        }
+        WebhookGisController::updateAllDiaries($call);
     }
 
     private function createCall(array $data, ?string $extension, mixed $phoneNumber, ?Phone $phone, mixed $user, $isOutgoing = false): ?Call

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\ProcessGisWebhookJob;
+use App\Models\Call;
+use App\Models\Diary;
 use App\Models\WebhookEntry;
 use Illuminate\Http\Request;
 
@@ -61,6 +63,28 @@ class WebhookGisController extends Controller
             ]);
 
             return 'Error processing webhook';
+        }
+    }
+
+    static public function updateAllDiaries(Call $call)
+    {
+        $diaries = Diary::where('data->call_id', $call->id)
+            ->where('type', 'call')
+            ->get();
+
+        $duration = 0;
+
+        if($call->duration > 0 && $diaries->isNotEmpty()){
+            $duration = (int) ($call->duration / $diaries->count());
+        }
+
+        foreach ($diaries as $diary) {
+            $diary->update([
+                'data' => array_merge($diary->data, [
+                    'file' => $call->audio_url,
+                    'duration' => $duration,
+                ]),
+            ]);
         }
     }
 }
