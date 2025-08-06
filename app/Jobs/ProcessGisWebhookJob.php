@@ -12,6 +12,7 @@ use App\Models\Phone;
 use App\Models\User;
 use App\Models\WebhookEntry;
 use App\Services\PhoneCallGis\ActiveCall;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,16 +26,26 @@ class ProcessGisWebhookJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private WebhookEntry $webhook;
+
     /**
      * Create a new job instance.
      *
      * @param array $data The webhook data to process
-     * @param WebhookEntry $webhook The webhook entry record
+     * @param int $webhookId The ID of the webhook entry to update upon completion
+     * @throws Exception
      */
     public function __construct(
         protected array $data,
-        protected WebhookEntry $webhook
+        protected int $webhookId
     ) {
+        $webhook = WebhookEntry::find($this->webhookId);
+
+        if (!$webhook) {
+            throw new Exception('Webhook entry not found');
+        }
+
+        $this->webhook = $webhook;
     }
 
     /**
@@ -165,7 +176,7 @@ class ProcessGisWebhookJob implements ShouldQueue
             CallActivityEvent::dispatch($user, $call);
 
             $this->webhook->completed();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->webhook->setError([
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

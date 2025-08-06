@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class WebhookGisController extends Controller
 {
+    public bool $afterCommit = true;
+
     public function __invoke(Request $request)
     {
         context([
@@ -50,7 +52,7 @@ class WebhookGisController extends Controller
             }
 
             // Dispatch the job to process the webhook data
-            ProcessGisWebhookJob::dispatch($data, $webhook);
+            ProcessGisWebhookJob::dispatch($data, $webhook->id)->afterCommit();
 
             return 'Webhook received and processing';
         } catch (\Exception $e) {
