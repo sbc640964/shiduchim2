@@ -26,7 +26,7 @@ class ProcessGisWebhookJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private WebhookEntry $webhook;
+    private WebhookEntry|null $webhook = null;
 
     /**
      * Create a new job instance.
@@ -39,13 +39,6 @@ class ProcessGisWebhookJob implements ShouldQueue
         protected array $data,
         protected int $webhookId
     ) {
-        $webhook = WebhookEntry::find($this->webhookId);
-
-        if (!$webhook) {
-            throw new Exception('Webhook entry not found');
-        }
-
-        $this->webhook = $webhook;
     }
 
     /**
@@ -59,6 +52,8 @@ class ProcessGisWebhookJob implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->setWebhook();
+
         try {
             $isOutgoing = $this->data['is_outgoing'] !== 'incoming';
 
@@ -279,5 +274,16 @@ class ProcessGisWebhookJob implements ShouldQueue
         $call && CallActivityEvent::dispatch($user, $call);
 
         return $call;
+    }
+
+    private function setWebhook(): void
+    {
+        $webhook = WebhookEntry::find($this->webhookId);
+
+        if (!$webhook) {
+            throw new Exception("Webhook entry $this->webhookId not found");
+        }
+
+        $this->webhook = $webhook;
     }
 }
