@@ -94,6 +94,11 @@ class Call extends Model
         return $this->belongsTo(Diary::class);
     }
 
+    public function transcription(): BelongsTo
+    {
+        return $this->belongsTo(Transcription::class);
+    }
+
     public function diaries(): HasMany
     {
         return $this->hasMany(Diary::class, 'data->call_id');
