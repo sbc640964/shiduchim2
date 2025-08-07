@@ -38,7 +38,8 @@ class Call extends Model
         'unique_id',
         'duration',
         'user_id',
-        'text_call'
+        'text_call',
+        'transcription_id',
     ];
 
     /**
