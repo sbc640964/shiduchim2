@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Call;
 use App\Models\Diary;
 use App\Models\Person;
+use App\Models\Transcription;
 use Arr;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -55,14 +56,14 @@ class TranscriptionCallJob implements ShouldQueue
         }
 
         if(!$transcription) {
-             $transcription = $call->transcription()->create([
+             $transcription = $call->transcription()->associate(Transcription::create([
                 'status' => 'splitting',
                 'data' => [
                     'status_message' => 'Splitting audio file into chunks for transcription.',
                 ],
                 'current_step' => 0,
                 'total_steps' => 0,
-            ]);
+            ]));
 
             //split the audio file to 8-12 minute chunks
             $chunks = $call->splitAudioFile();
