@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Str;
+use Process;
 
 class Call extends Model
 {
@@ -476,5 +477,91 @@ Blade;
             ->filter()
             ->whereNotNull('description')
             ->groupBy('proposal_id');
+    }
+
+    public function splitAudioFile(): array
+    {
+        $audioPath = urldecode($this->audio_url);
+        $maxChunkLength = 60 * 12;
+        $outputDir = storage_path("app/chunks/" . $this->id);
+        $minChunkLength = 60 * 8;
+
+        //create output directory if it doesn't exist
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+
+        // זיהוי רגעי שקט – עם d גבוה יותר (למשל 2 שניות)
+        $process = Process::run(
+            "ffmpeg -i " .
+            escapeshellarg($audioPath) .
+            " -af silencedetect=noise=-30dB:d=2 -f null - 2>&1"
+        );
+        if (!$process->successful()) {
+            throw new \Exception("ffmpeg failed: " . $process->errorOutput());
+        }
+        $output = $process->output();
+        preg_match_all("/silence_end: ([0-9.]+)/", $output, $ends);
+
+        // צור רשימת חיתוכים (כולל תחילת הקובץ)
+        $cutPoints = [0];
+        foreach ($ends[1] as $time) {
+            $cutPoints[] = (float)$time;
+        }
+
+        // אורך קובץ
+        $probe = Process::run(
+            "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .
+            escapeshellarg($audioPath)
+        );
+        $length = (float)trim($probe->output());
+
+        // איחוד צ'אנקים קטנים + שמירה על אורך מרבי
+        $chunks = [];
+        $last = 0;
+        foreach ($cutPoints as $next) {
+            if ($next - $last < $minChunkLength) {
+                continue; // דלג על צ'אנקים קצרים מדי
+            }
+            while ($next - $last > $maxChunkLength) {
+                $chunks[] = [$last, $last + $maxChunkLength];
+                $last += $maxChunkLength;
+            }
+            if ($next > $last) {
+                $chunks[] = [$last, $next];
+                $last = $next;
+            }
+        }
+        // אחרון עד סוף קובץ
+        if ($last < $length) {
+            $chunks[] = [$last, $length];
+        }
+
+        // חותך בפועל
+        $result = [];
+        foreach ($chunks as $i => [$start, $end]) {
+            if ($i > 0) {
+                $start = max(0, $start - 1);
+            }
+            $chunkFile = $outputDir . "/chunk_" . $i . ".mp3";
+            $duration = $end - $start;
+            $cutProcess = Process::run(
+                "ffmpeg -y -ss {$start} -t {$duration} -i " .
+                escapeshellarg($audioPath) .
+                " -acodec copy " .
+                escapeshellarg($chunkFile) .
+                " 2>&1"
+            );
+            if (!$cutProcess->successful()) {
+                throw new \Exception("ffmpeg chunk failed: " . $cutProcess->errorOutput());
+            }
+            $result[] = [
+                "start" => $start,
+                "end" => $end,
+                "file" => $chunkFile
+            ];
+        }
+
+        return $result;
     }
 }

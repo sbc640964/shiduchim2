@@ -234,7 +234,7 @@ class CallsDiariesResource extends Resource
                                 ->color('gray')
                                 ->successNotificationTitle('ההקלטה נשלחה לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
                                 ->action(function (Call $call, Action|InfolistComponents\Actions\Action $action) {
-                                    TranscriptionCallJob::dispatch($call);
+                                    TranscriptionCallJob::dispatch($call->id);
                                     $action->success();
                                 })
                                 ->visible(auth()->user()->can('ai_beta'))
