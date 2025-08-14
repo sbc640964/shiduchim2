@@ -139,35 +139,41 @@ class TranscriptionCallJob implements ShouldQueue
         return true;
     }
 
-    public function getSchema(): ArraySchema
+    public function getSchema(): ObjectSchema
     {
-        return new ArraySchema(
-            name: 'CallTranscript',
-            description: 'Transcript of a phone call',
-            items: new ObjectSchema(
-                name: 'item',
-                description: 'A single item in the call transcript',
-                properties: [
-                    new EnumSchema(
-                        name: 'spoken',
-                        description: 'Who is speaking in the call',
-                        options: ['הורה', 'שדכן'],
+        return new ObjectSchema(
+            name: 'TranscriptionCall',
+            description: 'Schema for the transcription of a phone call',
+            properties: [
+                new ArraySchema(
+                    name: 'CallTranscript',
+                    description: 'Transcript of a phone call',
+                    items: new ObjectSchema(
+                        name: 'item',
+                        description: 'A single item in the call transcript',
+                        properties: [
+                            new EnumSchema(
+                                name: 'spoken',
+                                description: 'Who is speaking in the call',
+                                options: ['הורה', 'שדכן'],
+                            ),
+                            new StringSchema(
+                                name: 'text',
+                                description: 'The text spoken in the call',
+                            ),
+                            new StringSchema(
+                                name: 'time',
+                                description: 'The time when the text was spoken',
+                            ),
+                            new StringSchema(
+                                name: 'duration',
+                                description: 'The duration of the text spoken',
+                            ),
+                        ],
+                        requiredFields: ['spoken', 'text', 'time', 'duration'],
                     ),
-                    new StringSchema(
-                        name: 'text',
-                        description: 'The text spoken in the call',
-                    ),
-                    new StringSchema(
-                        name: 'time',
-                        description: 'The time when the text was spoken',
-                    ),
-                    new StringSchema(
-                        name: 'duration',
-                        description: 'The duration of the text spoken',
-                    ),
-                ],
-                requiredFields: ['spoken', 'text', 'time', 'duration'],
-            ),
+                ),
+            ],
         );
     }
 
