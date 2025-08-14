@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use Auth;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Sentry\State\Scope;
@@ -23,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RequestException::dontTruncate();
+
         Gate::define('banner-manager', function (User $user) {
             return $user->can('banner_manager');
         });
