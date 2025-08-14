@@ -66,8 +66,6 @@ class TranscriptionCallJob implements ShouldQueue
             $call->transcription()->associate($transcription); // ימלא את transcription_id
             $call->save();
 
-            $call->load('transcription');
-
             //split the audio file to 8-12 minute chunks
             $chunks = $call->splitAudioFile();
 
