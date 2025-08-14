@@ -209,12 +209,19 @@ class TranscriptionCallJob implements ShouldQueue
         $schema = $this->getSchema();
         $inputTextPrompt = $this->getPrompt();
         $audio = $this->getAudioBase64($chunk);
+        $systemPrompt = "אתה עוזר לשדכן לכתוב את תמלול השיחה עם ההורה. " .
+            "השיחה מתבצעת בעברית, התמלול צריך להיות בעברית, " .
+            "התמלול צריך להיות מפורט ככל האפשר, כולל שמות של אנשים, תאריכים, מקומות וכו'. " .
+            "אם יש משהו לא ברור, תכתוב [לא ברור], " .
+            "אם יש לך ספק לגבי משהו, תכתוב [לא הבנתי], ".
+            "אם לא צורפה לך הקלטה, תכתוב [לא צורפה הקלטה]. ";
 
         try {
             $response = Prism::structured()
 //                ->using(Provider::Gemini, 'gemini-2.5-flash')
                 ->using(Provider::OpenAI, 'gpt-4o')
                 ->withSchema($schema)
+                ->withSystemPrompt($systemPrompt)
                 ->withPrompt($inputTextPrompt, [$audio])
                 ->withProviderOptions([
                     'temperature' => 0.5,
