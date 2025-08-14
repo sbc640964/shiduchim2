@@ -206,7 +206,7 @@ class TranscriptionCallJob implements ShouldQueue
         try {
             $response = Prism::structured()
 //                ->using(Provider::Gemini, 'gemini-2.5-flash')
-                ->using(Provider::OpenAI, 'gpt-4o-transcribe')
+                ->using(Provider::OpenAI, 'gpt-4o')
                 ->withSchema($schema)
                 ->withPrompt($inputTextPrompt, [$audio])
                 ->withProviderOptions([
