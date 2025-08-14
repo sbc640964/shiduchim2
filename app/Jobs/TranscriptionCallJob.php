@@ -174,6 +174,7 @@ class TranscriptionCallJob implements ShouldQueue
                     ),
                 ),
             ],
+            requiredFields: ['CallTranscript'],
         );
     }
 
