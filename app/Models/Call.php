@@ -409,9 +409,9 @@ Blade;
     public function splitAudioFile(): array
     {
         $audioPath = urldecode($this->audio_url);
-        $maxChunkLength = 60 * 8;
+        $maxChunkLength = 60 * 6;
         $outputDir = storage_path("app/chunks/" . $this->id);
-        $minChunkLength = 60 * 6;
+        $minChunkLength = 60 * 4;
 
         //create output directory if it doesn't exist
         if (!is_dir($outputDir)) {
