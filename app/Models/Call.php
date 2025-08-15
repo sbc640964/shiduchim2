@@ -3,18 +3,13 @@
 namespace App\Models;
 
 use App\Events\CallActivityEvent;
+use App\Jobs\TranscriptionCallJob;
 use App\Services\PhoneCallGis\ActiveCall;
 use App\Services\PhoneCallGis\CallPhone;
-use Derrickob\GeminiApi\Data\Content;
-use Derrickob\GeminiApi\Data\GenerationConfig;
-use Derrickob\GeminiApi\Data\Schema;
-use Derrickob\GeminiApi\Gemini;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Str;
 use Process;
 
 class Call extends Model
@@ -226,105 +221,20 @@ HTML
             }
         }
     }
-
-    private function updateTextCall(): void
-    {
-        $text = $this->getParserTheCallText();
-
-        if($text){
-            $this->text_call = $text;
-            $this->save();
-        }
-    }
-
-    function getParserTheCallText(): ?string
-    {
-        if($this->audio_url){
-            $file = base64_encode(
-                file_get_contents(
-                    urldecode($this->audio_url)
-                )
-            );
-
-            $client = new Gemini([
-                "apiKey" => config('gemini.api_key')
-            ]);
-
-            $response = $client->models()->generateContent([
-                "model" => "models/gemini-2.5-flash-preview-04-17",
-                "systemInstruction" =>
-                    "אני מצרף לך קובץ שמע של שיחה ששדכן מתקשר להורה להציע שידוכ/ים לבנו או בתו, תמלל את השיחה, שים לב אם השיחה היא באנגלית או בעברית",
-                "generationConfig" => new GenerationConfig(
-                    responseMimeType: "application/json",
-                    responseSchema: Schema::fromArray([
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'spoken' => [
-                                    'type' => 'string',
-                                    'enum' => ['הורה', 'שדכן']
-                                ],
-                                'text' => [
-                                    'type' => 'string'
-                                ],
-                                'time' => [
-                                    'type' => 'string'
-                                ],
-                                'duration' => [
-                                    'type' => 'string'
-                                ],
-                            ],
-                            'required' => ['spoken', 'text', 'time', 'duration']
-                        ],
-                    ]),
-                    maxOutputTokens: 65536,
-                    temperature: 1,
-                    topP: 0.95,
-                    topK: 40,
-                ),
-                "contents" => [
-                    Content::createBlobContent(
-                        mimeType: "audio/mp3",
-                        data: $file,
-                        role: "user"
-                    ),
-                    Content::createTextContent(
-                        \Arr::join([
-                                $this->user ?  "השדכן: ". $this->user->name : '',
-                                $this->phoneModel?->model ? "ההורה: ".$this->phoneModel->model->full_name : '',
-                                 $this->diaries->count() ? "ההצעות אליהם נידון בשיחה: ".$this->diaries->map(function (Diary $diary) {
-                                    return $diary->proposal->people->map(function (Person $person) {
-                                        return $person->full_name .' בן של '
-                                            . ($person->father?->full_name ?? '?') . 'ו '
-                                            . ($person->mother?->full_name ?? '')
-                                            . " (בת של " . ($person->mother->father?->full_name ?? '?') . ")";
-                                    })->join(' עם');
-                                })->join(' ו') : '',
-                            ]
-                            ,' '),
-                        role: "user"
-                    )
-                ]
-            ]);
-
-            return $response->text();
-        }
-
-        return null;
-    }
-
     public function refreshCallText(): void
     {
-        $this->updateTextCall();
+        if($this->transcription) {
+            $this->transcription->delete();
+        }
+        TranscriptionCallJob::dispatch($this->id);
     }
 
-    function getTextCallAttribute()
+    function getTextCallAttribute(): string
     {
         return $this->renderCallText();
     }
 
-    function getRenderCallTextToString()
+    function getRenderCallTextToString(): string
     {
         $json = $this->getCallTextToJson();
 
@@ -337,15 +247,18 @@ HTML
         return $text;
     }
 
-    function getCallTextToJson()
+    function getCallTextToJson(): ?array
     {
-        $text = $this->attributes['text_call'];
+        $chunks = $this->transcription->data['chunks'] ?? null;
 
-        if(!$text || !Str::isJson($text)){
+        if ($chunks === null) {
             return null;
         }
 
-        return json_decode(json_decode($text, true));
+        return collect($chunks)
+            ->pluck('transcription.CallTranscript')
+            ->flatten(1)
+            ->toArray();
     }
 
     function getProposalContactsCount(): int
@@ -359,8 +272,10 @@ HTML
 
         $text = $this->getCallTextToJson();
 
-        if(!$text){
-            return 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?' ;
+        if (!$text) {
+            return $this->transcription
+                ? 'ההקלטה בתהליך פיענוח, סטטוס הפיענוח:' . ($this->transcription->data['status_message'] ?? 'לא ידוע')
+                : 'לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו?';
         }
 
         $blade = <<<'Blade'
@@ -369,15 +284,15 @@ HTML
             @foreach($text as $item)
                 <div @class([
                     "flex flex-col gap-1 p-2 rounded-lg",
-                    "bg-gray-100" => $item->spoken === 'שדכן',
-                    "bg-gray-200" => $item->spoken === 'הורה',
+                    "bg-gray-100" => $item['spoken'] === 'שדכן',
+                    "bg-gray-200" => $item['spoken'] === 'הורה',
                 ])>
-                    @if($current !== $item->spoken)
-                        <span class="font-bold">{{ $item->spoken }}</span>
+                    @if($current !== $item['spoken'])
+                        <span class="font-bold">{{ $item['spoken'] }}</span>
                     @endif
-                    <span>{{ $item->text }}</span>
+                    <span>{{ $item['text'] }}</span>
                 </div>
-                @php($current = $item->spoken)
+                @php($current = $item['spoken'])
             @endforeach
         </div>
 Blade;
@@ -488,9 +403,9 @@ Blade;
     public function splitAudioFile(): array
     {
         $audioPath = urldecode($this->audio_url);
-        $maxChunkLength = 60 * 12;
+        $maxChunkLength = 60 * 8;
         $outputDir = storage_path("app/chunks/" . $this->id);
-        $minChunkLength = 60 * 8;
+        $minChunkLength = 60 * 6;
 
         //create output directory if it doesn't exist
         if (!is_dir($outputDir)) {

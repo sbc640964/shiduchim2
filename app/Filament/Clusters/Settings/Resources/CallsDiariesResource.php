@@ -18,7 +18,6 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -27,7 +26,6 @@ use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components as InfolistComponents;
 use Filament\Infolists\Infolist;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\ActionSize;
@@ -232,6 +230,7 @@ class CallsDiariesResource extends Resource
                                 ->iconButton()
                                 ->tooltip('נתח מחדש את הטקסט של השיחה')
                                 ->color('gray')
+                                ->hidden(fn (Call $call) => $call->transcription)
                                 ->successNotificationTitle('ההקלטה נשלחה לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
                                 ->action(function (Call $call, Action|InfolistComponents\Actions\Action $action) {
                                     TranscriptionCallJob::dispatch($call->id);

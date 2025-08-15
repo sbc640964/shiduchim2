@@ -8,12 +8,9 @@ use App\Models\Person;
 use App\Models\Transcription;
 use Arr;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Http\File;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Enums\Provider;
@@ -24,6 +21,7 @@ use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\StringSchema;
 use Prism\Prism\Structured\Response;
 use Prism\Prism\ValueObjects\Media\Audio;
+use Prism\Prism\ValueObjects\Messages\UserMessage;
 
 class TranscriptionCallJob implements ShouldQueue
 {
@@ -90,7 +88,10 @@ class TranscriptionCallJob implements ShouldQueue
         }
 
         if (in_array($transcription->status, ['transcribing', 'split'])) {
-            $this->chunkTranscription();
+            if($this->chunkTranscription()) {
+                if($transcription->total_steps >= $transcription->current_step)
+                    static::dispatch($this->callId);
+            }
         }
 
         if($transcription->status === 'completed_transcription') {
@@ -163,7 +164,7 @@ class TranscriptionCallJob implements ShouldQueue
                             ),
                             new StringSchema(
                                 name: 'time',
-                                description: 'The time when the text was spoken',
+                                description: 'The time in milliseconds the text was spoken, add the milliseconds of the beginning of the episode (because it is connected in one part of the recording out of several)',
                             ),
                             new StringSchema(
                                 name: 'duration',
@@ -214,27 +215,34 @@ class TranscriptionCallJob implements ShouldQueue
             "התמלול צריך להיות מפורט ככל האפשר, כולל שמות של אנשים, תאריכים, מקומות וכו'. " .
             "אם יש משהו לא ברור, תכתוב [לא ברור], " .
             "אם יש לך ספק לגבי משהו, תכתוב [לא הבנתי], ".
-            "אם לא צורפה לך הקלטה, תכתוב [לא צורפה הקלטה]. ";
+            "אם לא צורפה לך הקלטה, תכתוב [לא צורפה הקלטה]. " .
+            "כשאתה מחשב את המילישניות של הtime תוסיף לו " . ($chunk['start'] * 1000) . " מילישניות שבו מתחיל החלק הנוכחי של ההקלטה";
 
-        try {
-            $response = Prism::structured()
-//                ->using(Provider::Gemini, 'gemini-2.5-flash')
-                ->using(Provider::OpenAI, 'gpt-4o')
-                ->withSchema($schema)
-                ->withSystemPrompt($systemPrompt)
-                ->withPrompt($inputTextPrompt, [$audio])
-                ->withProviderOptions([
-                    'temperature' => 0.5,
-                    'language' => 'he',
-                ])
-                ->asStructured();
-
-            dump($response);
-            return $response;
-        } catch (\Exception $e) {
-            dump($e);
-            return null;
-        }
+        return Prism::structured()
+            ->using(Provider::Gemini, 'gemini-2.5-flash')
+            ->withMaxTokens(65536)
+//                ->using(Provider::OpenAI, 'gpt-4o-transcribe')
+//                ->withInput($audio)
+            ->withSchema($schema)
+            ->withSystemPrompt($systemPrompt)
+//                ->withPrompt($inputTextPrompt, [$audio])
+            ->withProviderOptions([
+                'thinkingBudget' => 0
+//                    'temperature' => 0.5,
+//                    'language' => 'he',
+            ])
+            ->withClientOptions([
+                'timeout' => 60
+            ])
+            ->withMessages([
+                new UserMessage(
+                    $inputTextPrompt,
+                    additionalContent: [
+                        $audio,
+                    ],
+                ),
+            ])
+            ->asStructured();
     }
 
 

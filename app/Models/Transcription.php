@@ -46,11 +46,12 @@ class Transcription extends Model
         $data['chunks'][$this->current_step - 1]['transcription'] = $transcription;
 
         $this->data = $data;
-        $this->current_step++;
 
-        if($this->current_step >= $this->total_steps) {
+        if($this->current_step === $this->total_steps) {
             $this->status = 'completed_transcription';
         }
+
+        $this->current_step++;
 
         return $this->save();
     }
