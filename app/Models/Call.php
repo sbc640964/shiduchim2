@@ -282,17 +282,23 @@ HTML
         <div class="flex flex-col gap-2 text-xs">
             @php($current = '')
             @foreach($text as $item)
-                <div @class([
-                    "flex flex-col gap-1 p-2 rounded-lg",
-                    "bg-gray-100" => $item['spoken'] === 'שדכן',
-                    "bg-gray-200" => $item['spoken'] === 'הורה',
-                ])>
-                    @if($current !== $item['spoken'])
-                        <span class="font-bold">{{ $item['spoken'] }}</span>
-                    @endif
-                    <span>{{ $item['text'] }}</span>
+                @if(!$item)
+                <div class="flex items-center justify-center p-2 bg-red-100 text-red-600 rounded-lg">
+                    <span>לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו, אולי עוד כמה דקות תנסה שוב, יש מצב?</span>
                 </div>
-                @php($current = $item['spoken'])
+                @else
+                    <div @class([
+                        "flex flex-col gap-1 p-2 rounded-lg",
+                        "bg-gray-100" => $item['spoken'] === 'שדכן',
+                        "bg-gray-200" => $item['spoken'] === 'הורה',
+                    ])>
+                        @if($current !== $item['spoken'])
+                            <span class="font-bold">{{ $item['spoken'] }}</span>
+                        @endif
+                        <span>{{ $item['text'] }}</span>
+                    </div>
+                    @php($current = $item['spoken'])
+                @endif
             @endforeach
         </div>
 Blade;
