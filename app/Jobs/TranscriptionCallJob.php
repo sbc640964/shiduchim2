@@ -232,7 +232,7 @@ class TranscriptionCallJob implements ShouldQueue
 //                    'language' => 'he',
             ])
             ->withClientOptions([
-                'timeout' => 60
+                'timeout' => 120
             ])
             ->withMessages([
                 new UserMessage(
