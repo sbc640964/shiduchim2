@@ -2,12 +2,25 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Arr;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Filament\Forms\Components\ToggleButtons;
+use App\Models\Role;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\UserResource\Pages\ListUsers;
 use App\Models\User;
 use App\Services\PhoneCallGis\CallPhone;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -24,11 +37,11 @@ class UserResource extends Resource
 
     protected static ?string $pluralLabel = 'משתמשים';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-user';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-user';
 
-    protected static ?string $navigationGroup = 'ניהול משתמשים';
+    protected static string | \UnitEnum | null $navigationGroup = 'ניהול משתמשים';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         $extensions = (new CallPhone())->getExtensions()->mapWithKeys(function ($ext) {
             $id = $ext->get('ex_number');
@@ -37,33 +50,33 @@ class UserResource extends Resource
             return [$id => $name];
         })->toArray();
 
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
-                Forms\Components\TextInput::make('name')
+            ->components([
+                TextInput::make('name')
                     ->label('שם')
                     ->required(),
 
-                Forms\Components\TextInput::make('email')
+                TextInput::make('email')
                     ->label('אימייל')
                     ->email()
                     ->required(),
 
-                Forms\Components\Select::make('ext')
+                Select::make('ext')
                     ->options($extensions)
                     ->native(false)
                     ->label('שלוחה GIS'),
 
-                Forms\Components\Select::make('roles')
+                Select::make('roles')
                     ->relationship('roles', 'name')
                     ->multiple()
                     ->preload()
                     ->searchable(),
 
-                Forms\Components\Fieldset::make('סיסמה')
+                Fieldset::make('סיסמה')
                     ->columns(1)
                     ->schema([
-                        Forms\Components\TextInput::make('password')
+                        TextInput::make('password')
                             ->helperText('השאר ריק כדי לשמור את הסיסמה הנוכחית')
                             ->password()
                             ->revealable()
@@ -71,7 +84,7 @@ class UserResource extends Resource
                             ->rule('confirmed')
                             ->autocomplete('new-password'),
 
-                        Forms\Components\TextInput::make('password_confirmation')
+                        TextInput::make('password_confirmation')
                             ->password()
                             ->revealable()
                             ->rule('exclude')
@@ -85,15 +98,15 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('שם')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->label('אימייל')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('roles.name')
+                TextColumn::make('roles.name')
                     ->label('תפקידים')
                     ->badge()
                     ->searchable()
@@ -102,8 +115,8 @@ class UserResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->slideOver()
                     ->iconButton()
                     ->tooltip('עריכה')
@@ -115,34 +128,34 @@ class UserResource extends Resource
                             unset($data['password']);
                         }
 
-                        $data = \Arr::except($data, ['roles', 'password_confirmation']);
+                        $data = Arr::except($data, ['roles', 'password_confirmation']);
 
                         $record->update($data);
 
                         return $record;
                     })
                     ->modalWidth('sm'),
-                Tables\Actions\ActionGroup::make([
+                ActionGroup::make([
                     Impersonate::make()
                         ->view('filament-actions::grouped-action')
                         ->icon('iconsax-bul-brush-4')
                         ->requiresConfirmation()
                         ->label('התחברות כמשתמש')
                         ->redirectTo('/admin'),
-                    Tables\Actions\DeleteAction::make()
+                    DeleteAction::make()
                         ->icon('iconsax-bul-trash')
                         ->hidden(fn (User $record) => $record->id === auth()->id())
                         ->color('danger'),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\BulkAction::make('roles')
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    BulkAction::make('roles')
                         ->icon('iconsax-bul-user')
                         ->label('הוסף/הסר תפקידים')
                         ->form([
-                            Forms\Components\ToggleButtons::make('action')
+                            ToggleButtons::make('action')
                                 ->label('פעולה')
                                 ->grouped()
                                 ->default('1')
@@ -150,16 +163,16 @@ class UserResource extends Resource
                                     'הוסף',
                                     'הסר',
                                 ),
-                            Forms\Components\Select::make('roles')
+                            Select::make('roles')
                                 ->label('תפקידים')
-                                ->options(fn () => \App\Models\Role::pluck('name', 'name')->toArray())
+                                ->options(fn () => Role::pluck('name', 'name')->toArray())
                                 ->multiple()
                                 ->preload()
                                 ->required()
                                 ->searchable(),
                         ])
                         ->deselectRecordsAfterCompletion()
-                        ->action(function (Collection $records, array $data, Tables\Actions\BulkAction $action) {
+                        ->action(function (Collection $records, array $data, BulkAction $action) {
                             $action = $data['action'] === '1';
 
                             if($action) {

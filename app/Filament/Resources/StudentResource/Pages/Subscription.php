@@ -2,6 +2,20 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Hidden;
+use Filament\Support\Enums\Width;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use App\Filament\Resources\StudentResource\Widgets\SubscriptionTasks;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
+use Filament\Actions\ViewAction;
 use App\Filament\Resources\PersonResource\Pages\CreditCards;
 use App\Filament\Resources\StudentResource;
 use App\Filament\Resources\StudentResource\Widgets\SubscriptionInfo;
@@ -11,11 +25,8 @@ use App\Models\Person;
 use App\Models\Subscriber;
 use Carbon\Carbon;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Infolists\Components\KeyValueEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ManageRelatedRecords;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -32,7 +43,7 @@ class Subscription extends ManageRelatedRecords
 
     protected static string $relationship = 'subscriptions';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $title = 'מנוי';
     public static function getNavigationLabel(): string
@@ -40,11 +51,11 @@ class Subscription extends ManageRelatedRecords
         return 'מנוי';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema(static::formFields());
+            ->components(static::formFields());
     }
 
     public static function canAccess(array $parameters = []): bool
@@ -52,10 +63,10 @@ class Subscription extends ManageRelatedRecords
         return auth()->user()->can('students_subscriptions');
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 KeyValueEntry::make('data')
                     ->keyLabel('סוג ערך')
                     ->valueLabel('ערך')
@@ -67,7 +78,7 @@ class Subscription extends ManageRelatedRecords
     static function formFields(?Subscriber $formRecord = null): array
     {
         return [
-            Forms\Components\Select::make('referrer_id')
+            Select::make('referrer_id')
                 ->model(Subscriber::class)
                 ->relationship('referrer', 'first_name')
                 ->searchable()
@@ -85,7 +96,7 @@ class Subscription extends ManageRelatedRecords
                 )
                 ->allowHtml(),
 
-            Forms\Components\Select::make('payer_id')
+            Select::make('payer_id')
                 ->model(Subscriber::class)
                 ->relationship('payer', 'first_name')
                 ->saveRelationshipsUsing(fn () => null)
@@ -106,7 +117,7 @@ class Subscription extends ManageRelatedRecords
                 ->live()
                 ->required(),
 
-            Forms\Components\Select::make('method')
+            Select::make('method')
                 ->label('אמצעי תשלום')
                 ->options([
                     'credit_card' => 'כרטיס אשראי',
@@ -115,27 +126,27 @@ class Subscription extends ManageRelatedRecords
                 ->live()
                 ->required(),
 
-            Forms\Components\Select::make('credit_card_id')
+            Select::make('credit_card_id')
                 ->label('כרטיס אשראי')
                 ->preload()
-                ->options(fn (Forms\Get $get) => $get('payer_id')
+                ->options(fn (Get $get) => $get('payer_id')
                     ? CreditCard::where('person_id', $get('payer_id'))->get()->mapWithKeys(fn(CreditCard $card) => [$card->getKey() => $card->last4])
                     : []
                 )
                 ->searchable()
-                ->hidden(fn(Forms\Get $get) => $get('method') !== 'credit_card')
-                ->disabled(fn(Forms\Get $get) => !$get('payer_id'))
+                ->hidden(fn(Get $get) => $get('method') !== 'credit_card')
+                ->disabled(fn(Get $get) => !$get('payer_id'))
                 ->native(false)
-                ->createOptionForm(function (Forms\Get $get,  Form $form) {
-                    return $form
-                        ->schema([
-                            Forms\Components\Hidden::make('person_id')
+                ->createOptionForm(function (Get $get,  Schema $schema) {
+                    return $schema
+                        ->components([
+                            Hidden::make('person_id')
                                 ->default($get('payer_id'))
                                 ->required(),
                             ...CreditCards::formFields(),
                         ]);
                 })
-                ->createOptionAction(fn ($action) => $action->modalWidth(MaxWidth::Small))
+                ->createOptionAction(fn ($action) => $action->modalWidth(Width::Small))
                 ->createOptionUsing(function ($data) {
                     $record = Person::findOrFail($data['person_id']);
                     $card = CreditCards::createNewCreditCard($record, $data);
@@ -143,7 +154,7 @@ class Subscription extends ManageRelatedRecords
                 })
                 ->required(),
 
-            Forms\Components\TextInput::make('amount')
+            TextInput::make('amount')
                 ->numeric()
                 ->label('סכום')
                 ->type('number')
@@ -151,19 +162,19 @@ class Subscription extends ManageRelatedRecords
                 ->stripCharacters(',')
                 ->required(),
 
-            Forms\Components\TextInput::make('payments')
+            TextInput::make('payments')
                 ->label("מס תשלומים/חודשי עבודה")
                 ->numeric()
                 ->live()
                 ->required(),
 
-            Forms\Components\Toggle::make('is_published')
+            Toggle::make('is_published')
                 ->label('פרסם לכל השדכנים')
-                ->visible(fn(Forms\Get $get) => !$get('user_id'))
+                ->visible(fn(Get $get) => !$get('user_id'))
                 ->default(true)
                 ->nullable(),
 
-            Forms\Components\Textarea::make('notes')
+            Textarea::make('notes')
                 ->label('הערות')
                 ->rule('max:255')
                 ->rows(3)
@@ -181,7 +192,7 @@ class Subscription extends ManageRelatedRecords
             SubscriptionInfo::make([
                 'record' => $this->getRecord()
             ]),
-            StudentResource\Widgets\SubscriptionTasks::make([
+            SubscriptionTasks::make([
                 'record' => $this->getRecord()
             ])
         ];
@@ -197,13 +208,13 @@ class Subscription extends ManageRelatedRecords
             ->recordTitleAttribute('last4')
             ->defaultSort('created_at', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('תאריך')
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->width(100)
                     ->tooltip(fn ($record) => $record->created_at->format('H:i')),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->width(100)
                     ->tooltip(fn ($record) => $record->status_message)
@@ -222,31 +233,31 @@ class Subscription extends ManageRelatedRecords
                         default => $state,
                     })
                     ->label('סטטוס'),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->tooltip(fn (Payment $record) => str($record->description)->endsWith('*') ? 'חיוב ידני' : false)
                     ->label('תיאור'),
-                Tables\Columns\TextColumn::make('creditCard.person.full_name')
+                TextColumn::make('creditCard.person.full_name')
                     ->label('משלם'),
-                Tables\Columns\TextColumn::make('last4')
+                TextColumn::make('last4')
                     ->formatStateUsing(fn($state) => "$state")
                     ->label('כרטיס אשראי'),
-                Tables\Columns\TextColumn::make('amount')
+                TextColumn::make('amount')
                     ->label('סכום')
                     ->money('ILS'),
-                Tables\Columns\TextColumn::make('transaction_id')
+                TextColumn::make('transaction_id')
                     ->label('מספר עסקה'),
             ])
             ->heading('פעולות חיוב')
             ->hiddenFilterIndicators()
             ->filters([
-                Tables\Filters\SelectFilter::make('subscriber_id')
+                SelectFilter::make('subscriber_id')
                     ->default($this->getRecord()->lastSubscription?->id ?? null)
                     ->options($this->getRecord()->subscriptions
                         ->mapWithKeys(fn(Subscriber $subscriber) => [$subscriber->id => $subscriber->getToOptionsSelect()])
                     )
                     ->label('מנוי'),
 
-                Tables\Filters\SelectFilter::make('payments.status')
+                SelectFilter::make('payments.status')
                     ->options([
                         'OK' => 'הצליח',
                         'Error' => 'נכשל',
@@ -257,18 +268,18 @@ class Subscription extends ManageRelatedRecords
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->headerActions([
-                Tables\Actions\Action::make('charge')
+                Action::make('charge')
                 ->label('חייב ח"פ')
                 ->requiresConfirmation()
-                ->form([
+                ->schema([
 
-                    Forms\Components\TextInput::make('amount')
+                    TextInput::make('amount')
                         ->label('סכום')
                         ->numeric()
                         ->default($this->getRecord()->lastSubscription?->amount)
                         ->required(),
 
-                    Forms\Components\Toggle::make('join')
+                    Toggle::make('join')
                         ->label('צרף את התשלום כחלק מהו"ק')
                         ->helperText('אם התשלום יצורף המנוי תשלומי היתרה ותאריך הבא יעודכנו')
                         ->rule('max:255'),
@@ -277,11 +288,11 @@ class Subscription extends ManageRelatedRecords
                     ->charge(true, $data['join'] ?? ($data['amount'] == $this->getRecord()->lastSubscription->amount), $data['amount']))
 
                 ,
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('הגדר מנוי')
                     ->createAnother(false)
                     ->slideOver()
-                    ->modalWidth(MaxWidth::Small)
+                    ->modalWidth(Width::Small)
                     ->modalHeading('הגדר מנוי')
                     ->hidden(!! $this->getRecord()->lastSubscription?->isCurrent())
                     ->using(function ($data, $action, self $livewire) {//
@@ -311,12 +322,12 @@ class Subscription extends ManageRelatedRecords
                         return $record;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->modalHeading('פרטי חיוב')
                     ->record($this->getRecord())
                     ->iconButton(),
-                Tables\Actions\Action::make('cancel')
+                Action::make('cancel')
                     ->label('ביטול עסקה')
                     ->color('danger')
                     ->button()
@@ -325,7 +336,7 @@ class Subscription extends ManageRelatedRecords
                         && $record->created_at->isToday()
                         && auth()->user()->can('refund_payments')
                     )
-                    ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
+                    ->action(function (Payment $record, array $data, Action $action) {
                         $result = $record->cancel($data['comments'] ?? '');
 
                         if($result['Result'] === 'OK') {
@@ -338,12 +349,12 @@ class Subscription extends ManageRelatedRecords
                         $action->failureNotificationTitle('הביטול נכשל (' . $result['Message'] . ')');
                         $action->failure();
                     })
-                    ->form([
-                        Forms\Components\Textarea::make('comments')
+                    ->schema([
+                        Textarea::make('comments')
                             ->label('הערות')
                             ->rule('max:255')
                             ->rows(3),
-                        Forms\Components\TextInput::make('confirm_password')
+                        TextInput::make('confirm_password')
                             ->label('סיסמה')
                             ->helperText('הכנס את סיסמת המשתמש כדי לאשר את הפעולה')
                             ->password()
@@ -353,13 +364,13 @@ class Subscription extends ManageRelatedRecords
                     ])
                     ->requiresConfirmation(),
 
-                Tables\Actions\Action::make('refund')
+                Action::make('refund')
                     ->label('החזר עסקה')
                     ->color('danger')
                     ->button()
                     ->size('xs')
                     ->visible(fn (Payment $record) => $record->status === 'OK' && auth()->user()->can('refund_payments'))
-                    ->action(function (Payment $record, array $data, Tables\Actions\Action $action) {
+                    ->action(function (Payment $record, array $data, Action $action) {
                         $result = $record->refund($data['comments'] ?? '', $data['amount'] ?? null);
 
                         if($result['Result'] === 'OK') {
@@ -380,18 +391,18 @@ class Subscription extends ManageRelatedRecords
                         $action->failureNotificationTitle('ההחזרה נכשלה (' . $result['Message'] . ')');
                         $action->failure();
                     })
-                    ->form([
-                        Forms\Components\TextInput::make('amount')
+                    ->schema([
+                        TextInput::make('amount')
                             ->label('סכום')
                             ->numeric()
                             ->helperText('לא ניתן לזכות פעמיים את אותה עסקה')
                             ->default(fn ($record) => $record->amount)
                             ->required(),
-                        Forms\Components\Textarea::make('comments')
+                        Textarea::make('comments')
                             ->label('הערות')
                             ->rule('max:255')
                             ->rows(3),
-                        Forms\Components\TextInput::make('confirm_password')
+                        TextInput::make('confirm_password')
                             ->label('סיסמה')
                             ->helperText('הכנס את סיסמת המשתמש כדי לאשר את הפעולה')
                             ->password()
@@ -402,7 +413,7 @@ class Subscription extends ManageRelatedRecords
                     ->requiresConfirmation(),
 
             ])
-            ->bulkActions([
+            ->toolbarActions([
 //                Tables\Actions\BulkActionGroup::make([
 //                    Tables\Actions\DeleteBulkAction::make(),
 //                ]),

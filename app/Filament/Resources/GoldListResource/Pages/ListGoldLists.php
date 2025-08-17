@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\GoldListResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Exports\ProposalsExport;
 use App\Exports\SubscriptionsExport;
 use App\Filament\Resources\GoldListResource;
@@ -12,7 +14,6 @@ use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Facades\Excel;
@@ -24,7 +25,7 @@ class ListGoldLists extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
             ActionGroup::make([
                 Action::make('export')
                     ->hidden(!auth()->user()->can('students_subscriptions'))

@@ -2,10 +2,15 @@
 
 namespace App\Filament\Resources\StudentResource\Widgets;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\CreateAction;
+use Filament\Support\Enums\Width;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use App\Models\Person;
 use App\Models\Task;
-use Filament\Forms\Form;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables\Table;
 use Filament\Forms;
 use Filament\Tables;
@@ -15,14 +20,14 @@ class SubscriptionTasks extends BaseWidget
 {
     public Person $record;
 
-    public function createNewForm(Form $form): Form
+    public function createNewForm(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Textarea::make('description')
+        return $schema->components([
+            Textarea::make('description')
                 ->label('תיאור')
                 ->required(),
 
-            Forms\Components\DatePicker::make('due_date')
+            DatePicker::make('due_date')
                 ->label('תאריך יעד')
                 ->default(now()->addDay())
                 ->native(false)
@@ -30,12 +35,12 @@ class SubscriptionTasks extends BaseWidget
         ]);
     }
 
-    public function newTaskAction(): Tables\Actions\CreateAction
+    public function newTaskAction(): CreateAction
     {
-        return Tables\Actions\CreateAction::make('create')
+        return CreateAction::make('create')
             ->label('הוסף משימה')
             ->modalHeading('הוסף משימה')
-            ->modalWidth(MaxWidth::Small)
+            ->modalWidth(Width::Small)
             ->using(function (array $data) {
                 return Task::create([
                     'person_id' => $this->record->id,
@@ -44,7 +49,7 @@ class SubscriptionTasks extends BaseWidget
                     'due_date' => $data['due_date'] ?? null,
                 ]);
             })
-            ->form(fn (Form $form) => $this->createNewForm($form));
+            ->schema(fn (Schema $schema) => $this->createNewForm($schema));
     }
 
     public function table(Table $table): Table
@@ -64,13 +69,13 @@ class SubscriptionTasks extends BaseWidget
                     ->where('person_id', $this->record->id)
             )
             ->columns([
-                Tables\Columns\IconColumn::make('completed_at')
+                IconColumn::make('completed_at')
                     ->label('הושלם')
                     ->getStateUsing(fn (Task $task) => !!$task->completed_at)
                     ->width(20)
                     ->alignCenter()
                     ->boolean(),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label('תיאור'),
             ]);
     }

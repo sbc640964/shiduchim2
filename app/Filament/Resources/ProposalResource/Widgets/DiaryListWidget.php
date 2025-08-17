@@ -2,6 +2,13 @@
 
 namespace App\Filament\Resources\ProposalResource\Widgets;
 
+use Filament\Actions\Action;
+use Filament\Support\Enums\Width;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\DateTimePicker;
 use App\Filament\Resources\ProposalResource\Pages\Diaries;
 use App\Filament\Resources\ProposalResource\Traits\DiariesComponents;
 use App\Models\Diary;
@@ -10,7 +17,6 @@ use App\Models\Proposal;
 use App\Models\Task;
 use Carbon\CarbonInterface;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms;
@@ -50,7 +56,7 @@ class DiaryListWidget extends BaseWidget
         $this->record = $id;
     }
 
-    public function table(Tables\Table $table): Tables\Table
+    public function table(Table $table): Table
     {
         if(!$this->record->guy || !$this->record->girl) {
             return $table;
@@ -64,13 +70,13 @@ class DiaryListWidget extends BaseWidget
                 });
             })
             ->headerActions([
-                Tables\Actions\Action::make('create-diary')
+                Action::make('create-diary')
                     ->label('הוסף תיעוד')
                     ->model(Diary::class)
                     ->action(fn ($data) => Diaries::createNewDiary($data, $this->getRecord(), $data['side'] ?? null))
-                    ->form(fn ($form) => $this->form($form)),
+                    ->schema(fn ($form) => $this->form($form)),
 
-                Tables\Actions\Action::make('create-task')
+                Action::make('create-task')
                     ->label('הוסף משימה')
                     ->model(Task::class)
                     ->action(function (array $data, self $livewire) {
@@ -78,9 +84,9 @@ class DiaryListWidget extends BaseWidget
                             'user_id' => auth()->id(),
                         ]));
                     })
-                    ->modalWidth(MaxWidth::Small)
-                    ->form([
-                        Forms\Components\Select::make('type')
+                    ->modalWidth(Width::Small)
+                    ->schema([
+                        Select::make('type')
                             ->label('סוג')
                             ->selectablePlaceholder(false)
                             ->native(false)
@@ -90,7 +96,7 @@ class DiaryListWidget extends BaseWidget
                                 'contact' => 'יצירת קשר',
                             ])
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                            ->afterStateUpdated(function ($state, Get $get, Set $set) {
                                 if(filled($state) && blank($get('description'))) {
                                     $set('description', match ($state) {
                                         'regular' => '',
@@ -100,8 +106,8 @@ class DiaryListWidget extends BaseWidget
                                 }
                             })
                             ->required(),
-                        Forms\Components\Textarea::make('description')
-                            ->placeholder(fn (Forms\Get $get) => match ($get('type')) {
+                        Textarea::make('description')
+                            ->placeholder(fn (Get $get) => match ($get('type')) {
                                 default => 'לגשת לפינת הקפה, להירגע דקה או שניים ולחזור עם כל המרץ לשידוך... הדחף שלי הוא המנוע של ההורים לסגור היום!!!',
                             })
                             ->rows(6)
@@ -110,9 +116,9 @@ class DiaryListWidget extends BaseWidget
                             ->helperText('אין צורך להוסיף את שמות המשפחות השמות יופיעו באופן אוטומטי בתחילת התיאור בלוח המשימות.')
                             ->label('תיאור')
                             ->live()
-                            ->default(fn (Forms\Get $get) => $get('description'))
+                            ->default(fn (Get $get) => $get('description'))
                             ->required(),
-                        Forms\Components\DateTimePicker::make('due_date')
+                        DateTimePicker::make('due_date')
                             ->label('תאריך יעד')
                             ->placeholder('בחר תאריך')
                             ->firstDayOfWeek(CarbonInterface::SUNDAY)
@@ -124,7 +130,7 @@ class DiaryListWidget extends BaseWidget
                             ->minDate(now()->addDay()->startOfDay())
                             ->default(now()->addDay()->setTime(9, 0))
                             ->required(),
-                        Forms\Components\Select::make('priority')
+                        Select::make('priority')
                             ->label('עדיפות')
                             ->selectablePlaceholder(false)
                             ->native(false)
@@ -135,8 +141,8 @@ class DiaryListWidget extends BaseWidget
                                 '2' => 'גבוהה',
                             ])
                             ->required(),
-                        Forms\Components\Select::make('data.contact_to')
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'contact')
+                        Select::make('data.contact_to')
+                            ->visible(fn (Get $get) => $get('type') === 'contact')
                             ->required()
                             ->label('איש קשר')
                             ->searchable()

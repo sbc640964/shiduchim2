@@ -2,11 +2,26 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\FileUpload;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\RichEditor;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Old\Contact;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,7 +36,7 @@ class ManageFiles extends ManageRelatedRecords
 
     protected static ?string $title = 'קבצים';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getNavigationLabel(): string
     {
@@ -45,18 +60,18 @@ class ManageFiles extends ManageRelatedRecords
         ];
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
-                Forms\Components\TextInput::make('name')
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->nullable()
                     ->maxLength(255),
-                Forms\Components\FileUpload::make('path')
+                FileUpload::make('path')
                     ->imageEditor()
                     ->openable()
                     ->previewable()
@@ -69,7 +84,7 @@ class ManageFiles extends ManageRelatedRecords
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\ImageColumn::make('path')
+                ImageColumn::make('path')
                     ->getStateUsing(function ($record) {
                         $state = $record->path;
 
@@ -88,7 +103,7 @@ class ManageFiles extends ManageRelatedRecords
                     ->defaultImageUrl('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>')
                     ->label('קובץ'),
 
-                Tables\Columns\TextColumn::make('file_type')
+                TextColumn::make('file_type')
                     ->badge()
                     ->color(fn ($state) => match ($state) {
                         'תמונה' => 'success',
@@ -100,33 +115,33 @@ class ManageFiles extends ManageRelatedRecords
                     })
                     ->label('סוג'),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('שם'),
 
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label('תיאור'),
             ])
             ->filters([
 
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->modalWidth('lg')
                     ->label('הוסף קובץ'),
             ])
-            ->actions([
+            ->recordActions([
                 //                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->iconButton()
                     ->modalWidth('lg')
                     ->icon('heroicon-o-pencil'),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->iconButton()
                     ->icon('heroicon-o-trash'),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\BulkAction::make('email')
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                BulkAction::make('email')
                     ->label('שלח מייל')
                     ->icon('heroicon-o-envelope')
                     ->form(fn ($form) => $this->senEmailForm($form))
@@ -149,7 +164,7 @@ class ManageFiles extends ManageRelatedRecords
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('contact')
+                Select::make('contact')
                     ->autofocus()
                     ->label('איש קשר')
                     ->options(ManageContacts::queryAllContacts($this->getOwnerRecord())
@@ -158,11 +173,11 @@ class ManageFiles extends ManageRelatedRecords
                     ->helperText('')
                     ->live()
                     ->required(),
-                Forms\Components\Split::make([
-                    Forms\Components\TextInput::make('email')
+                Flex::make([
+                    TextInput::make('email')
                         ->label('אימייל')
                         ->email()
-                        ->hidden(function (Forms\Get $get, Forms\Set $set, Forms\Components\TextInput $component) {
+                        ->hidden(function (Get $get, Set $set, TextInput $component) {
                             if (! $get('contact')) {
                                 return true;
                             }
@@ -182,14 +197,14 @@ class ManageFiles extends ManageRelatedRecords
                         })
                         ->required(),
                 ]),
-                Forms\Components\TextInput::make('subject')
+                TextInput::make('subject')
                     ->default($this->activeTab === 'girl'
                         ? $this->getOwnerRecord()->girl->full_name
                         : $this->getOwnerRecord()->guy->full_name)
                     ->label('נושא')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\RichEditor::make('body')
+                RichEditor::make('body')
                     ->label('גוף המייל')
                     ->default('בהמשך לשיחתנו מצורפים הקבצים/תמונות')
                     ->required(),

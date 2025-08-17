@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextInputColumn;
 use App\Filament\Actions\Call;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Person;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,7 +23,7 @@ class Schools extends ManageRelatedRecords
 
     protected static string $relationship = 'contacts';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-book';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-book';
 
     protected static ?string $title = 'בתי חינוך';
 
@@ -67,11 +69,11 @@ class Schools extends ManageRelatedRecords
         })->toArray();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -84,13 +86,13 @@ class Schools extends ManageRelatedRecords
             ->emptyStateHeading(fn () => $this->getOwnerRecord()->{$this->side}->schools()->exists() ? 'לא נמצאו אנשי קשר' : 'לא נמצאו בתי חינוך')
             ->columns([
                 Person::nameColumn(withSpouse: false),
-                Tables\Columns\TextInputColumn::make('pivot.type')
+                TextInputColumn::make('pivot.type')
                     ->updateStateUsing(function ($state, Person $person) {
                         $person->pivot->update(['type' => $state]);
                     })
                     ->label('סוג קשר'),
             ])
-            ->actions([
+            ->recordActions([
                 Call::tableActionDefaultPhone($this->getOwnerRecord(), $this->side),
                 Call::tableAction($this->getOwnerRecord(), $this->side),
             ])

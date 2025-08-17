@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use DB;
+use Arr;
 use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\ProposalResource\Traits\DiariesComponents;
 use App\Http\Controllers\WebhookGisController;
@@ -22,7 +24,7 @@ class Diaries extends ManageRelatedRecords
 
     protected static string $relationship = 'diaries';
 
-    protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-list-bullet';
 
     protected static ?string $title = 'תיעוד';
 
@@ -40,7 +42,7 @@ class Diaries extends ManageRelatedRecords
         return [
             Action::make('create-diary')
                 ->label('הוסף תיעוד')
-                ->form(fn ($form) => $this->form($form))
+                ->schema(fn ($form) => $this->form($form))
                 ->action(function (Action $action, $data) {
                     if (static::createNewDiary($data, $this->getOwnerRecord(), $this->side)) {
                         $action->success();
@@ -81,7 +83,7 @@ class Diaries extends ManageRelatedRecords
             }
         }
 
-        return \DB::transaction(function () use ($data, $record, $side, $call) {
+        return DB::transaction(function () use ($data, $record, $side, $call) {
 
             $newTasks = collect(data_get($data, 'tasks', []))->map(fn ($task) => [
                 'user_id' => auth()->id(),
@@ -96,7 +98,7 @@ class Diaries extends ManageRelatedRecords
 
             $completedTask = data_get($data, 'completed_tasks', []);
 
-            $data = \Arr::except($data, ['tasks', 'completed_tasks']);
+            $data = Arr::except($data, ['tasks', 'completed_tasks']);
 
             $newTasks->isNotEmpty() && $data['data']['tasks'] = $record->tasks()->createMany($newTasks->toArray());
 

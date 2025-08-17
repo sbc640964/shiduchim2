@@ -2,13 +2,25 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use Filament\Support\Enums\Width;
+use Filament\Forms\Components\Select;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
 use App\Filament\Actions\Call;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Person;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
@@ -22,7 +34,7 @@ class ManageContacts extends ManageRelatedRecords
 
     protected static string $relationship = 'contacts';
 
-    protected static ?string $navigationIcon = 'heroicon-o-identification';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-identification';
 
     protected static ?string $title = 'אנשי קשר';
 
@@ -51,12 +63,12 @@ class ManageContacts extends ManageRelatedRecords
         return 'אנשי קשר';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
-                Forms\Components\TextInput::make('type')
+            ->components([
+                TextInput::make('type')
                     ->label('סוג קשר')
                     ->required(),
             ]);
@@ -72,7 +84,7 @@ class ManageContacts extends ManageRelatedRecords
             ->filtersLayout(FiltersLayout::Modal)
             ->columns([
                 Person::nameColumn()->searchable(['first_name', 'last_name']),
-                Tables\Columns\TextColumn::make('pivot.type')
+                TextColumn::make('pivot.type')
                     ->label('סוג קשר'),
 
             ])
@@ -80,13 +92,13 @@ class ManageContacts extends ManageRelatedRecords
 
             ])
             ->headerActions([
-                Tables\Actions\Action::make('create-new')
+                Action::make('create-new')
                     ->label('שייך חדש')
                     ->color('gray')
-                    ->modalWidth(MaxWidth::Small)
-                    ->form(function (Form $form) {
-                        return $form->schema([
-                            Forms\Components\Select::make('person_id')
+                    ->modalWidth(Width::Small)
+                    ->schema(function (Schema $schema) {
+                        return $schema->components([
+                            Select::make('person_id')
                                 ->searchable()
                                 ->getSearchResultsUsing(function ($search) {
                                     $query = Person::query()->limit(60);
@@ -108,7 +120,7 @@ class ManageContacts extends ManageRelatedRecords
                                 ->allowHtml()
                                 ->label('איש קשר')
                                 ->required(),
-                            Forms\Components\TextInput::make('type')
+                            TextInput::make('type')
                                 ->label('סוג קשר')
                                 ->required(),
                         ]);
@@ -126,17 +138,17 @@ class ManageContacts extends ManageRelatedRecords
                     ->outlined()
                     ->modalHeading('הוספת איש קשר'),
             ])
-            ->actions([
+            ->recordActions([
                 Call::tableActionDefaultPhone($this->getOwnerRecord(), $this->side),
                 Call::tableAction($this->getOwnerRecord(), $this->side),
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\DetachAction::make()
+                ActionGroup::make([
+                    DetachAction::make()
                         ->icon('iconsax-bul-trash'),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make()
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make()
                         ->icon('iconsax-bul-trash'),
                 ]),
             ]);
@@ -149,28 +161,28 @@ class ManageContacts extends ManageRelatedRecords
             ->merge($person->family ? $person->family->phones->each(fn ($phone) => $phone->number = $phone->number.' (בבית)') : []);
 
         return [
-            Forms\Components\Radio::make('phone')
+            Radio::make('phone')
                 ->options($phones->pluck('number', 'id')->toArray())
                 ->default($phones->first()?->id)
                 ->label('טלפון'),
 
-            Forms\Components\Toggle::make('use_new_phone')
+            Toggle::make('use_new_phone')
                 ->label('השתמש בטלפון חדש')
                 ->live()
                 ->default(false),
 
-            Forms\Components\Fieldset::make('הוספת טלפון')
+            Fieldset::make('הוספת טלפון')
                 ->columns(3)
-                ->visible(fn (Forms\Get $get) => $get('use_new_phone'))
+                ->visible(fn (Get $get) => $get('use_new_phone'))
                 ->schema([
-                    Forms\Components\TextInput::make('new_phone')
+                    TextInput::make('new_phone')
                         ->hiddenLabel()
                         ->required()
                         ->columnSpan(2)
                         ->placeholder('מספר')
                         ->label('טלפון חדש'),
 
-                    Forms\Components\Select::make('type_phone')
+                    Select::make('type_phone')
                         ->native(false)
                         ->label('סוג טלפון')
                         ->hiddenLabel()

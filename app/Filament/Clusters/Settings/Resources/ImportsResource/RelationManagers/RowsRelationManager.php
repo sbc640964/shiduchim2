@@ -2,14 +2,21 @@
 
 namespace App\Filament\Clusters\Settings\Resources\ImportsResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\KeyValue;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use App\Filament\Resources\StudentResource;
 use App\Helpers\LivewireDotStateFix;
 use App\Models\ImportRow;
 use App\Services\Imports\Students\Importer;
 use Arr;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -26,12 +33,12 @@ class RowsRelationManager extends RelationManager
     {
         return false;
     }
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
-                Forms\Components\KeyValue::make('data')
+            ->components([
+                KeyValue::make('data')
                     ->dehydrateStateUsing(fn (?array $state) => LivewireDotStateFix::fix($state))
                     ->label('נתונים')
                     ->deleteAction(fn ($action) => $action->icon('heroicon-o-trash'))
@@ -75,7 +82,7 @@ class RowsRelationManager extends RelationManager
         $columns = [];
 
         foreach ($columnsOptions as $column) {
-            $columns[] = Tables\Columns\TextColumn::make($column['name'])
+            $columns[] = TextColumn::make($column['name'])
                 ->label($column['label'])
                 ->searchable(['data->'.$mapping[$column['name']]])
                 ->sortable(['data->'.$mapping[$column['name']]])
@@ -94,7 +101,7 @@ class RowsRelationManager extends RelationManager
             ->columns(array_merge(
                 $this->getColumns(),
                 [
-                    Tables\Columns\TextColumn::make('status')
+                    TextColumn::make('status')
                         ->label('סטטוס')
                         ->searchable()
                         ->sortable()
@@ -112,11 +119,11 @@ class RowsRelationManager extends RelationManager
                         })
                         ->badge(),
 
-                    Tables\Columns\TextColumn::make('error')
+                    TextColumn::make('error')
                         ->label('שגיאה')
                         ->searchable()
                         ->sortable(),
-                    Tables\Columns\TextColumn::make('import_model_state')
+                    TextColumn::make('import_model_state')
                         ->label('סטטוס ייבוא')
                         ->formatStateUsing(fn ($state) => match ($state) {
                             'updated' => 'עדכון',
@@ -136,32 +143,32 @@ class RowsRelationManager extends RelationManager
 //                    ->label('הוסף רשומת יבוא')
 //                    ->icon('heroicon-o-plus'),
             ])
-            ->actions([
-                Tables\Actions\Action::make('run')
+            ->recordActions([
+                Action::make('run')
                     ->label('הפעל')
                     ->iconButton()
                     ->icon(fn(ImportRow $record) =>  $record->status === 'pending' ? 'heroicon-o-play': 'heroicon-o-arrow-path')
                     ->requiresConfirmation()
                     ->hidden(fn (ImportRow $record) => ! in_array($record->status, ['pending', 'failed']))
                     ->action(fn (ImportRow $record) => $record->run($record->status !== 'failed')),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->iconButton()
                     ->icon('heroicon-o-pencil')
                     ->slideOver(),
-                Tables\Actions\Action::make('go_to_model')
+                Action::make('go_to_model')
                     ->label('עבור למודל')
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->iconButton()
                     ->url(fn (ImportRow $record) => StudentResource::getUrl('edit', ['record' => $record->import_model_id]))
                     ->openUrlInNewTab()
                     ->visible(fn (ImportRow $record) => $record->status === 'success'),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->icon('heroicon-o-trash')
                     ->iconButton(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

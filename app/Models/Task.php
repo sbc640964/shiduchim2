@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Arr;
 use Guava\Calendar\Contracts\Eventable;
 use Guava\Calendar\ValueObjects\CalendarEvent;
 use Illuminate\Database\Eloquent\Model;
@@ -73,7 +74,7 @@ class Task extends Model implements Eventable
             return $this->description;
         }
 
-        return \Arr::join([
+        return Arr::join([
             $this->getProposalNames(),
             $this->description,
         ], ' | ');

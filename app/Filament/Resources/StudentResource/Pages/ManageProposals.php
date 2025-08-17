@@ -2,15 +2,17 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\StudentResource;
 use App\Models\Proposal;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\DeleteAction as TableDeleteAction;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -20,7 +22,7 @@ class ManageProposals extends ManageRelatedRecords
 
     protected static string $relationship = 'proposals';
 
-    protected static ?string $navigationIcon = '';
+    protected static string | \BackedEnum | null $navigationIcon = '';
 
     protected static ?string $title = 'הצעות';
 
@@ -29,11 +31,11 @@ class ManageProposals extends ManageRelatedRecords
         return $this->record->gender === 'G';
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make($this->isGirl() ? 'guy_id' : 'girl_id')
+        return $schema
+            ->components([
+                Select::make($this->isGirl() ? 'guy_id' : 'girl_id')
                     ->relationship($this->isGirl() ? 'guy' : 'girl', 'id')
                     ->searchable(['first_name', 'last_name'])
                     ->placeholder('בחר תלמיד')
@@ -42,7 +44,7 @@ class ManageProposals extends ManageRelatedRecords
                     ->preload()
                     ->required(),
 
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->options([
                         'pending' => 'ממתין לאישור',
                         'approved' => 'אושר',
@@ -66,8 +68,8 @@ class ManageProposals extends ManageRelatedRecords
                 "bg-red-50 hover:bg-red-100" => $proposal->hidden_at,
 //                "relative before:content-[''] before:border-s-[6px] before:z-20 before:border-red-600 before:h-full before:absolute before:start-0" => $proposal->hidden_at,
             ])
-            ->bulkActions(ProposalResource::getBulkActions())
-            ->actions([
+            ->toolbarActions(ProposalResource::getBulkActions())
+            ->recordActions([
                 ActionGroup::make([
                     ProposalResource::getAddDiaryAction(),
                     ProposalResource::getAddDiaryAction('guy'),
@@ -75,12 +77,12 @@ class ManageProposals extends ManageRelatedRecords
                 ]),
                 ...ProposalResource::showHideActions(),
                 ProposalResource::getCloseProposalAction(),
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->visible(fn ($record) => $record->access)
                     ->label('')
                     ->icon('heroicon-o-eye')
                     ->url(fn ($record) => route('filament.families.resources.proposals.view', $record->id)),
-                TableDeleteAction::make()
+                DeleteAction::make()
                     ->label('מחק')
                     ->iconButton()
                     ->icon('iconsax-bul-trash')

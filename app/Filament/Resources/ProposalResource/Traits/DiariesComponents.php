@@ -2,6 +2,33 @@
 
 namespace App\Filament\Resources\ProposalResource\Traits;
 
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Radio;
+use Filament\Schemas\Components\Section;
+use Filament\Support\Enums\TextSize;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Components\Flex;
+use Filament\Actions\ViewAction;
 use App\Infolists\Components\AudioEntry;
 use App\Infolists\Components\FileEntry;
 use App\Models\Call;
@@ -17,12 +44,8 @@ use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms;
-use Filament\Forms\Set;
 use Filament\Infolists;
-use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\TextEntry\TextEntrySize;
-use Filament\Infolists\Infolist;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +62,7 @@ trait DiariesComponents
     private static function getTasksSchema(Proposal $proposal): array
     {
         return [
-            Forms\Components\Repeater::make('tasks')
+            Repeater::make('tasks')
                 ->label('משימות חדשות')
                 ->addActionLabel('הוסף משימה')
                 ->defaultItems(0)
@@ -49,13 +72,13 @@ trait DiariesComponents
                 ->itemLabel(fn (array $state): ?string => $state['description'] ?? null)
                 ->deleteAction(fn ($action) => $action->icon('heroicon-o-trash')->color('danger'))
                 ->schema([
-                    Forms\Components\Textarea::make('description')
+                    Textarea::make('description')
                         ->columnSpanFull()
                         ->label('תיאור')
                         ->live()
-                        ->default(fn (Forms\Get $get) => $get('description'))
+                        ->default(fn (Get $get) => $get('description'))
                         ->required(),
-                    Forms\Components\DateTimePicker::make('due_date')
+                    DateTimePicker::make('due_date')
                         ->label('תאריך יעד')
                         ->placeholder('בחר תאריך')
                         ->firstDayOfWeek(CarbonInterface::SUNDAY)
@@ -66,7 +89,7 @@ trait DiariesComponents
                         ->seconds(false)
                         ->minDate(now()->addDay()->startOfDay())
                         ->required(),
-                    Forms\Components\Select::make('priority')
+                    Select::make('priority')
                         ->label('עדיפות')
                         ->selectablePlaceholder(false)
                         ->native(false)
@@ -77,7 +100,7 @@ trait DiariesComponents
                             '2' => 'גבוהה',
                         ])
                         ->required(),
-                    Forms\Components\Select::make('contact_to')
+                    Select::make('contact_to')
                         ->label('ליצור קשר עם (אם יש)')
                         ->searchable()
                         ->allowHtml()
@@ -85,11 +108,11 @@ trait DiariesComponents
                             return $proposal->contacts()->searchName($query)->get()->pluck('select_option_html', 'id');
                         })
                 ]),
-            Forms\Components\Repeater::make('completed_tasks')
+            Repeater::make('completed_tasks')
                 ->label('משימות שהושלמו')
                 ->addActionLabel('הוסף משימה שהושלמה')
                 ->defaultItems(0)
-                ->simple(Forms\Components\Select::make('task_id')
+                ->simple(Select::make('task_id')
                     ->label('משימה')
                     ->options($proposal->tasks()
                         ->whereNull('completed_at')
@@ -106,19 +129,19 @@ trait DiariesComponents
         ];
     }
 
-    public function form(Forms\Form $form): Forms\Form
+    public function form(Schema $schema): Schema
     {
-        return static::getDiaryForm($form, $this->getOwnerRecord(), $this->side);
+        return static::getDiaryForm($schema, $this->getOwnerRecord(), $this->side);
     }
 
-    public static function getDiaryForm(Forms\Form $form, Proposal $proposal, $side): Forms\Form
+    public static function getDiaryForm(Schema $schema, Proposal $proposal, $side): Schema
     {
-        return $form
+        return $schema
             ->columns(2)
-            ->schema(static::getDiaryFormSchema($proposal, $side, Call::activeCall()));
+            ->components(static::getDiaryFormSchema($proposal, $side, Call::activeCall()));
     }
 
-    public static function getDiaryFormSchema(?Proposal $proposal = null, ?string $side = null, ?Call $currentCall = null, ?Forms\Get $get = null): array
+    public static function getDiaryFormSchema(?Proposal $proposal = null, ?string $side = null, ?Call $currentCall = null, ?Get $get = null): array
     {
         if(!$proposal && $get) {
             $proposal = Proposal::find($get('proposal'));
@@ -127,7 +150,7 @@ trait DiariesComponents
         $proposal ??= Proposal::make();
 
         return [
-            Forms\Components\Select::make('side')
+            Select::make('side')
                 ->selectablePlaceholder(false)
                 ->label('תיעוד עבור')
                 ->placeholder('כללי')
@@ -142,21 +165,21 @@ trait DiariesComponents
                 ])
                 ->native(false)
                 ->default($side),
-            Forms\Components\Group::make([
-                Forms\Components\Checkbox::make('change_next_dates')
-                    ->visible(fn (Forms\Get $get) => ! $get('side'))
+            Group::make([
+                Checkbox::make('change_next_dates')
+                    ->visible(fn (Get $get) => ! $get('side'))
                     ->live()
                     ->label('עדכן תאריכי הטיפול הבא'),
-                Forms\Components\DatePicker::make('next_date')
+                DatePicker::make('next_date')
                     ->label('תאריך הטיפול הבא')
-                    ->helperText(fn (Forms\Get $get) => $get('side') ? null : str('<span class="text-red-600"> >>> תאריך הטיפול ישתנה הן אצל הבחור והן אצל הבחורה <<< </span>')->toHtmlString())
+                    ->helperText(fn (Get $get) => $get('side') ? null : str('<span class="text-red-600"> >>> תאריך הטיפול ישתנה הן אצל הבחור והן אצל הבחורה <<< </span>')->toHtmlString())
                     ->date()
                     ->weekStartsOnSunday()
-                    ->hidden(fn (Forms\Get $get) => ! $get('change_next_dates') && ! $get('side'))
+                    ->hidden(fn (Get $get) => ! $get('change_next_dates') && ! $get('side'))
                     ->native(false)
-                    ->hiddenLabel(fn (Forms\Get $get) => ! $get('side'))
+                    ->hiddenLabel(fn (Get $get) => ! $get('side'))
                     ->displayFormat('d/m/Y')
-                    ->disabledDates(function (Forms\Get $get) {
+                    ->disabledDates(function (Get $get) {
                         $to = $proposal->{"{$get('side')}_next_time"} ?? now();
 
                         if (now()->isAfter($to)) {
@@ -179,12 +202,12 @@ trait DiariesComponents
                             : now()->addDay()->format('Y-m-d')
                     ),
             ]),
-            Forms\Components\Fieldset::make('statuses')
+            Fieldset::make('statuses')
                 ->label('עדכון סטטוסים')
                 ->columnSpanFull()
                 ->columns(2)
                 ->live()
-                ->afterStateUpdated(function (Forms\Get $get, Set $set, ?array $state) use ($proposal) {
+                ->afterStateUpdated(function (Get $get, Set $set, ?array $state) use ($proposal) {
                     $side = $get('side');
 
                     $statusesData = $state['statuses'];
@@ -216,19 +239,19 @@ trait DiariesComponents
                     }
 
                 })
-                ->schema(fn (Forms\Get $get) => [
+                ->schema(fn (Get $get) => [
                     $proposal->statusField(),
                     $proposal->itemStatusField($get('side') ?? $side),
                 ]),
 
-            Forms\Components\Tabs::make('tabs')->columnSpanFull()
+            Tabs::make('tabs')->columnSpanFull()
                 ->extraAttributes(['class' => 'tabs-light-view'])
                 ->tabs([
-                    Forms\Components\Tabs\Tab::make('info')
+                    Tab::make('info')
                         ->label('מידע')
                         ->columns(2)
                         ->schema([
-                            Forms\Components\Select::make('type')
+                            Select::make('type')
                                 ->label('סוג')
                                 ->options([
                                     'call' => 'שיחה',
@@ -240,7 +263,7 @@ trait DiariesComponents
                                 ->searchable()
                                 ->required(),
 
-                            Forms\Components\DateTimePicker::make('data.date')
+                            DateTimePicker::make('data.date')
                                 ->label('תאריך')
                                 ->date()
                                 ->hidden((bool) $currentCall)
@@ -249,15 +272,15 @@ trait DiariesComponents
                                 ->default(now()->format('Y-m-d H:i:s'))
                                 ->required(),
 
-                            Forms\Components\Fieldset::make('data')
+                            Fieldset::make('data')
                                 ->label('')
                                 ->columnSpanFull()
                                 ->columns(1)
-                                ->hidden(fn (Forms\Get $get) => empty($get('type')))
+                                ->hidden(fn (Get $get) => empty($get('type')))
                                 ->schema(static::getFieldsByType($currentCall, $proposal)),
 
-                            Forms\Components\Hidden::make('statuses_info_pack')
-                                ->default(function (Forms\Get $get, Proposal $proposal) {
+                            Hidden::make('statuses_info_pack')
+                                ->default(function (Get $get, Proposal $proposal) {
                                     $statuses = [
                                         'all_statuses' => collect(Setting::firstOrNew(['key' => 'statuses_proposal'], ['value' => []])->value ?? []),
                                         'all_items_statuses' => collect(Setting::firstOrNew(['key' => 'statuses_proposal_person'], ['value' => []])->value ?? []),
@@ -281,14 +304,14 @@ trait DiariesComponents
                                     return $statuses;
                                 }),
                         ]),
-                    Forms\Components\Tabs\Tab::make('tasks')
+                    Tab::make('tasks')
                         ->label('משימות')
                         ->schema(static::getTasksSchema($proposal)),
-                    Forms\Components\Tabs\Tab::make('permissions')
+                    Tab::make('permissions')
                         ->label('הרשאות')
                         ->hidden()
                         ->schema([
-                            Forms\Components\Radio::make('confidentiality_level')
+                            Radio::make('confidentiality_level')
                                 ->label('רמת הסיווג')
                                 ->extraAttributes([
                                     'class' => '[&_p]:text-xs [&_label]:text-sm flex [&_label]:items-center [&_input]:mt-0 flex-col gap-2.5 mt-2 hover:[&>div]:bg-gray-900/10 ![&>div]:cursor-pointer [&>div]:transition [&>div]:rounded-xl [&>div]:p-1.5 [&>div]:ps-3 [&>div]:ring-1 [&>div]:ring-gray-900/10',
@@ -310,10 +333,10 @@ trait DiariesComponents
         ];
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist->schema([
-            Infolists\Components\Section::make()
+        return $schema->components([
+            Section::make()
                 ->columns(3)
                 ->schema([
                     TextEntry::make('label_type')
@@ -323,7 +346,7 @@ trait DiariesComponents
                         ->color(fn (Diary $diary) => $diary->getDiaryTypeColor())
                         ->icon(fn (Diary $diary) => $diary->getDiaryTypeIcon())
                         ->helperText(fn (Diary $diary) => $diary->getCallTypeLabel())
-                        ->size(TextEntrySize::Large),
+                        ->size(TextSize::Large),
 
                     TextEntry::make('data.date')
                         ->label('תאריך')
@@ -335,15 +358,15 @@ trait DiariesComponents
                         ->icon('heroicon-o-user'),
                 ]),
 
-            Infolists\Components\Tabs::make('tabs')
+            Tabs::make('tabs')
                 ->columnSpanFull()
                 ->tabs([
-                    Infolists\Components\Tabs\Tab::make('general')
+                    Tab::make('general')
                         ->label('כללי')
                         ->schema([
                             TextEntry::make('data.description')
                                 ->label(fn (Diary $diary) => $diary->getLabelDescription())
-                                ->size(TextEntrySize::Large),
+                                ->size(TextSize::Large),
 
                             FileEntry::make('file')
                                 ->label(fn ($record) => $record->type === 'call' ? 'הקלטה' : 'מסמך/תמונה')
@@ -351,26 +374,26 @@ trait DiariesComponents
                                 ->prefixPath(''),
                         ]),
 
-                    Infolists\Components\Tabs\Tab::make('files')
+                    Tab::make('files')
                         ->label('קבצים מצורפים')
                         ->schema([
-                            Infolists\Components\RepeatableEntry::make('data.files')
+                            RepeatableEntry::make('data.files')
                                 ->contained(false)
-                                ->hintAction(Infolists\Components\Actions\Action::make('add-file')
+                                ->hintAction(Action::make('add-file')
                                     ->label('הוסף קובץ')
                                     ->modalWidth('sm')
-                                    ->form(fn (Form $form) => $form->schema([
-                                        Forms\Components\FileUpload::make('file')
+                                    ->schema(fn (Form $form) => $form->schema([
+                                        FileUpload::make('file')
                                             ->label('קובץ')
                                             ->afterStateUpdated(function (TemporaryUploadedFile $state, Set $set) {
                                                 $set('name', str($state->getClientOriginalName())->beforeLast('.')->value());
                                             })
                                             ->required(),
-                                        Forms\Components\TextInput::make('name')
+                                        TextInput::make('name')
                                             ->label('שם')
                                             ->required(),
                                     ]))
-                                    ->action(function (Diary $record, array $data, Infolists\Components\Actions\Action $action) {
+                                    ->action(function (Diary $record, array $data, Action $action) {
                                         $recordData = $record->data;
 
                                         data_set($recordData, 'files', array_merge($recordData['files'] ?? [], [
@@ -392,14 +415,14 @@ trait DiariesComponents
                                         ->fileAttribute('path')
                                         ->hiddenLabel()
                                         ->registerActions([
-                                            Infolists\Components\Actions\Action::make('delete')
+                                            Action::make('delete')
                                                 ->label('מחק')
                                                 ->requiresConfirmation()
                                                 ->iconButton()
                                                 ->icon('heroicon-o-trash')
                                                 ->color('danger')
                                                 ->tooltip('מחק קובץ')
-                                                ->action(function (Diary $record, $component, Infolists\Components\Actions\Action $action) {
+                                                ->action(function (Diary $record, $component, Action $action) {
 
                                                     $state = $component->getState('file', true);
 
@@ -446,10 +469,10 @@ trait DiariesComponents
 
         return [
             //For call type
-            Forms\Components\Select::make('data.call_type')
+            Select::make('data.call_type')
                 ->label('סוג שיחה')
                 ->searchable()
-                ->visible(fn (Forms\Get $get) => $get('type') === 'call')
+                ->visible(fn (Get $get) => $get('type') === 'call')
                 ->options([
                     'inquiry_about' => 'בירור',
                     'proposal' => 'הצעה',
@@ -461,15 +484,15 @@ trait DiariesComponents
                 ->default('general')
                 ->hidden(),
 
-            Forms\Components\Toggle::make('helpers.show_advanced')
+            Toggle::make('helpers.show_advanced')
                 ->label('הצג פרטים מתקדמים')
                 ->live()
                 ->default(false),
 
-            Forms\Components\Textarea::make('data.description')
-                ->label(fn (Forms\Get $get) => Diary::getLabelDescriptionByType($get('type'))),
+            Textarea::make('data.description')
+                ->label(fn (Get $get) => Diary::getLabelDescriptionByType($get('type'))),
 
-            Forms\Components\Select::make('call_id')
+            Select::make('call_id')
                 ->label('שייך לשיחה')
                 ->native(false)
                 ->allowHtml()
@@ -482,7 +505,7 @@ trait DiariesComponents
                         );
                     }
                 })
-                ->visible(fn (Forms\Get $get) => ! $activeCall && $get('type') === 'call')
+                ->visible(fn (Get $get) => ! $activeCall && $get('type') === 'call')
                 ->extraAttributes([
                     'class' => 'option-select-w-full',
                 ])
@@ -497,10 +520,10 @@ trait DiariesComponents
                         ->get()->mapWithKeys(fn (Call $call) => [$call->id => $call->select_option_html])
                 ),
 
-            Forms\Components\FileUpload::make('data.file')
+            FileUpload::make('data.file')
                 ->disabled((bool) $activeCall)
                 ->helperText($activeCall ? "קובץ השיחה יאוחזר באופן אוטו' מהשיחה הפעילה" : null)
-                ->visible(function (Forms\Get $get) use ($activeCall) {
+                ->visible(function (Get $get) use ($activeCall) {
                     if (in_array($get('type'), ['document', 'call']) && ! $get('call_id')) {
                         return ! $activeCall
                             || $get('helpers.show_advanced');
@@ -508,41 +531,41 @@ trait DiariesComponents
 
                     return false;
                 })
-                ->label(fn (Forms\Get $get) => match ($get('type')) {
+                ->label(fn (Get $get) => match ($get('type')) {
                     'call' => 'הלקטה',
                     'document' => 'מסמך/תמונה',
                     'email' => 'קבצים מצורפים',
                     default => 'קבצים קשורים',
                 }),
 
-            Forms\Components\Repeater::make('data.files')
+            Repeater::make('data.files')
                 ->label('קבצים קשורים')
-                ->visible(fn (Forms\Get $get) => $get('helpers.show_advanced'))
+                ->visible(fn (Get $get) => $get('helpers.show_advanced'))
                 ->addActionLabel('הוסף קובץ')
                 ->reorderable(false)
                 ->collapsible()
                 ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
                 ->defaultItems(0)
                 ->schema([
-                    Forms\Components\FileUpload::make('path')
+                    FileUpload::make('path')
                         ->label('קובץ')
                         ->required(),
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->label('שם')
                         ->live(onBlur: true),
                 ]),
 
-            Forms\Components\Hidden::make('data.call_id')
+            Hidden::make('data.call_id')
                 ->default($activeCall?->id),
 
-            Forms\Components\Select::make('data.participants')
+            Select::make('data.participants')
                 ->options(
                     $proposal
                         ->contacts
                         ->load('father', 'fatherInLaw')
                         ->mapWithKeys(fn (Person $person) => [$person->id => $person->getSelectOptionHtmlAttribute()])
                 )
-                ->visible(fn (Forms\Get $get) => ! $person || $get('helpers.show_advanced'))
+                ->visible(fn (Get $get) => ! $person || $get('helpers.show_advanced'))
                 ->label('משתתפים')
                 ->searchable()
 //                ->multiple()
@@ -556,7 +579,7 @@ trait DiariesComponents
         ];
     }
 
-    public function table(Tables\Table $table): Tables\Table
+    public function table(Table $table): Table
     {
         return $table
 //            ->defaultGroup(
@@ -567,7 +590,7 @@ trait DiariesComponents
 //                    ->groupQueryUsing(fn (Builder $query) => $query->orderBy('data->date', 'desc'))
 //            )
             ->filters([
-                Tables\Filters\SelectFilter::make('type')
+                SelectFilter::make('type')
                     ->options([
                         'call' => 'שיחה',
                         'document' => 'מסמך',
@@ -579,7 +602,7 @@ trait DiariesComponents
                     ])
                     ->label('סוג')
                     ->searchable(),
-                Tables\Filters\SelectFilter::make('model_id')
+                SelectFilter::make('model_id')
                     ->placeholder('הכל')
                     ->native(false)
                     ->hidden(fn () => ! $this->side)
@@ -596,7 +619,7 @@ trait DiariesComponents
                     )
             )
             ->columns([
-                Tables\Columns\IconColumn::make('id')
+                IconColumn::make('id')
                     ->label('')
                     ->alignCenter()
                     ->color(fn (Diary $record) => match ($record->model_id) {
@@ -616,7 +639,7 @@ trait DiariesComponents
                         default => 'כללי'
                     })
                     ->icon(fn (Diary $diary) => $diary->model_type === Person::class ? 'heroicon-s-user' : 'heroicon-s-star'),
-                Tables\Columns\TextColumn::make('label_type')
+                TextColumn::make('label_type')
                     ->badge()
                     ->label('סוג')
                     ->color(fn (Diary $record) => $record->getDiaryTypeColor())
@@ -632,16 +655,16 @@ trait DiariesComponents
                     } : null)
                     ->sortable(['type', 'data->call_type'])
                     ->searchable(['type']),
-                Tables\Columns\TextColumn::make('statuses_html')
+                TextColumn::make('statuses_html')
                     ->label('סטטוסים')
                     ->html()
                     ->size('sm'),
-                Tables\Columns\TextColumn::make('call.phoneModel.model')
+                TextColumn::make('call.phoneModel.model')
                     ->label('')
                     ->size('sm')
                     ->description(fn (Diary $record) => $record->call?->phoneModel?->number)
                     ->formatStateUsing(fn ($state) => !$state ? null : ($state::class === Person::class ? $state->full_name : $state->name." (בית)")),
-                Tables\Columns\TextColumn::make('data.date')
+                TextColumn::make('data.date')
                     ->label('תאריך')
                     ->formatStateUsing(fn ($state) => Carbon::make($state)->hebcal()->hebrewDate(withQuotes: true))
                     ->sortable(query: fn (Builder $query, $direction) => $query->orderBy('data->date', $direction))
@@ -650,7 +673,7 @@ trait DiariesComponents
                     ->color('gray')
                     ->weight('semibold'),
 
-                Tables\Columns\TextColumn::make('data.description')
+                TextColumn::make('data.description')
                     ->description(fn (Diary $record) => match ($record->type) {
                         'call' => 'סיכום שיחה',
                         'document' => 'תיאור המסמך',
@@ -665,7 +688,7 @@ trait DiariesComponents
                     ->size('xs')
                     ->wrap()
                     ->searchable(['data->description']),
-                Tables\Columns\TextColumn::make('files_count')
+                TextColumn::make('files_count')
                     ->label('קבצים')
                     ->formatStateUsing(fn ($state) => $state == 0 ? '' : "$state קבצים")
                     ->badge()
@@ -673,14 +696,14 @@ trait DiariesComponents
                     ->color(Color::Neutral)
                     ->size('xs'),
             ])
-            ->actions($this->getTableRowsActions())
+            ->recordActions($this->getTableRowsActions())
             ->defaultSort('data->date', 'desc');
     }
 
     public function getTableRowsActions(): array
     {
         return [
-            Tables\Actions\Action::make('speaker-recording')
+            Action::make('speaker-recording')
                 ->iconButton()
                 ->icon('heroicon-o-speaker-wave')
                 ->modalWidth('sm')
@@ -690,8 +713,8 @@ trait DiariesComponents
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel('סגור')
                 ->tooltip('הקלטת שיחה')
-                ->infolist(fn (Infolist $infolist) => $infolist->schema([
-                    Split::make([
+                ->schema(fn (Schema $schema) => $schema->components([
+                    Flex::make([
                         TextEntry::make('call.duration')
                             ->label('משך הקלטה')
                             ->formatStateUsing(fn (Diary $record) => $record->data['duration']
@@ -704,29 +727,29 @@ trait DiariesComponents
                         ->autoplay()
                         ->hiddenLabel(),
                 ])),
-            Tables\Actions\ViewAction::make()
+            ViewAction::make()
                 ->modalHeading('פרטי תיעוד')
                 ->extraModalFooterActions( fn (Diary $record) => [
-                    Tables\Actions\EditAction::make('type')
+                    EditAction::make('type')
                         ->record($record)
                         ->modalHeading('עריכת תיעוד')
                         ->slideOver()
                         ->action(fn (Diary $record, array $data) => $record->update([
                             'data' => array_merge($record->data, $data['data'] ?? []),
                         ]))
-                        ->form(fn (Forms\Form $form) => static::getEditDiaryForm($form))
+                        ->schema(fn (Schema $schema) => static::getEditDiaryForm($schema))
                 ])
-                ->infolist(fn (Infolist $infolist) => $this->infolist($infolist))
+                ->schema(fn (Schema $schema) => $this->infolist($schema))
                 ->icon('heroicon-o-eye')
                 ->slideOver()
                 ->iconButton(),
         ];
     }
 
-    public static function getEditDiaryForm(Forms\Form $form): Forms\Form
+    public static function getEditDiaryForm(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Textarea::make('data.description')
+        return $schema->components([
+            Textarea::make('data.description')
                 ->autosize()
                 ->label('תיאור')
                 ->required(),

@@ -2,6 +2,20 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
+use Filament\Actions\BulkAction;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Tables\Filters\Filter;
+use Filament\Schemas\Components\Group;
+use Filament\Tables\Filters\QueryBuilder;
+use Filament\Tables\Filters\QueryBuilder\Constraints\TextConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\SelectConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\RelationshipConstraint\Operators\IsRelatedToOperator;
+use Filament\Tables\Filters\QueryBuilder\Constraints\NumberConstraint;
+use Filament\Tables\Filters\QueryBuilder\Constraints\NumberConstraint\Operators\IsMinOperator;
 use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\StudentResource;
 use App\Models\Form as FormModel;
@@ -9,17 +23,11 @@ use App\Models\Person as Student;
 use App\Models\Proposal;
 use DB;
 use Exception;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Support\Enums\MaxWidth;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters;
 use Filament\Tables\Filters\QueryBuilder\Constraints;
@@ -38,7 +46,7 @@ class AddProposal extends ListRecords
 
     protected static ?string $navigationLabel = 'חיפוש הצעה';
 
-    protected static ?string $navigationIcon = 'heroicon-o-magnifying-glass-plus';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-magnifying-glass-plus';
 
     public function mount(): void
     {
@@ -66,7 +74,7 @@ class AddProposal extends ListRecords
             ->deselectAllRecordsWhenFiltered(false)
             ->recordUrl(null)
             ->paginationPageOptions([10, 25, 50, 100, 200])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkAction::make('create-proposals')
                     ->label('צור הצעות')
                     ->deselectRecordsAfterCompletion()
@@ -86,7 +94,7 @@ class AddProposal extends ListRecords
 //                $action->slideOver();
 //            })
 //            ->filters($this->getFilters(), FiltersLayout::Modal)
-            ->actions([
+            ->recordActions([
                 Action::make('add-proposal')
                     ->action(function (Student $student, Action $action) {
                         $this->addProposal($student, $action);
@@ -121,7 +129,7 @@ class AddProposal extends ListRecords
     {
 
         return [
-            Filters\Filter::make('table_columns')
+            Filter::make('table_columns')
                 ->columnSpanFull()
                 ->columns(1)
                 ->query(function (Builder $query, array $data) {
@@ -130,7 +138,7 @@ class AddProposal extends ListRecords
                         ->when($data['last_name'] ?? null, fn (Builder $query, $value) => $query->where('last_name', 'like', "%$value%"))
                         ->when($data['father_first_name'] ?? null, fn (Builder $query, $value) => $query->whereRelation('father', 'first_name', 'like', "%$value%"));
                 })
-                ->form([
+                ->schema([
                     Group::make([
                         TextInput::make('last_name')
                             ->placeholder('שם משפחה')
@@ -146,21 +154,21 @@ class AddProposal extends ListRecords
         ];
 
         return [
-            Filters\QueryBuilder::make()
+            QueryBuilder::make()
                 ->label('סינון מתקדם')
                 ->constraints([
-                    Constraints\TextConstraint::make('first_name')
+                    TextConstraint::make('first_name')
                         ->label('שם פרטי'),
 
-                    Constraints\SelectConstraint::make('last_name')
+                    SelectConstraint::make('last_name')
                         ->multiple()
                         ->options($this->getTableQuery()->pluck('last_name', 'last_name')->toArray())
                         ->searchable()
                         ->label('שם משפחה'),
 
-                    Constraints\RelationshipConstraint::make('tags')
+                    RelationshipConstraint::make('tags')
                         ->selectable(
-                            Constraints\RelationshipConstraint\Operators\IsRelatedToOperator::make()
+                            IsRelatedToOperator::make()
                                 ->modifyRelationshipQueryUsing(function (Builder $query) {
                                     $query->addSelect('name->he as name');
                                 })
@@ -171,9 +179,9 @@ class AddProposal extends ListRecords
                         ->label('תגיות')
                         ->multiple(),
 
-                    Constraints\RelationshipConstraint::make('school')
+                    RelationshipConstraint::make('school')
                         ->selectable(
-                            Constraints\RelationshipConstraint\Operators\IsRelatedToOperator::make()
+                            IsRelatedToOperator::make()
                                 ->titleAttribute('name')
                                 ->searchable()
                                 ->multiple()
@@ -181,7 +189,7 @@ class AddProposal extends ListRecords
                         )
                         ->label('מוסד לימודים'),
 
-                    Constraints\RelationshipConstraint::make('proposals')
+                    RelationshipConstraint::make('proposals')
 //                        ->selectable(
 //                            Constraints\RelationshipConstraint\Operators\IsRelatedToOperator::make()
 //                                ->native(false)
@@ -190,10 +198,10 @@ class AddProposal extends ListRecords
                         ->label('הצעות')
                         ->multiple(),
 
-                    Constraints\NumberConstraint::make('age')
+                    NumberConstraint::make('age')
                         ->label('גיל')
                         ->operators([
-                            Constraints\NumberConstraint\Operators\IsMinOperator::make()
+                            IsMinOperator::make()
                                 ->query(function (Builder $query, $settings, $column, $isInverse) {
                                     $date = now()->hebcal()->subYears((int) $settings['number']);
 

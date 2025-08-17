@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Exports\ProposalsExport;
 use App\Filament\Exports\ProposalExporter;
 use App\Filament\Resources\ProposalResource;
@@ -10,7 +11,6 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\ExportAction;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Maatwebsite\Excel\Facades\Excel;
 

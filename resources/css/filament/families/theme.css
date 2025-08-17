@@ -1,8 +1,16 @@
-@import '/vendor/filament/filament/resources/css/theme.css';
-@import '/vendor/malzariey/filament-daterangepicker-filter/resources/css/filament-daterangepicker.css';
-@import '../../../../vendor/kenepa/banner/resources/css/index.css';
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
 
-@config 'tailwind.config.js';
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/**/*';
+@source '../../../../app/livewire/*';
+
+
+/*@import '/vendor/filament/filament/resources/css/theme.css';*/
+/*@import '/vendor/malzariey/filament-daterangepicker-filter/resources/css/filament-daterangepicker.css';*/
+/*@import '../../../../vendor/kenepa/banner/resources/css/index.css';*/
+
+/*@config 'tailwind.config.js';*/
 
 
 .fi-page.fi-resource-proposals .fi-tabs:not([aria-label=tabs]),

@@ -2,9 +2,9 @@
 
 namespace App\Notifications;
 
+use Filament\Actions\Action;
 use App\Models\User;
 use Carbon\Carbon;
-use Filament\Notifications\Actions\Action;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;

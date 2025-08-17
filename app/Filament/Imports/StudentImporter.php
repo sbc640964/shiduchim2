@@ -2,6 +2,7 @@
 
 namespace App\Filament\Imports;
 
+use Str;
 use App\Models\City;
 use App\Models\Person;
 use App\Models\Phone;
@@ -112,7 +113,7 @@ class StudentImporter extends Importer
                 ->guess(['תאריך לידה', 'birthday', 'ת.ל. לועזי'])
                 ->fillRecordUsing(function (Person $record, ?string $state) {
                     if (filled($state)) {
-                        $carbon = \Str::contains($state, '/')
+                        $carbon = Str::contains($state, '/')
                             ? Carbon::createFromFormat('d/m/Y', $state)
                             : Carbon::createFromFormat('Y-m-d', $state);
                         $record->born_at = $carbon;
@@ -276,7 +277,7 @@ class StudentImporter extends Importer
                 'imported_at' => now()->format('Y-m-d H:i:s'),
                 'imported_by' => auth()->id(),
                 'imported_from' => 'csv',
-                'import_id' => \Str::uuid(),
+                'import_id' => Str::uuid(),
             ]
         ]);
     }
@@ -339,7 +340,7 @@ class StudentImporter extends Importer
         ];
 
         foreach ($phones as $key => $phone) {
-            $phone = \Str::replace(['-', ' '], '', $phone);
+            $phone = Str::replace(['-', ' '], '', $phone);
 
             if (blank($phone)) {
                 continue;

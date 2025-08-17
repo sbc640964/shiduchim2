@@ -16,7 +16,7 @@ class OpenProposalsOverview extends Widget
 
     protected static ?int $sort = -10;
 
-    protected static string $view = 'filament.widgets.open-proposals-overview';
+    protected string $view = 'filament.widgets.open-proposals-overview';
 
     public ?int $currentUserId = null;
 

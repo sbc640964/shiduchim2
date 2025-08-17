@@ -2,6 +2,10 @@
 
 namespace App\Models\Traits;
 
+use Closure;
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 use App\Filament\Resources\PersonResource;
 use App\Infolists\Components\FamilyTable;
 use App\Models\Person;
@@ -10,9 +14,6 @@ use Filament\Infolists\Components\Actions;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
-use Filament\Support\Enums\MaxWidth;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 
 trait HasPersonFilamentTableColumns
@@ -42,7 +43,7 @@ trait HasPersonFilamentTableColumns
             });
     }
 
-    public static function baseColumns(?array $only = null, null|\Closure|array $callback = null): array
+    public static function baseColumns(?array $only = null, null|Closure|array $callback = null): array
     {
         $columns = collect([
             'father' => TextColumn::make('father.first_name')
@@ -90,9 +91,9 @@ trait HasPersonFilamentTableColumns
             ->action(Action::make('children')
                 ->label('פרטים')
                 ->modalHeading(fn ($record) => "ילדי $record->full_name ({$record->children->count()})")
-                ->infolist(function (Infolist $infolist) use ($side, $proposal) {
-                    return $infolist
-                        ->schema(fn (Person $record) => [
+                ->schema(function (Schema $schema) use ($side, $proposal) {
+                    return $schema
+                        ->components(fn (Person $record) => [
                             FamilyTable::make('children')
                                 ->viewData($proposal ? [
                                     'person' => $record,
@@ -107,7 +108,7 @@ trait HasPersonFilamentTableColumns
                         ]);
                 })
                 ->slideOver()
-                ->modalWidth(MaxWidth::SevenExtraLarge)
+                ->modalWidth(Width::SevenExtraLarge)
                 ->icon('heroicon-o-chevron-right')
                 ->action(function () {
                 })

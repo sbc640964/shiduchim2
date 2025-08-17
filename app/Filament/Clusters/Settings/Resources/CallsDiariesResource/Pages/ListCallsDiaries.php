@@ -2,10 +2,11 @@
 
 namespace App\Filament\Clusters\Settings\Resources\CallsDiariesResource\Pages;
 
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\Settings\Resources\CallsDiariesResource;
 use App\Models\Call;
 use Filament\Actions;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 
 class ListCallsDiaries extends ListRecords
@@ -15,9 +16,9 @@ class ListCallsDiaries extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('update_models_phones')
+            Action::make('update_models_phones')
                 ->successNotificationTitle('טלפונים עודכנו')
-                ->action(function (Actions\Action $action) {
+                ->action(function (Action $action) {
                     Call::updateModelPhones();
                     $action->success();
                 })

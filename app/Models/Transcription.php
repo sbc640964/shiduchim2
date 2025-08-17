@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Arr;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -30,7 +31,7 @@ class Transcription extends Model
             'status_message' => $message,
         ];
 
-        $data = collect($data)->dot()->merge(\Arr::dot($this->data))->undot();
+        $data = collect($data)->dot()->merge(Arr::dot($this->data))->undot();
 
         $this->fill([
             'status' => $status,

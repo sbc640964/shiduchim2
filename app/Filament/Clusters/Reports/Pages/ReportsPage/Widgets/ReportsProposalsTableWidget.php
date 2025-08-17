@@ -2,6 +2,9 @@
 
 namespace App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets;
 
+use Blade;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use App\Filament\Widgets\FilterReportsTrait;
 use App\Models\Person;
 use App\Models\Proposal;
@@ -69,7 +72,7 @@ class ReportsProposalsTableWidget extends BaseWidget
     </div>
 Blade;
 
-        return \Blade::render($html);
+        return Blade::render($html);
 
     }
 
@@ -103,7 +106,7 @@ Blade;
                 $this->proposal == $record->id ? '!bg-gray-50 !dark:bg-white/5 [&>*:first-child]:!relative [&>*:first-child]:before:!absolute [&>*:first-child]:before:!start-0 [&>*:first-child]:before:!inset-y-0 [&>*:first-child]:before:!w-0.5 [&>*:first-child]:before:!bg-primary-600 [&>*:first-child]:dark:before:!bg-primary-500' : ''
             )
             ->columns([
-                Tables\Columns\IconColumn::make('is_open')
+                IconColumn::make('is_open')
                     ->label('פתוחה')
                     ->width(100)
                     ->alignCenter()
@@ -122,26 +125,26 @@ Blade;
                     )
                     ->boolean()
                 ,
-                Tables\Columns\TextColumn::make('guy.full_name')
+                TextColumn::make('guy.full_name')
                     ->description(fn (Proposal $record) => $record->guy->parents_info)
                     ->hidden(fn () => $person && $person->gender === 'B')
                     ->label('בחור')
                     ->searchable(['last_name', 'first_name'])
                     ->sortable(['last_name', 'first_name']),
 
-                Tables\Columns\TextColumn::make('girl.full_name')
+                TextColumn::make('girl.full_name')
                     ->hidden(fn () => $person && $person->gender === 'G')
                     ->label('בחורה')
                     ->description(fn (Proposal $record) => $record->girl->parents_info)
                     ->searchable(['last_name', 'first_name'])
                     ->sortable(['last_name', 'first_name']),
-                Tables\Columns\TextColumn::make('diaries_count')
+                TextColumn::make('diaries_count')
                     ->alignCenter()
                     ->label('תיעודים')
                     ->badge()
                     ->color('gray')
                     ->counts(['diaries' => fn ($query) => $query->whereBetween('created_at', [$dateStart, $dateEnd])]),
-                Tables\Columns\TextColumn::make('calls_count')
+                TextColumn::make('calls_count')
                     ->alignCenter()
                     ->label('שיחות')
                     ->badge()

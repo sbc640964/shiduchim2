@@ -2,11 +2,20 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Utilities\Get;
+use Arr;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Columns\SelectColumn;
+use Filament\Actions\EditAction;
+use app\Filament\Clusters\Settings\Resources\SchoolResource\Pages\ListSchools;
+use app\Filament\Clusters\Settings\Resources\SchoolResource\Pages\Contacts;
 use App\Filament\Clusters\Settings;
 use App\Models\School;
 use Filament\Forms;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -23,7 +32,7 @@ class SchoolResource extends Resource
 
     protected static ?string $label = 'מוסד';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-book-saved';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-book-saved';
 
     protected static ?string $pluralLabel = 'מוסדות';
 
@@ -31,23 +40,23 @@ class SchoolResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\TextInput::make('name')
+        return $schema->components([
+            TextInput::make('name')
                 ->label('שם המוסד')
                 ->required(),
 
-            Forms\Components\Select::make('city')
+            Select::make('city')
                 ->label('עיר')
                 ->searchable()
                 ->relationship('city', 'name', fn ($query) => $query->orderBy('name'))
-                ->createOptionForm(function (Form $form) {
-                    return $form->schema([
-                        Forms\Components\TextInput::make('name')
+                ->createOptionForm(function (Schema $schema) {
+                    return $schema->components([
+                        TextInput::make('name')
                             ->label('שם העיר')
                             ->required(),
-                        Forms\Components\TextInput::make('country')
+                        TextInput::make('country')
                             ->label('מדינה')
                             ->required(),
                     ]);
@@ -56,7 +65,7 @@ class SchoolResource extends Resource
                 ->createOptionModalHeading('הוספת עיר')
                 ->required(),
 
-            Forms\Components\Select::make('gender')
+            Select::make('gender')
                 ->label('בנים/בנות')
                 ->options([
                     'B' => 'בנים',
@@ -64,10 +73,10 @@ class SchoolResource extends Resource
                 ])
                 ->required(),
 
-            Forms\Components\Select::make('type')
+            Select::make('type')
                 ->label('סוג המוסד')
                 ->native(false)
-                ->options(fn (Forms\Get $get) => \Arr::only(
+                ->options(fn (Get $get) => Arr::only(
                     School::$typeLabel,
                     $get('gender') === 'B'
                         ? ['YS', 'YB', 'YH', 'TT', 'SH']
@@ -80,12 +89,12 @@ class SchoolResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
-            Tables\Columns\TextInputColumn::make('name')
+            TextInputColumn::make('name')
                 ->label('שם המוסד')
                 ->searchable()
                 ->sortable(),
 
-            Tables\Columns\SelectColumn::make('gender')
+            SelectColumn::make('gender')
                 ->label('בנים/בנות')
                 ->options([
                     'B' => 'בנים',
@@ -99,9 +108,9 @@ class SchoolResource extends Resource
                 ->searchable()
                 ->sortable(),
 
-            Tables\Columns\SelectColumn::make('type')
+            SelectColumn::make('type')
                 ->label('סוג המוסד')
-                ->options(fn (School $school) => \Arr::only(
+                ->options(fn (School $school) => Arr::only(
                     School::$typeLabel,
                     $school->gender === 'B'
                         ? ['YS', 'YB', 'YH', 'TT', 'SH']
@@ -111,14 +120,14 @@ class SchoolResource extends Resource
                 ->sortable(),
 
         ])
-            ->actions([
-                Tables\Actions\Action::make('contacts')
+            ->recordActions([
+                Action::make('contacts')
                     ->label('אנשי קשר')
                     ->iconButton()
                     ->color('gray')
                     ->url(fn ($record) => static::getUrl('contacts', ['record' => $record->id]))
                     ->icon('iconsax-bul-user-square'),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->iconButton()
                     ->modalWidth('sm')
                     ->icon('iconsax-bul-edit-2'),
@@ -128,17 +137,17 @@ class SchoolResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \app\Filament\Clusters\Settings\Resources\SchoolResource\Pages\ListSchools::route('/'),
+            'index' => ListSchools::route('/'),
             //            'create' => Pages\CreateSchool::route('/create'),
             //            'edit' => Pages\EditSchool::route('/{record}/edit'),
-            'contacts' => \app\Filament\Clusters\Settings\Resources\SchoolResource\Pages\Contacts::route('/{record}/contacts'),
+            'contacts' => Contacts::route('/{record}/contacts'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            \app\Filament\Clusters\Settings\Resources\SchoolResource\Pages\Contacts::class,
+            Contacts::class,
         ]);
     }
 

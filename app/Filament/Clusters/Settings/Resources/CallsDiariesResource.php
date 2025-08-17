@@ -2,6 +2,19 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Schemas\Components\Flex;
+use Filament\Support\Enums\Size;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\Width;
+use Blade;
+use App\Filament\Clusters\Settings\Resources\CallsDiariesResource\Pages\ListCallsDiaries;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\CallsDiariesResource\Pages;
 use App\Filament\Resources\PersonResource;
@@ -18,19 +31,11 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard\Step;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components as InfolistComponents;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\ActionSize;
 use Filament\Support\Enums\FontWeight;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Guava\FilamentClusters\Forms\Cluster;
@@ -43,7 +48,7 @@ class CallsDiariesResource extends Resource
 {
     protected static ?string $model = Call::class;
 
-    protected static ?string $navigationIcon = 'iconsax-bul-call';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-call';
 
     protected static ?string $cluster = Settings::class;
 
@@ -79,10 +84,10 @@ class CallsDiariesResource extends Resource
             ), 'proposals');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -91,14 +96,14 @@ class CallsDiariesResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->weight(FontWeight::Bold)
                     ->formatStateUsing(fn (Call $call) => $call->user?->name ?? 'לא ידוע')
                     ->description(fn (Call $call) => $call->extensionWithTarget(true))
                     ->label('משתמש')
                     ->searchable()
                     ->visible(auth()->user()->canAccessAllCalls()),
-                Tables\Columns\IconColumn::make('group')
+                IconColumn::make('group')
                     ->icons([
                         'iconsax-bul-call-incoming' => 'incoming',
                         'iconsax-bul-call-outgoing' => 'outgoing',
@@ -117,7 +122,7 @@ class CallsDiariesResource extends Resource
                         'primary' => 'outgoing',
                         'danger' => 'missed',
                     ]),
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->label('מספר')
                     ->formatStateUsing(fn ($state) => str($state)
                         ->whenStartsWith('05',
@@ -158,16 +163,16 @@ class CallsDiariesResource extends Resource
                     })
                     ->weight(FontWeight::Bold)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('תאריך')
                     ->formatStateUsing(fn (Carbon $state) => $state->diffForHumans())
                     ->description(fn (Carbon $state) => $state->format('H:i:s d/m/y'))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('duration')
+                TextColumn::make('duration')
                     ->label('משך')
                     ->formatStateUsing(fn ($state) => gmdate('H:i:s', $state))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('proposals')
+                TextColumn::make('proposals')
                     ->label('הצעות קשורות')
                     ->badge()
                     ->color('gray')
@@ -176,7 +181,7 @@ class CallsDiariesResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('user')
+                SelectFilter::make('user')
                     ->label('משתמש')
                     ->native(false)
                     ->searchable()
@@ -187,8 +192,8 @@ class CallsDiariesResource extends Resource
                 DateRangeFilter::make('created_at')
                     ->label('תאריך')
                     ->placeholder('בחר תאריך'),
-                Tables\Filters\Filter::make('filters')
-                    ->form([
+                Filter::make('filters')
+                    ->schema([
                         TextInput::make('target_phone')
                             ->label('מספר שחוייג')
                     ])
@@ -200,8 +205,8 @@ class CallsDiariesResource extends Resource
                     })
             ])
             ->defaultSort('calls.created_at', 'desc')
-            ->actions([
-                Tables\Actions\Action::make('speaker-recording')
+            ->recordActions([
+                Action::make('speaker-recording')
                     ->iconButton()
                     ->icon('heroicon-o-speaker-wave')
                     ->modalWidth('lg')
@@ -211,8 +216,8 @@ class CallsDiariesResource extends Resource
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('סגור')
                     ->tooltip('הקלטת שיחה')
-                    ->infolist(fn (Infolist $infolist) => $infolist->schema([
-                        Split::make([
+                    ->schema(fn (Schema $schema) => $schema->components([
+                        Flex::make([
                             TextEntry::make('duration')
                                 ->label('משך הקלטה')
                                 ->formatStateUsing(fn (Call $call) => gmdate('H:i:s', $call->duration))
@@ -225,14 +230,14 @@ class CallsDiariesResource extends Resource
 
                         InfolistComponents\TextEntry::make('text_call')
                             ->label('טקסט שיחה')
-                            ->hintAction(InfolistComponents\Actions\Action::make('refresh_call_text')
+                            ->hintAction(Action::make('refresh_call_text')
                                 ->icon('heroicon-o-arrow-path')
                                 ->iconButton()
                                 ->tooltip('נתח מחדש את הטקסט של השיחה')
                                 ->color('gray')
                                 ->hidden(fn (Call $call) => $call->transcription)
                                 ->successNotificationTitle('ההקלטה נשלחה לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
-                                ->action(function (Call $call, Action|InfolistComponents\Actions\Action $action) {
+                                ->action(function (Call $call, Action $action) {
                                     TranscriptionCallJob::dispatch($call->id);
                                     $action->success();
                                 })
@@ -240,15 +245,15 @@ class CallsDiariesResource extends Resource
                             )
                             ->html()
                     ])),
-                Tables\Actions\Action::make('go-to-proposals')
-                    ->size(ActionSize::ExtraSmall)
+                Action::make('go-to-proposals')
+                    ->size(Size::ExtraSmall)
                     ->visible(fn (Call $record) => $record->getProposalContactsCount() > 0)
                     ->label('עבור להצעות')
                     ->badge(fn (Call $record) => $record->getProposalContactsCount())
                     ->url(fn (Call $record) => PersonResource::getUrl('proposals', ['record' => $record->getPersonContactId()]))
                     ->button(),
-                Tables\Actions\Action::make('add_proposal_diary')
-                    ->size(ActionSize::ExtraSmall)
+                Action::make('add_proposal_diary')
+                    ->size(Size::ExtraSmall)
                     ->visible(fn (Call $record) => $record->getProposalContactsCount() > 0)
                     ->label('הוסף יומן')
                     ->color(Color::Cyan)
@@ -291,25 +296,25 @@ class CallsDiariesResource extends Resource
                         Step::make('diary')
                             ->label('יומן')
                             ->columns(2)
-                            ->schema(fn (Get $get, Call $record) => ProposalResource\Pages\Diaries::getDiaryFormSchema(currentCall: $record, get: $get)),
+                            ->schema(fn (Get $get, Call $record) => Diaries::getDiaryFormSchema(currentCall: $record, get: $get)),
                     ])
                     ->button(),
-                Tables\Actions\Action::make('call')
-                    ->size(ActionSize::ExtraSmall)
+                Action::make('call')
+                    ->size(Size::ExtraSmall)
                     ->color('success')
                     ->icon('iconsax-bul-call')
                     ->label('חייג')
-                    ->modalWidth(MaxWidth::Large)
+                    ->modalWidth(Width::Large)
                     ->modalHeading(fn (Call $call) => $call->phoneModel ? null : 'יצירת מספר חדש וחיוג')
                     ->modalDescription(fn (Call $call) => $call->phoneModel ? null : "מס' הטלפון לא קיים במערכת, בחר איש קשר אליו יצורף המספר, כמו כן בחר את סוג המספר (אישי או ביתי).")
                     ->modalSubmitActionLabel('צור טלפון וחייג')
-                    ->form(function (Form $form, Call $call) {
+                    ->schema(function (Schema $schema, Call $call) {
 
                         if ($call->phoneModel) {
                             return null;
                         }
 
-                        return $form->schema([
+                        return $schema->components([
                             Cluster::make([
                                 Select::make('person')
                                     ->label('איש קשר')
@@ -328,8 +333,8 @@ class CallsDiariesResource extends Resource
                                         ->get()
                                         ->mapWithKeys(fn (Person $person) => [$person->id => $person->select_option_html])
                                     )
-                                    ->createOptionForm(function (Form $form) {
-                                        return $form->schema([
+                                    ->createOptionForm(function (Schema $schema) {
+                                        return $schema->components([
 
                                         ]);
                                     })
@@ -355,7 +360,7 @@ class CallsDiariesResource extends Resource
                                 ->columns(4),
                         ]);
                     })
-                    ->action(function (Call $call, $livewire, $data, Tables\Actions\Action $action) {
+                    ->action(function (Call $call, $livewire, $data, Action $action) {
 
                         $phone = $call->phoneModel;
 
@@ -387,7 +392,7 @@ class CallsDiariesResource extends Resource
                         $action->success();
                     })
                     ->button(),
-                    Tables\Actions\Action::make('diary_2')
+                    Action::make('diary_2')
                         ->visible(fn (Call $call) => $call->phoneModel)
                         ->tooltip('כרטיס שיחה')
                         ->iconButton()
@@ -412,7 +417,7 @@ class CallsDiariesResource extends Resource
                 </div>
             </div>
                          */
-                        ->modalHeading(fn (Call $call) => str(\Blade::render('<div class="flex items-center gap-2">
+                        ->modalHeading(fn (Call $call) => str(Blade::render('<div class="flex items-center gap-2">
                             <div class="flex-shrink flex items-center">
                                 <div
                                  @class(["rounded-full flex justify-center p-1 items-center", "bg-success-100" => !$call->finished_at,  "bg-red-100" => $call->finished_at])
@@ -429,13 +434,13 @@ class CallsDiariesResource extends Resource
                                 </p>
                             </div>
                         </div>', ['call' => $call]))->toHtmlString())
-                        ->modalContent(fn (Call $call) => str(\Blade::render('<livewire:active-call-drawer :hidden-header="true" :current-call="$call" :key="$call->id" />', ['call' => $call]))->toHtmlString())
+                        ->modalContent(fn (Call $call) => str(Blade::render('<livewire:active-call-drawer :hidden-header="true" :current-call="$call" :key="$call->id" />', ['call' => $call]))->toHtmlString())
                 //                Tables\Actions\EditAction::make(),
             ])
 //            ->contentGrid([
 //                'sm' => 1
 //            ])
-            ->bulkActions([
+            ->toolbarActions([
                 //                Tables\Actions\BulkActionGroup::make([
                 //                    Tables\Actions\DeleteBulkAction::make(),
                 //                ]),
@@ -452,7 +457,7 @@ class CallsDiariesResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCallsDiaries::route('/'),
+            'index' => ListCallsDiaries::route('/'),
         ];
     }
 }

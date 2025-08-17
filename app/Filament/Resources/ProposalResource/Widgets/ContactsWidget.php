@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ProposalResource\Widgets;
 
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use App\Filament\Actions\Call;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Tables;
@@ -28,14 +30,14 @@ class ContactsWidget extends BaseWidget
         };
     }
 
-    public function table(Tables\Table $table): Tables\Table
+    public function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('full_name')->label('שם מלא'),
-                Tables\Columns\TextColumn::make('pivot.type')->label('תיאור הקשר'),
+                TextColumn::make('full_name')->label('שם מלא'),
+                TextColumn::make('pivot.type')->label('תיאור הקשר'),
             ])
-            ->actions([
+            ->recordActions([
                 Call::tableActionDefaultPhone($this->getOwnerRecord(), $this->side),
                 Call::tableAction($this->getOwnerRecord(), $this->side),
             ])

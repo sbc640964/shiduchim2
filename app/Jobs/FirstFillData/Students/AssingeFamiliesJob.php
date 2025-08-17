@@ -2,6 +2,7 @@
 
 namespace App\Jobs\FirstFillData\Students;
 
+use DB;
 use App\Jobs\FirstFillData\AbstractToBatchJob;
 use App\Models\Family;
 use App\Models\Person;
@@ -17,7 +18,7 @@ class AssingeFamiliesJob extends AbstractToBatchJob implements ShouldQueue
             ->groupBy('data_raw.spouse')
             ->filter(fn ($t) => $t->count() === 2);
 
-        \DB::transaction(function () use ($people) {
+        DB::transaction(function () use ($people) {
 
             $personFamilies = [];
 

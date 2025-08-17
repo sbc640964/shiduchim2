@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use Number;
 use App\Filament\Resources\StudentResource\Pages\Subscription;
 use App\Models\Payment;
 use App\Models\Subscriber;
@@ -13,7 +14,7 @@ class TodayPayments extends BaseWidget
 
     protected static ?int $sort = -200;
 
-    protected static ?string $pollingInterval = null;
+    protected ?string $pollingInterval = null;
 
     public static function canView(): bool
     {
@@ -33,10 +34,10 @@ class TodayPayments extends BaseWidget
             ->sum('amount');
 
         return [
-            Stat::make('תשלומים היום', \Number::format($pay,2, locale: 'he'))
+            Stat::make('תשלומים היום', Number::format($pay,2, locale: 'he'))
                 ->color($pay < $notPay ? 'danger' : 'success')
                 ->icon('heroicon-o-currency-dollar')
-                ->description('תשלומים שלא בוצעו היום: ' . \Number::format($notPay, 2, locale: 'he'))
+                ->description('תשלומים שלא בוצעו היום: ' . Number::format($notPay, 2, locale: 'he'))
         ];
     }
 }

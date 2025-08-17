@@ -2,13 +2,19 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\RichEditor;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Textarea;
 use App\Events\MessageCreatedEvent;
 use App\Models\Discussion;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Forms\Components;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -25,7 +31,7 @@ class Inbox extends Page
 
     protected static ?string $title = 'תיבת הודעות';
 
-    protected static string $view = 'filament.pages.inbox';
+    protected string $view = 'filament.pages.inbox';
 
     #[Url]
     public ?int $discussion = null;
@@ -78,10 +84,10 @@ class Inbox extends Page
 
                     $action->success();
                 })
-                ->form(fn (Form $form) =>
-                    $form
-                        ->schema([
-                            Components\Select::make('users')
+                ->schema(fn (Schema $schema) =>
+                    $schema
+                        ->components([
+                            Select::make('users')
                                 ->label('נמענים')
                                 ->options(
                                     User::all()->mapWithKeys(fn ($user) => [$user->id => $user->name])
@@ -90,21 +96,21 @@ class Inbox extends Page
                                 ->searchable()
                                 ->required()
                                 ->placeholder('בחר נמען'),
-                            Components\RichEditor::make('content')
+                            RichEditor::make('content')
                                 ->label('תוכן ההודעה')
                                 ->required()
                                 ->placeholder('הקלד כאן את תוכן ההודעה'),
 
-                            Components\TextInput::make('title')
+                            TextInput::make('title')
                                 ->label('כותרת')
                                 ->placeholder('הקלד כאן את כותרת ההודעה'),
 
-                            Components\Fieldset::make('הודעות מנהל')
+                            Fieldset::make('הודעות מנהל')
                                 ->visible(fn () => auth()->user()->can('allowed_send_messages'))
                                 ->schema([
-                                    Components\Checkbox::make('is_popup')
+                                    Checkbox::make('is_popup')
                                         ->label('הודעה קופצת'),
-                                    Components\FileUpload::make('image_hero')
+                                    FileUpload::make('image_hero')
                                         ->label('תמונה')
                                         ->image()
                                         ->maxFiles(1)
@@ -192,19 +198,19 @@ class Inbox extends Page
         ];
     }
 
-    public function answerForm(\Filament\Forms\Form $form): Form
+    public function answerForm(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->statePath('answerData')
-            ->schema([
-            \Filament\Forms\Components\RichEditor::make('rich_content')
+            ->components([
+            RichEditor::make('rich_content')
                 ->label('תוכן ההודעה')
                 ->visible(fn () => $this->answerData['mode'] === 'rich')
                 ->required()
                 ->autofocus()
                 ->hintAction($this->toggleModeContentAction())
                 ->placeholder('הקלד כאן את תוכן ההודעה'),
-            \Filament\Forms\Components\Textarea::make('content')
+            Textarea::make('content')
                 ->label('תוכן ההודעה')
                 ->hintAction($this->toggleModeContentAction())
                 ->visible(fn () => $this->answerData['mode'] === 'normal')
@@ -218,7 +224,7 @@ class Inbox extends Page
 
     public function toggleModeContentAction()
     {
-        return \Filament\Forms\Components\Actions\Action::make('normal')
+        return Action::make('normal')
             ->label(fn () => $this->answerData['mode'] === 'normal' ? 'עבור לעורך עשיר' : 'עבור לעורך פשוט')
             ->visible(auth()->user()->can('write_rich_messages'))
             ->action(fn () => $this->answerData['mode'] = $this->answerData['mode'] === 'normal' ? 'rich' : 'normal');

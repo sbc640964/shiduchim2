@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Log;
 use App\Services\Nedarim;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -84,7 +85,7 @@ class Payment extends Model
 
         if($result->status() !== 200) {
             $numberError = rand(1000, 9999);
-            \Log::error("Failed to cancel transaction ($numberError)", [
+            Log::error("Failed to cancel transaction ($numberError)", [
                 'action' => 'cancel transaction',
                 'request_session' => request(),
                 'transaction_id' => $this->transaction_id,

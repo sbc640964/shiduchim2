@@ -2,11 +2,21 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\AttachAction;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Proposal;
 use Carbon\Carbon;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,7 +27,7 @@ class UserAssignmentManagement extends ManageRelatedRecords
 
     protected static string $relationship = 'users';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-security-safe';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-security-safe';
 
     protected static ?string $title = 'הקצאת משתמשים';
 
@@ -34,11 +44,11 @@ class UserAssignmentManagement extends ManageRelatedRecords
         return $record && $record->userCanAccess();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -49,8 +59,8 @@ class UserAssignmentManagement extends ManageRelatedRecords
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name'),
-                Tables\Columns\TextColumn::make('pivot.timeout')
+                TextColumn::make('name'),
+                TextColumn::make('pivot.timeout')
                     ->state(fn ($record) => $record->pivot->timeout ? Carbon::parse($record->pivot->timeout)->format('d/m/Y בשעה H:i') : 'לא מוגבל')
                     ->default('לא מוגבל')
                     ->label('סיום הרשאה'),
@@ -59,12 +69,12 @@ class UserAssignmentManagement extends ManageRelatedRecords
                 //
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
+                AttachAction::make()
                     ->label('הוסף משתמש')
                     ->modalHeading('הוספת משתמשים'),
             ])
-            ->actions([
-                Tables\Actions\Action::make('edit-timeout')
+            ->recordActions([
+                Action::make('edit-timeout')
                     ->icon('iconsax-bul-timer-1')
                     ->iconButton()
                     ->color('gray')
@@ -76,17 +86,17 @@ class UserAssignmentManagement extends ManageRelatedRecords
                     })
                     ->modalWidth('sm')
                     ->modalHeading('הגבל זמן')
-                    ->form(function (Form $form) {
-                        return $form->schema([
-                            Forms\Components\DateTimePicker::make('timeout')
+                    ->schema(function (Schema $schema) {
+                        return $schema->components([
+                            DateTimePicker::make('timeout')
                                 ->label('סיום הרשאה')
                                 ->live()
                                 ->displayFormat('d/m/Y בשעה H:i')
                                 ->placeholder('ללא הגבלת זמן')
-                                ->hintAction(Forms\Components\Actions\Action::make('clear-timeout')
+                                ->hintAction(Action::make('clear-timeout')
                                     ->label('ללא הגבלת זמן')
-                                    ->visible(fn (Forms\Get $get) => $get('timeout') !== null)
-                                    ->action(fn (Forms\Set $set) => $set('timeout', null))
+                                    ->visible(fn (Get $get) => $get('timeout') !== null)
+                                    ->action(fn (Set $set) => $set('timeout', null))
                                     ->color('gray')
                                 )
                                 ->minDate(now()->addMinutes(1))
@@ -94,13 +104,13 @@ class UserAssignmentManagement extends ManageRelatedRecords
                         ]);
                     })
                     ->action(fn ($record, $data) => $record->pivot->update($data)),
-                Tables\Actions\DetachAction::make()
+                DetachAction::make()
                     ->tooltip('הסר משתמש')
                     ->iconButton(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

@@ -2,6 +2,24 @@
 
 namespace App\Filament\Resources\StudentResource\Forms;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Hidden;
+use Filament\Schemas\Components\View;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Placeholder;
+use Blade;
+use Filament\Forms\Components\SpatieTagsInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Repeater;
+use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\FileUpload;
 use App\Filament\Resources\StudentResource\Pages\AddProposal;
 use App\Models\City;
 use App\Models\Family;
@@ -10,30 +28,26 @@ use App\Models\School;
 use Carbon\Carbon;
 use Filament\Forms\Components;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Infolists\Components\KeyValueEntry;
-use Filament\Infolists\Infolist;
 use Illuminate\Support\HtmlString;
 
 class CreateForm
 {
-    public function __invoke(Form $form): Form
+    public function __invoke(Schema $schema): Schema
     {
-        $isModal = $form->getLivewire()::class === AddProposal::class;
+        $isModal = $schema->getLivewire()::class === AddProposal::class;
 
-        return $form->schema([
-            Components\Grid::make($isModal ? 2 : 3)
+        return $schema->components([
+            Grid::make($isModal ? 2 : 3)
                 ->schema([
-                    Components\Grid::make(1)
+                    Grid::make(1)
                         ->columnSpan(2)
                         ->schema([
                             $this->getPersonalDetails(),
 //                            $this->getSchoolDetails(),
                             $this->getParentsDetails(),
                         ]),
-                    Components\Grid::make(1)
+                    Grid::make(1)
                         ->columnSpan(1)
                         ->schema($this->getStatus()),
                 ]),
@@ -42,18 +56,18 @@ class CreateForm
 
     private function getPersonalDetails()
     {
-        return Components\Section::make('פרטים אישיים')
+        return Section::make('פרטים אישיים')
             ->headerActions([
-                Components\Actions\Action::make('data-raw')
+                Action::make('data-raw')
                     ->visible(fn ($record) => $record?->exists)
                     ->label('נתונים גולמיים מיבוא')
                     ->link()
                     ->modalSubmitAction(false)
                     ->action(fn () => null)
-                    ->infolist(function (Infolist $infolist, $record) {
-                        return $infolist
+                    ->schema(function (Schema $schema, $record) {
+                        return $schema
                             ->record($record)
-                            ->schema([
+                            ->components([
                                 KeyValueEntry::make('data_raw'),
                             ]);
                     }),
@@ -62,7 +76,7 @@ class CreateForm
             ->columns(2)
             ->inlineLabel()
             ->schema(fn (?Person $record = null) => [
-                Components\Select::make('gender')
+                Select::make('gender')
                     ->label('מין')
                     ->options(
                         [
@@ -101,26 +115,26 @@ class CreateForm
                     }),
 
                 //Fields that will be hidden and will be updated by the family selection
-                Components\Hidden::make('father_id')->nullable(),
-                Components\Hidden::make('mother_id')->nullable(),
+                Hidden::make('father_id')->nullable(),
+                Hidden::make('mother_id')->nullable(),
 
-                Components\View::make('divider')->columnSpan(2),
+                View::make('divider')->columnSpan(2),
 
-                Components\TextInput::make('last_name')
+                TextInput::make('last_name')
                     ->label('שם משפחה')
                     ->helperText('שם המשפחה מושפע משם משפחת ההורים')
                     ->readOnly()
                     ->string()
                     ->required(),
 
-                Components\TextInput::make('first_name')
+                TextInput::make('first_name')
                     ->label('שם פרטי')
                     ->string()
                     ->required(),
 
-                Components\View::make('divider')->columnSpan(2),
+                View::make('divider')->columnSpan(2),
 
-                Components\DatePicker::make('born_at')
+                DatePicker::make('born_at')
                     ->label('תאריך לידה')
                     ->live()
                     ->helperText(fn (Get $get) => Carbon::parse($get('born_at'))->hebcal()->hebrewDate(withQuotes: true))
@@ -137,7 +151,7 @@ class CreateForm
 
     private function getSchoolDetails()
     {
-        return Components\Section::make('פרטי מוסדות לימוד')
+        return Section::make('פרטי מוסדות לימוד')
             ->columns(2)
             ->collapsed()
             ->schema([
@@ -149,18 +163,18 @@ class CreateForm
                     ->preload()
                     ->searchable(),
 
-                Components\Grid::make(2)
+                Grid::make(2)
                     ->columnSpan(1)
                     ->schema([
-                        Components\TextInput::make('class')
+                        TextInput::make('class')
                             ->label('כיתה')
                             ->string(),
 
-                        Components\TextInput::make('class_serial_in_school')
+                        TextInput::make('class_serial_in_school')
                             ->label("מס' כיתה"),
                     ]),
 
-                Components\View::make('divider')->columnSpan(2),
+                View::make('divider')->columnSpan(2),
 
                 Select::make('prev_school_id')
                     ->relationship('prevSchool', 'name', function ($query, Get $get, $state) {
@@ -198,26 +212,26 @@ class CreateForm
 
     private function getParentsDetails()
     {
-        return Components\Section::make('פרטי משפחה')
+        return Section::make('פרטי משפחה')
             ->columns(2)
             ->description(str('פרטי ההורים יוצגו על פי המשפחה שנבחרה <b class="text-danger-600">***ויעודכנו במקור***</b>')->toHtmlString())
             ->schema(function (Get $get, ?Person $record = null) {
                 $parentFamily = ($record?->parentsFamily ?? tap($get('parent_family_id'), fn ($value) => Person::find($value)));
 
                 return $parentFamily ? [
-                    Components\TextInput::make('father_first_name')
+                    TextInput::make('father_first_name')
                         ->formatStateUsing(fn (Person $record) => $parentFamily?->husband?->first_name)
                         ->label('שם האב'),
 
-                    Components\TextInput::make('mother_first_name')
+                    TextInput::make('mother_first_name')
                         ->formatStateUsing(fn (Person $record) => $parentFamily?->wife?->first_name)
                         ->label('שם האם'),
 
-                    Components\TextInput::make('family_address')
+                    TextInput::make('family_address')
                         ->formatStateUsing(fn (Person $record) => $parentFamily?->address)
                         ->label('כתובת'),
 
-                    Components\Select::make('family_city_id')
+                    Select::make('family_city_id')
                         ->options(City::orderBy('name')->get()->pluck('name', 'id'))
                         ->native(false)
                         ->searchable()
@@ -225,7 +239,7 @@ class CreateForm
                         ->formatStateUsing(fn (Person $record) => $parentFamily?->city?->id)
                         ->label('עיר'),
 
-                    Components\Select::make('father_synagogue_id')
+                    Select::make('father_synagogue_id')
                         ->native(false)
                         ->options(School::with('city')
                             ->orderBy('name')
@@ -240,9 +254,9 @@ class CreateForm
                         ->preload()
                         ->label('בית כנסת'),
                 ] : [
-                    Components\Placeholder::make('empty')
+                    Placeholder::make('empty')
                         ->hiddenLabel()
-                        ->content( new HtmlString(\Blade::render(
+                        ->content( new HtmlString(Blade::render(
                             <<<'Blade'
                             <div class="text-center text-gray-400 py-6 flex justify-center flex-col items-center">
                                 <div class="text-9xl opacity-35">
@@ -260,25 +274,25 @@ Blade
     private function getStatus(): array
     {
         return [
-            Components\Section::make('מזהים חיצוניים')
+            Section::make('מזהים חיצוניים')
                 ->columns(2)
                 ->schema([
                     Person::externalCodeColumn(),
                     Person::externalCodeColumn('external_code_students', 'קוד תלמיד חיצוני'),
                 ]),
 
-            Components\Section::make('נתונים נוספים')
+            Section::make('נתונים נוספים')
                 ->columns(1)
                 ->schema([
-                    Components\SpatieTagsInput::make('tags')
+                    SpatieTagsInput::make('tags')
                         ->type(Person::studentTagsKey())
                         ->label('תגיות')
                         ->placeholder('הכנס תגיות')
                         ->helperText('הכנס תגיות כדי לסייע בחיפוש ובסינון'),
-                    Components\Textarea::make('info')
+                    Textarea::make('info')
                         ->label('הערות')
                         ->string(),
-                    Components\Textarea::make('info_private.user_'.auth()->id())
+                    Textarea::make('info_private.user_'.auth()->id())
                         ->extraAttributes([
                             'class' => 'bg-red-50'
                         ])
@@ -287,10 +301,10 @@ Blade
                         ->string(),
                 ]),
 
-            Components\Section::make('קבצים')
+            Section::make('קבצים')
                 ->columns(1)
                 ->schema([
-                    Components\Repeater::make('files')
+                    Repeater::make('files')
                         ->label('קבצים')
                         ->addActionLabel('הוסף קובץ')
                         ->itemLabel(fn (array $state) => $state['name'])
@@ -308,17 +322,17 @@ Blade
                             //                            },
                         ])
                         ->schema([
-                            Components\Split::make([
-                                Components\Group::make([
-                                    Components\TextInput::make('name')
+                            Flex::make([
+                                Group::make([
+                                    TextInput::make('name')
                                         ->label('שם')
                                         ->string()
                                         ->required(),
-                                    Components\Textarea::make('description')
+                                    Textarea::make('description')
                                         ->label('תיאור')
                                         ->string(),
                                 ]),
-                                Components\FileUpload::make('path')
+                                FileUpload::make('path')
                                     ->directory('students-images')
                                     ->label('קובץ')
                                     ->imageEditor()

@@ -2,6 +2,8 @@
 
 namespace App\Models\Traits;
 
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\Action;
 use App\Filament\Resources\PersonResource\Pages\EditPerson;
 use App\Models\Person;
 use Filament\Forms;
@@ -10,12 +12,12 @@ trait HasPersonFormFields
 {
     public static function externalCodeColumn(?string $column = 'external_code', ?string $label = 'קוד איחוד')
     {
-        return Forms\Components\TextInput::make($column)
+        return TextInput::make($column)
             ->readOnlyOn('edit')
             ->unique('people', $column, fn (Person $person) => $person)
             ->helperText(fn (?Person $record) => $record?->exists ? 'לשינוי הקוד יש ללחוץ על אייקון העריכה.' : null)
             ->suffixAction(
-                Forms\Components\Actions\Action::make('edit_id_' . $column)
+                Action::make('edit_id_' . $column)
                     ->hidden(fn (?Person $record) => !$record?->exists)
                     ->icon('heroicon-o-pencil')
                     ->label('')
@@ -30,8 +32,8 @@ trait HasPersonFormFields
                         ]);
                         $livewire->mount($record->id);
                     })
-                    ->form([
-                        Forms\Components\TextInput::make($column)
+                    ->schema([
+                        TextInput::make($column)
                             ->label($label)
                             ->unique('people', $column, fn (Person $person) => $person),
                     ])

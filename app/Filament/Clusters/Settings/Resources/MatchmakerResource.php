@@ -2,6 +2,13 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\Settings\Resources\MatchmakerResource\Pages\ListMatchmakers;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\MatchmakerResource\Pages;
 use App\Models\Matchmaker;
@@ -9,7 +16,6 @@ use App\Models\Person;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,7 +24,7 @@ class MatchmakerResource extends Resource
 {
     protected static ?string $model = Matchmaker::class;
 
-    protected static ?string $navigationIcon = 'iconsax-bul-music-play';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-music-play';
 
     protected static ?string $cluster = Settings::class;
 
@@ -26,11 +32,11 @@ class MatchmakerResource extends Resource
 
     protected static ?string $pluralLabel = 'שדכנים';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
+            ->components([
                 Hidden::make('created_by')
                     ->default(auth()->id())
                     ->required(),
@@ -62,34 +68,34 @@ class MatchmakerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\IconColumn::make('active')
+                IconColumn::make('active')
                     ->label('')
                     ->width('40px'),
-                Tables\Columns\TextColumn::make('person.full_name')
+                TextColumn::make('person.full_name')
                     ->label('שם מלא')
                     ->searchable(['first_name', 'last_name'])
                     ->sortable(),
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->label('טלפון')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('level')
+                TextColumn::make('level')
                     ->label('רמה')
                     ->sortable(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->tooltip('עריכה')
                     ->icon('iconsax-bul-edit-2')
                     ->iconButton()
                     ->modalWidth('sm'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -104,7 +110,7 @@ class MatchmakerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMatchmakers::route('/'),
+            'index' => ListMatchmakers::route('/'),
             //            'create' => Pages\CreateMatchmaker::route('/create'),
             //            'edit' => Pages\EditMatchmaker::route('/{record}/edit'),
         ];

@@ -2,9 +2,9 @@
 
 namespace App\Filament\Clusters\Settings\Resources\WebhookEnrtyResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\Settings\Resources\WebhookEntryResource;
 use Filament\Actions;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Tables\Columns\TextColumn;
 use App\Filament\Resources\StudentResource;
 use App\Models\Person;
 use App\Models\Proposal;
@@ -98,11 +99,11 @@ class GoldListWidget extends BaseWidget
             )
             ->recordClasses(fn (Subscriber $record) => $record->work_day === (now()->weekday() + 1) ? 'bg-green-50' : '')
             ->columns([
-                Columns\TextColumn::make('matchmaker.name')
+                TextColumn::make('matchmaker.name')
                     ->label('שדכן')
                     ->visible(auth()->user()->can('manage_reports'))
                     ->sortable(),
-                Columns\TextColumn::make('work_day')
+                TextColumn::make('work_day')
                     ->label('יום')
                     ->badge()
                     ->color(fn (Subscriber $record) => $record->work_day === (now()->weekday() + 1) ? 'success' : Color::Sky)
@@ -120,11 +121,11 @@ class GoldListWidget extends BaseWidget
                     })
                     ->searchable()
                     ->sortable(),
-                Columns\TextColumn::make('student.full_name')
+                TextColumn::make('student.full_name')
                     ->label('שם מלא')
                     ->searchable(['last_name', 'first_name'])
                     ->sortable(['last_name', 'first_name']),
-                Columns\TextColumn::make('last_proposal')
+                TextColumn::make('last_proposal')
                     ->dateTimeTooltip()
                     ->icon('heroicon-s-clock')
                     ->iconColor(function ($state) {
@@ -135,7 +136,7 @@ class GoldListWidget extends BaseWidget
                         return $state ? Carbon::make($state)->diffForHumans(): '---';
                     })
                     ->label('יצירת הצעה אחרונה'),
-                Columns\TextColumn::make('last_call')
+                TextColumn::make('last_call')
                     ->dateTimeTooltip()
                     ->icon('heroicon-s-clock')
                     ->iconColor(function ($state) {
@@ -146,7 +147,7 @@ class GoldListWidget extends BaseWidget
                     })
                     ->sortable()
                     ->label('שיחה אחרונה'),
-                Columns\TextColumn::make('work_month')
+                TextColumn::make('work_month')
 //                    ->formatStateUsing(function (Subscriber $record) {
 //                        return $record->payments - $record->balance_payments;
 //                    })

@@ -2,6 +2,7 @@
 
 namespace app\Filament\Clusters\Settings\Resources\FormResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use app\Filament\Clusters\Settings\Resources\FormResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditForm extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

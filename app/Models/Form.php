@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use Filament\Infolists\Components\Entry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Schema;
 use Filament\Actions\Action as Action;
 use Filament\Actions\ActionGroup as ActionGroup;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form as FilamentForm;
 use Filament\Infolists\Components\KeyValueEntry;
-use Filament\Infolists\Infolist;
-use Filament\Tables\Actions\Action as TableAction;
-use Filament\Tables\Actions\ActionGroup as TableActionGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -40,14 +44,14 @@ class Form extends Model
         })->filter()->toArray();
     }
 
-    public static function generateEntryInfolist(array $field): ?\Filament\Infolists\Components\Entry
+    public static function generateEntryInfolist(array $field): ?Entry
     {
         if (empty($field['type']) || empty($field['label'])) {
             return null;
         }
 
         $fieldInfolist = match ($field['type']) {
-            default => \Filament\Infolists\Components\TextEntry::class,
+            default => TextEntry::class,
         };
 
         $fieldInfolist = $fieldInfolist::make($field['label'])
@@ -60,7 +64,7 @@ class Form extends Model
     public static function getFormFields(Form $form): array
     {
         return [
-            \Filament\Forms\Components\Group::make([
+            Group::make([
                 ...collect($form->fields)->map(function ($field) {
                     return static::generateField($field);
                 })->filter()->toArray(),
@@ -76,12 +80,12 @@ class Form extends Model
         }
 
         $fieldForm = match ($field['type']) {
-            'select' => \Filament\Forms\Components\Select::class,
-            'checkbox' => \Filament\Forms\Components\Checkbox::class,
-            'radio' => \Filament\Forms\Components\Radio::class,
-            'textarea' => \Filament\Forms\Components\Textarea::class,
-            'date', 'datetime' => \Filament\Forms\Components\DateTimePicker::class,
-            default => \Filament\Forms\Components\TextInput::class,
+            'select' => Select::class,
+            'checkbox' => Checkbox::class,
+            'radio' => Radio::class,
+            'textarea' => Textarea::class,
+            'date', 'datetime' => DateTimePicker::class,
+            default => TextInput::class,
         };
 
         return $fieldForm::make($field['label'])
@@ -106,11 +110,11 @@ class Form extends Model
      */
     public static function getActions(string $resource, ?string $type = null, ?bool $onGroup = false): array
     {
-        $type = $type ?? TableAction::class;
+        $type = $type ?? Action::class;
 
         $groupType = match ($type) {
             Action::class => ActionGroup::class,
-            default => TableActionGroup::class,
+            default => ActionGroup::class,
         };
 
         $forms = Form::where('resource', $resource)
@@ -142,7 +146,7 @@ class Form extends Model
                         })
                         ->when($actionConfig['_type'] === 'edit', function ($action) use ($formModel) {
                             $action
-                                ->form(fn (FilamentForm $form) => $form->schema(static::getFormFields($formModel)))
+                                ->form(fn (Schema $schema) => $schema->components(static::getFormFields($formModel)))
                                 ->action(function ($data, $record, $action) use ($formModel) {
                                     if (method_exists($record, 'entry')) {
                                         $record->entry()->create([
@@ -165,12 +169,12 @@ class Form extends Model
                                     return [];
                                 });
                         })
-                        ->when($actionConfig['_type'] === 'view', function (TableAction $action) {
+                        ->when($actionConfig['_type'] === 'view', function (Action $action) {
                             $action
-                                ->infolist(fn (Infolist $infolist, $record) => $infolist
+                                ->schema(fn (Schema $schema, $record) => $schema
 //                                    ->schema(static::getInfolistFields($formModel))
                                     ->record($record->entry ?? new FormEntry())
-                                    ->schema([
+                                    ->components([
                                         KeyValueEntry::make('data')
                                             ->hiddenLabel()
                                             ->keyLabel('מפתח')

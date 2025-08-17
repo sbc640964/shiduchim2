@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
 use App\Filament\Clusters\Settings\Resources\CallsDiariesResource;
 use App\Filament\Clusters\Settings\Resources\TimeSheetsResource;
@@ -10,6 +11,7 @@ use App\Filament\Widgets\GoldListWidget;
 use Awcodes\FilamentGravatar\GravatarPlugin;
 use Awcodes\FilamentGravatar\GravatarProvider;
 use Blade;
+use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
@@ -58,7 +60,7 @@ class FamiliesPanelProvider extends PanelProvider
             ->login()
             ->profile()
             ->maxContentWidth('full')
-            ->defaultAvatarProvider(GravatarProvider::class)
+//            ->defaultAvatarProvider(GravatarProvider::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -94,15 +96,15 @@ class FamiliesPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
-                GravatarPlugin::make()
-                    ->default('robohash')
-                    ->size(200),
-                BannerPlugin::make()
-                    ->disableBannerManager()
-                    ->persistsBannersInDatabase()
-                    ->bannerManagerAccessPermission('banner-manager')
-                    ->navigationLabel('באנרים'),
-                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
+//                GravatarPlugin::make()
+//                    ->default('robohash')
+//                    ->size(200),
+//                BannerPlugin::make()
+//                    ->disableBannerManager()
+//                    ->persistsBannersInDatabase()
+//                    ->bannerManagerAccessPermission('banner-manager')
+//                    ->navigationLabel('באנרים'),
+                FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,
                         'sm' => 2,
@@ -119,14 +121,14 @@ class FamiliesPanelProvider extends PanelProvider
                     ]),
                 //                    ->myProfile(),
 
-                FilamentFullCalendarPlugin::make()
-//                    ->schedulerLicenseKey()
-                    ->selectable()
-                    ->editable()
-//                    ->timezone()
-//                    ->locale()
-//                    ->plugins()
-//                    ->config()
+//                FilamentFullCalendarPlugin::make()
+////                    ->schedulerLicenseKey()
+//                    ->selectable()
+//                    ->editable()
+////                    ->timezone()
+////                    ->locale()
+////                    ->plugins()
+////                    ->config()
             ])
             ->bootUsing(function () {
                 Notifications::alignment(Alignment::Center);
@@ -150,12 +152,12 @@ class FamiliesPanelProvider extends PanelProvider
 //                return Blade::render('@livewire(\'active-call-drawer\')');
 //            })
             ->userMenuItems([
-                MenuItem::make()
+                Action::make('work_diary')
                     ->label('יומן שעות')
                     ->icon('iconsax-bul-clock-1')
                     ->url(fn (): string => TimeSheetsResource::getUrl()),
 
-                MenuItem::make()
+                Action::make('call_diary')
                     ->label('יומן שיחות')
                     ->icon('iconsax-bul-call')
                     ->url(fn (): string => CallsDiariesResource::getUrl()),

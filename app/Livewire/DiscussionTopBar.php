@@ -2,6 +2,9 @@
 
 namespace App\Livewire;
 
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Pages\Inbox;
 use App\Models\Discussion;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
@@ -21,7 +24,7 @@ class DiscussionTopBar extends Component
     }
 
     #[Computed]
-    public function getUnreadMessages(): \Illuminate\Database\Eloquent\Collection
+    public function getUnreadMessages(): Collection
     {
         return $this->getUnreadMessagesQuery()
             ->with('parent', 'user')
@@ -35,7 +38,7 @@ class DiscussionTopBar extends Component
         return $count > 0 ? $count : null;
     }
 
-    public function getUnreadMessagesQuery(): \Illuminate\Database\Eloquent\Builder
+    public function getUnreadMessagesQuery(): Builder
     {
         return Discussion::query()
             ->whereNotNull('parent_id')
@@ -64,6 +67,6 @@ class DiscussionTopBar extends Component
 
     public function openViewRoom($id): void
     {
-        $this->redirect(\App\Filament\Pages\Inbox::getUrl(['discussion' => $id]), navigate: true);
+        $this->redirect(Inbox::getUrl(['discussion' => $id]), navigate: true);
     }
 }

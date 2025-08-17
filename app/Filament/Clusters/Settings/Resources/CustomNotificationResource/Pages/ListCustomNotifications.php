@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Settings\Resources\CustomNotificationResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Clusters\Settings\Resources\CustomNotificationResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -13,7 +14,7 @@ class ListCustomNotifications extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->label('הוסף הודעה'),
         ];
     }

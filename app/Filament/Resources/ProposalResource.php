@@ -2,6 +2,32 @@
 
 namespace App\Filament\Resources;
 
+use Closure;
+use Filament\Schemas\Components\FusedGroup;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Filters\Filter;
+use App\Filament\Resources\ProposalResource\Pages\ListProposals;
+use Filament\Schemas\Components\Group;
+use View;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkAction;
+use Filament\Support\Enums\Width;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use App\Filament\Resources\ProposalResource\Pages\EditProposal;
+use App\Filament\Resources\ProposalResource\Pages\ViewProposal;
+use App\Filament\Resources\ProposalResource\Pages\Family;
+use App\Filament\Resources\ProposalResource\Pages\ManageContacts;
+use App\Filament\Resources\ProposalResource\Pages\ManageFiles;
+use App\Filament\Resources\ProposalResource\Pages\Schools;
+use App\Filament\Resources\ProposalResource\Pages\UserAssignmentManagement;
+use Filament\Tables\Columns\ViewColumn;
+use Filament\Forms\Components\DatePicker;
+use Throwable;
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use App\Filament\Resources\ProposalResource\Pages;
 use App\Filament\Resources\ProposalResource\Pages\Diaries;
@@ -14,24 +40,16 @@ use App\Models\SettingOld as Setting;
 use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Navigation\NavigationGroup;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\MaxWidth;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Actions\DeleteAction as TableDeleteAction;
 use Filament\Tables\Columns;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters;
 use Filament\Tables\Table;
-use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -48,7 +66,7 @@ class ProposalResource extends Resource
 
     protected static ?string $pluralLabel = 'הצעות';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-lamp-charge';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-lamp-charge';
 
     protected static ?string $recordTitleAttribute = 'families_names';
 
@@ -66,16 +84,16 @@ class ProposalResource extends Resource
             );
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Textarea::make('not')
+        return $schema->components([
+            Textarea::make('not')
                 ->label('הערה'),
 
-            Forms\Components\Section::make('מתקדם')
+            Section::make('מתקדם')
                 ->collapsed()
                 ->schema([
-                    Forms\Components\Select::make('offered_by')
+                    Select::make('offered_by')
                         ->label('מציע')
                         ->relationship('offeredBy', modifyQueryUsing: fn (Builder $query) => $query->orderBy('first_name')->orderBy('last_name'))
                         ->getOptionLabelFromRecordUsing(fn (Person $record) => $record->full_name)
@@ -91,7 +109,7 @@ class ProposalResource extends Resource
     {
         return $table
             ->filters([
-                Filters\Filter::make('show-finished')
+                Filter::make('show-finished')
                     ->label('הצג הצעות סגורות')
                     ->toggle()
                     ->baseQuery(function (Builder $query, array $data) {
@@ -99,7 +117,7 @@ class ProposalResource extends Resource
                             ->withoutGlobalScope('withoutClosed')
                         );
                     }),
-                Filters\Filter::make('shares-proposals')
+                Filter::make('shares-proposals')
                     ->label('הצג רק שיתופי פעולה')
                     ->toggle()
                     ->baseQuery(function (Builder $query, array $data) {
@@ -112,16 +130,16 @@ class ProposalResource extends Resource
                             })
                         );
                     }),
-                Filters\Filter::make('show-hidden')
+                Filter::make('show-hidden')
                     ->label('הצג הצעות מוסתרות')
                     ->toggle()
-                    ->default(fn ($livewire) => ! ( $livewire instanceof Pages\ListProposals ))
+                    ->default(fn ($livewire) => ! ( $livewire instanceof ListProposals ))
                     ->baseQuery(function (Builder $query, array $data) {
                         return $query->when($data['isActive'] ?? false, fn (Builder $query) => $query
                             ->withoutGlobalScope('withoutHidden')
                         );
                     }),
-                Filters\Filter::make('f')
+                Filter::make('f')
                     ->columnSpanFull()
                     ->columns(1)
                     ->query(function (Builder $query, array $data) {
@@ -163,16 +181,16 @@ class ProposalResource extends Resource
                                 ->searchNameInPeople($data['girl'], 'G')
                             );
                     })
-                    ->form([
+                    ->schema([
                         Group::make([
-                            Cluster::make([
-                                Forms\Components\Select::make('status')
+                            FusedGroup::make([
+                                Select::make('status')
                                     ->columnSpan(2)
                                     ->multiple()
                                     ->options(collect(Setting::find('statuses_proposal')?->value ?? [])
                                         ->mapWithKeys(function ($status) {
                                             return [
-                                                $status['name'] => \View::make('components.status-option-in-select', [
+                                                $status['name'] => View::make('components.status-option-in-select', [
                                                     'status' => $status,
                                                 ])->render(),
                                             ];
@@ -182,7 +200,7 @@ class ProposalResource extends Resource
                                     ->searchable()
                                     ->allowHtml()
                                     ->label('סטטוס הצעה'),
-                                Forms\Components\Select::make('mode')
+                                Select::make('mode')
                                     ->native(false)
                                     ->selectablePlaceholder(false)
                                     ->default('show')
@@ -194,17 +212,17 @@ class ProposalResource extends Resource
                                 ->label('סטטוס הצעה')
                                 ->columns(3),
 
-                            Cluster::make([
+                            FusedGroup::make([
                                 TextInput::make('guy')
                                     ->placeholder('שם בחור')
                                     ->columnSpan(4)
                                     ->label('בחור'),
-                                Forms\Components\Select::make('status_guy')
+                                Select::make('status_guy')
                                     ->multiple()
                                     ->options(collect(Setting::find('statuses_proposal_person')?->value ?? [])
                                         ->mapWithKeys(function ($status) {
                                             return [
-                                                $status['name'] => \View::make('components.status-option-in-select', [
+                                                $status['name'] => View::make('components.status-option-in-select', [
                                                     'status' => $status,
                                                 ])->render(),
                                             ];
@@ -216,7 +234,7 @@ class ProposalResource extends Resource
                                     ->searchable()
                                     ->allowHtml()
                                     ->label('סטטוס הצעה'),
-                                Forms\Components\Select::make('mode_guy')
+                                Select::make('mode_guy')
                                     ->native(false)
                                     ->selectablePlaceholder(false)
                                     ->default('show')
@@ -229,18 +247,18 @@ class ProposalResource extends Resource
                                 ->columnSpan(2)
                                 ->label('בחור'),
 
-                            Cluster::make([
+                            FusedGroup::make([
                                 TextInput::make('girl')
                                     ->columnSpan(4)
                                     ->placeholder('שם בחורה')
                                     ->label('בחורה'),
-                                Forms\Components\Select::make('status_girl')
+                                Select::make('status_girl')
                                     ->multiple()
                                     ->columnSpan(2)
                                     ->options(collect(Setting::find('statuses_proposal_person')?->value ?? [])
                                         ->mapWithKeys(function ($status) {
                                             return [
-                                                $status['name'] => \View::make('components.status-option-in-select', [
+                                                $status['name'] => View::make('components.status-option-in-select', [
                                                     'status' => $status,
                                                 ])->render(),
                                             ];
@@ -251,7 +269,7 @@ class ProposalResource extends Resource
                                     ->searchable()
                                     ->allowHtml()
                                     ->label('סטטוס הצעה'),
-                                Forms\Components\Select::make('mode_girl')
+                                Select::make('mode_girl')
                                     ->native(false)
                                     ->selectablePlaceholder(false)
                                     ->default('show')
@@ -264,12 +282,12 @@ class ProposalResource extends Resource
                                 ->columns(7)
                                 ->label('בחורה'),
 
-                            Forms\Components\Select::make('city')
+                            Select::make('city')
                                 ->label('עיר')
                                 ->multiple()
                                 ->options(City::orderBy('name')->pluck('name', 'id')),
 
-                            Forms\Components\Select::make('synagogue')
+                            Select::make('synagogue')
                                 ->native(false)
                                 ->options(School::with('city')
                                     ->orderBy('name')
@@ -281,7 +299,7 @@ class ProposalResource extends Resource
                                 ->preload()
                                 ->label('בית כנסת'),
 
-                            Forms\Components\Select::make('school')
+                            Select::make('school')
                                 ->native(false)
                                 ->options(School::with('city')
                                     ->orderBy('name')
@@ -300,13 +318,13 @@ class ProposalResource extends Resource
                                 ->firstDayOfWeek(0)
                                 ->format('d/m/Y'),
 
-                            Forms\Components\Select::make('matchmaker')
+                            Select::make('matchmaker')
                                 ->visible(fn () => auth()->user()?->canAccessAllTimeSheets())
                                 ->label('שדכן')
                                 ->options(User::whereRelation('roles', 'name', config('app.matchmaker_role_name'))->pluck('name', 'id'))
                                 ->searchable(),
 
-                        ])->columns(6)->hiddenLabel(),
+                        ])->columns(6),
                     ]),
 
             ], FiltersLayout::AboveContent);
@@ -321,7 +339,7 @@ class ProposalResource extends Resource
             )'))
             ->paginationPageOptions([10, 50, 100, 200])
 //            ->contentGrid([1])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
                     static::getAddDiaryAction(),
                     static::getAddDiaryAction('guy'),
@@ -330,14 +348,14 @@ class ProposalResource extends Resource
                 ...static::showHideActions(),
                 static::getCloseProposalAction(),
                 static::getOpenProposalAction(),
-                TableDeleteAction::make()
+                DeleteAction::make()
                     ->label('מחק')
                     ->iconButton()
                     ->icon('iconsax-bul-trash')
                     ->before(fn (Proposal $record) => $record->deleteDependencies())
                     ->tooltip('מחק הצעה'),
             ])
-            ->bulkActions(static::getBulkActions())
+            ->toolbarActions(static::getBulkActions())
             ->recordClasses(fn (Proposal $proposal) => [
                 "bg-red-50 hover:bg-red-100" => $proposal->hidden_at,
 //                "relative before:content-[''] before:border-s-[6px] before:z-20 before:border-red-600 before:h-full before:absolute before:start-0" => $proposal->hidden_at,
@@ -356,9 +374,9 @@ class ProposalResource extends Resource
                 ->action(fn (\Illuminate\Database\Eloquent\Collection $records) => $records->each->show()),
             BulkAction::make('share')
                 ->label('שתף הצעות')
-                ->modalWidth(MaxWidth::Small)
+                ->modalWidth(Width::Small)
                 ->form([
-                    Forms\Components\Select::make('users')
+                    Select::make('users')
                         ->label('שדכנים')
                         ->options(User::orderBy('name')->pluck('name', 'id'))
                         ->multiple()
@@ -385,7 +403,7 @@ class ProposalResource extends Resource
     public static function getColumns(?bool $innerStudent = false): array
     {
         return [
-            Columns\TextColumn::make('created_at')
+            TextColumn::make('created_at')
                 ->sortable(['proposals.created_at'])
                 ->toggleable()
                 ->toggledHiddenByDefault()
@@ -393,7 +411,7 @@ class ProposalResource extends Resource
                 ->description(fn (Proposal $proposal) => $proposal->created_at->hebcal()->hebrewDate(withQuotes: true))
                 ->label('נוצר בתאריך')
                 ->date('d/m/Y'),
-            Columns\TextColumn::make('users')
+            TextColumn::make('users')
                 ->toggleable()
                 ->toggledHiddenByDefault()
                 ->formatStateUsing(fn ($state) => $state->you_or_name)
@@ -402,7 +420,7 @@ class ProposalResource extends Resource
                 ->limitList(2)
                 ->expandableLimitedList()
                 ->label('שדכנ/ים'),
-            Columns\TextColumn::make('status')
+            TextColumn::make('status')
                 ->tooltip(fn (Proposal $proposal) => $proposal->reason_status ?? null)
                 ->label('סטטוס')
                 ->action(fn (Proposal $proposal) => $proposal->userCanAccess() ? static::getAddDiaryAction() : null)
@@ -410,7 +428,7 @@ class ProposalResource extends Resource
                 ->html()
                 ->sortable(),
             ...static::sideGroupColumns('guy', $innerStudent),
-            Columns\TextColumn::make('divider')
+            TextColumn::make('divider')
                 ->label('')
                 ->extraAttributes(['class' => 'after:content-[""] after:absolute after:inset-y-0 after:right-0 after:w-1 after:bg-gray-200'])
                 ->width(50)
@@ -437,7 +455,7 @@ class ProposalResource extends Resource
 //                dd($form->getState());
 //            })
             ->hidden(fn (Proposal $proposal) => ! $proposal->userCanAccess())
-            ->form(fn ($form, $arguments, $record) => Diaries::getDiaryForm($form, $record, $arguments['side'] ?? null));
+            ->schema(fn ($form, $arguments, $record) => Diaries::getDiaryForm($form, $record, $arguments['side'] ?? null));
     }
 
     private static function searchPerson(string $query): Collection
@@ -464,20 +482,20 @@ class ProposalResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListProposals::route('/'),
+            'index' => ListProposals::route('/'),
             //            'create' => Pages\CreateProposal::route('/create'),
-            'edit' => Pages\EditProposal::route('/{record}/edit'),
-            'view' => Pages\ViewProposal::route('/{record}'),
+            'edit' => EditProposal::route('/{record}/edit'),
+            'view' => ViewProposal::route('/{record}'),
             //            'families' => Pages\ManageFamilies::route('/{record}/families'),
-            'families' => Pages\Family::route('/{record}/{side}/families'),
-            'diaries' => Pages\Diaries::route('/{record}/{side}/diaries'),
+            'families' => Family::route('/{record}/{side}/families'),
+            'diaries' => Diaries::route('/{record}/{side}/diaries'),
             //            'diaries' => Pages\ManageDiaries::route('/{record}/diaries'),
-            'contacts' => Pages\ManageContacts::route('/{record}/{side}/contacts'),
-            'documents' => Pages\ManageFiles::route('/{record}/documents'),
+            'contacts' => ManageContacts::route('/{record}/{side}/contacts'),
+            'documents' => ManageFiles::route('/{record}/documents'),
             //            'overView' => Pages\OverViewProposal::route('/{record}'),
 
-            'schools' => Pages\Schools::route('/{record}/{side}/schools'),
-            'assignment-users' => Pages\UserAssignmentManagement::route('/{record}/assignment-users'),
+            'schools' => Schools::route('/{record}/{side}/schools'),
+            'assignment-users' => UserAssignmentManagement::route('/{record}/assignment-users'),
         ];
     }
 
@@ -488,16 +506,16 @@ class ProposalResource extends Resource
         $parameters = $page->getSubNavigationParameters();
 
         return collect([
-            ...Pages\ViewProposal::getNavigationItems($parameters),
+            ...ViewProposal::getNavigationItems($parameters),
             NavigationGroup::make('בחור')
                 ->items(static::getNavigationItemBySide($parameters, 'guy')),
             NavigationGroup::make('בחורה')
                 ->items(static::getNavigationItemBySide($parameters, 'girl')),
 
-            Pages\UserAssignmentManagement::canAccess($parameters)
+            UserAssignmentManagement::canAccess($parameters)
                 ? NavigationGroup::make('הרשאת גישה')
                     ->items([
-                        Pages\UserAssignmentManagement::getNavigationItems($parameters)[0],
+                        UserAssignmentManagement::getNavigationItems($parameters)[0],
                     ])
                 : null,
         ],
@@ -510,10 +528,10 @@ class ProposalResource extends Resource
     public static function getNavigationItemBySide($parameters, $side)
     {
         $pages = [
-            Pages\Family::class,
-            Pages\Diaries::class,
-            Pages\ManageContacts::class,
-            Pages\Schools::class,
+            Family::class,
+            Diaries::class,
+            ManageContacts::class,
+            Schools::class,
         ];
 
         $items = [];
@@ -536,7 +554,7 @@ class ProposalResource extends Resource
         $ucFirst = Str::ucfirst($side);
 
         return [
-            Columns\ViewColumn::make("$side.full_name")
+            ViewColumn::make("$side.full_name")
                 ->view('filament.resources.proposal-resource.columns.student-name-and-status-column', [
                     'side' => $side,
                     'innerStudent' => $innerStudent,
@@ -547,9 +565,9 @@ class ProposalResource extends Resource
                 ->label($label)
                 ->url('#')
                 ->searchable(['first_name', 'last_name']),
-            Columns\TextColumn::make("$side.age")
+            TextColumn::make("$side.age")
                 ->label('גיל'),
-            Columns\TextColumn::make("last{$ucFirst}Diary.data.description")
+            TextColumn::make("last{$ucFirst}Diary.data.description")
                 ->label('יומן אחרון')
                 ->badge()
                 ->prefix(fn (Proposal $proposal) => $proposal->userCanAccess() ? 'המשך טיפול: ' : null)
@@ -565,9 +583,9 @@ class ProposalResource extends Resource
                     $proposal->{"last{$ucFirst}Diary"}->label_type.': '.$proposal->{"last{$ucFirst}Diary"}->data['description'] ?? null) : null)
                 ->state(fn (Proposal $proposal) => $proposal->userCanAccess() ? $proposal->getNextDate($side) : null)
                 ->wrap(),
-            Columns\TextColumn::make("$side.parentsFamily.city.name")
+            TextColumn::make("$side.parentsFamily.city.name")
                 ->label('עיר'),
-            Columns\TextColumn::make("$side.schools.name")
+            TextColumn::make("$side.schools.name")
                 ->state(fn (Proposal $proposal) => $proposal->{$side}->schools->first()?->name)
                 ->label('בית ספר')
                 ->description(fn (Proposal $proposal) => $proposal->{$side}->schools->count() > 1
@@ -576,16 +594,16 @@ class ProposalResource extends Resource
         ];
     }
 
-    private static function getCloseProposalForm(Form $form): Form
+    private static function getCloseProposalForm(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\DatePicker::make('finished_at')
+        return $schema->components([
+            DatePicker::make('finished_at')
                 ->label('תאריך סגירה')
                 ->default(now())
                 ->displayFormat('d/m/Y')
                 ->native(false)
                 ->required(),
-            Forms\Components\Textarea::make('reason_status')
+            Textarea::make('reason_status')
                 ->label('הערה')
                 ->helperText('שתף את התרשמותך מהמהלך, איך היית מדרג את הביצוע קל או קשה וכו\''),
         ]);
@@ -595,7 +613,7 @@ class ProposalResource extends Resource
     {
         return Action::make('close-proposal')
             ->label('סגור הצעה')
-            ->form(fn (Form $form) => static::getCloseProposalForm($form))
+            ->schema(fn (Schema $schema) => static::getCloseProposalForm($schema))
             ->modalWidth('sm')
             ->tooltip('סגור הצעה')
             ->modalSubmitActionLabel('סגור')
@@ -609,7 +627,7 @@ class ProposalResource extends Resource
                     $proposal->close($data);
 
                     $action->success();
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
 
                     $action->failureNotification(fn (Notification $notification) => $notification
                         ->title('סגירת הצעה נכשלה')
@@ -625,7 +643,7 @@ class ProposalResource extends Resource
     {
         return Action::make('reopen-proposal')
             ->label('פתח הצעה סגורה')
-            ->form(fn (Form $form) => $form->schema([
+            ->schema(fn (Schema $schema) => $schema->components([
                 Proposal::make()->statusField(true, 'status')
                     ->default(fn (Proposal $proposal) => $proposal->lastDiary->data['statuses']['proposal'] ?? null)
                     ->helperText(fn (Proposal $proposal) => ($proposal->lastDiary->data['statuses']['proposal'] ?? null)
@@ -633,7 +651,7 @@ class ProposalResource extends Resource
                         : null
                     )
                     ->required(),
-                Forms\Components\Textarea::make('reason_status')
+                Textarea::make('reason_status')
                     ->label('הערה')
                     ->default('נפתח מחדש ע"י '.auth()->user()->name),
             ]))
@@ -666,7 +684,7 @@ class ProposalResource extends Resource
         ];
     }
 
-    public static function resolveRecordRouteBinding(int | string $key): ?Model
+    public static function resolveRecordRouteBinding(string|int $key, ?Closure $modifyQuery = null): ?Model
     {
         return app(static::getModel())
             ->resolveRouteBindingQuery(static::getEloquentQuery(), $key, static::getRecordRouteKeyName())

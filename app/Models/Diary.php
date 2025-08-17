@@ -2,6 +2,11 @@
 
 namespace App\Models;
 
+use Filament\Actions\Action;
+use Arr;
+use Str;
+use Storage;
+use Blade;
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Traits\HasActivities;
@@ -59,7 +64,7 @@ class Diary extends Model
                 ->body(auth()->user()->name . " הוסיף תיעוד בהצעת שידוך שמשותפת אתך " . $proposal->guy->full_name . ' ו' . $proposal->girl->full_name)                ->icon('iconsax-bul-notification-bing')
                 ->iconColor('primary')
                 ->actions([
-                    \Filament\Notifications\Actions\Action::make('get_to_page')
+                    Action::make('get_to_page')
                         ->label('פתח הצעת שידוך')
                         ->markAsRead()
                         ->url(ProposalResource::getUrl('view', ['record' => $proposal->getKey()]))
@@ -70,7 +75,7 @@ class Diary extends Model
                 ->title('התקדמות בהצעה')
                 ->body(auth()->user()->name . " הוסיף תיעוד בהצעת שידוך שמשותפת אתך " . $proposal->guy->full_name . ' ו' . $proposal->girl->full_name)
                 ->actions([
-                    \Filament\Notifications\Actions\Action::make('get_to_page')
+                    Action::make('get_to_page')
                         ->label('פתח הצעת שידוך')
                         ->markAsRead()
                         ->url(ProposalResource::getUrl('view', ['record' => $proposal->getKey()]))
@@ -127,7 +132,7 @@ class Diary extends Model
             return null;
         }
 
-        return collect(\Arr::wrap($items))->map(function ($file) {
+        return collect(Arr::wrap($items))->map(function ($file) {
 
             $name = $file;
 
@@ -136,7 +141,7 @@ class Diary extends Model
                 $file = $file['path'];
             }
 
-            if (\Str::startsWith($urlDecode = trim(urldecode($file)), 'https://api.phonecall')) {
+            if (Str::startsWith($urlDecode = trim(urldecode($file)), 'https://api.phonecall')) {
                 $data = [
                     'type' => 'mp3',
                     'url' => $urlDecode,
@@ -144,8 +149,8 @@ class Diary extends Model
                 ];
             } else {
                 $data = [
-                    'type' => \Str::after($file, '.'),
-                    'url' => \Storage::url($file),
+                    'type' => Str::after($file, '.'),
+                    'url' => Storage::url($file),
                     'name' => $name,
                 ];
             }
@@ -242,7 +247,7 @@ class Diary extends Model
     {
         $statuses = $this->getStatuses();
 
-        return \Blade::render(
+        return Blade::render(
 <<<'HTML'
 <span class="flex divide-x rtl:divide-x-reverse">
 

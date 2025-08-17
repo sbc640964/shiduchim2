@@ -2,13 +2,16 @@
 
 namespace App\Filament\Resources\PersonResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\BulkActionGroup;
 use App\Filament\Resources\PersonResource;
 use App\Filament\Resources\ProposalResource;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
-use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -18,15 +21,15 @@ class Proposals extends ManageRelatedRecords
 
     protected static string $relationship = 'proposalContacts';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-lamp-charge';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-lamp-charge';
 
     protected static ?string $title = 'הצעות';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -52,14 +55,14 @@ class Proposals extends ManageRelatedRecords
                 //                    }),
                 //                Tables\Actions\AssociateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
                     ProposalResource::getAddDiaryAction(),
                     ProposalResource::getAddDiaryAction('guy'),
                     ProposalResource::getAddDiaryAction('girl'),
                 ]),
                 ProposalResource::getCloseProposalAction(),
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->visible(fn ($record) => $record->access)
                     ->label('')
                     ->icon('heroicon-o-eye')
@@ -73,8 +76,8 @@ class Proposals extends ManageRelatedRecords
                     ->withAccess()
                     ->with('people.schools');
             })
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     //                    Tables\Actions\DissociateBulkAction::make(),
                     //                    Tables\Actions\DeleteBulkAction::make(),
                 ]),

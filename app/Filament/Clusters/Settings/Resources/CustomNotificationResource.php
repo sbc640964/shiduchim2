@@ -2,12 +2,21 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\Settings\Resources\CustomNotificationResource\Pages\ListCustomNotifications;
+use App\Filament\Clusters\Settings\Resources\CustomNotificationResource\Pages\EditCustomNotification;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\CustomNotificationResource\Pages;
 use App\Filament\Clusters\Settings\Resources\CustomNotificationResource\RelationManagers;
 use App\Models\CustomNotification;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,7 +27,7 @@ class CustomNotificationResource extends Resource
 {
     protected static ?string $model = CustomNotification::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-bell-alert';
 
     protected static ?string $cluster = Settings::class;
 
@@ -26,15 +35,15 @@ class CustomNotificationResource extends Resource
 
     protected static ?string $pluralLabel = 'הודעות';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('title')
+        return $schema
+            ->components([
+                TextInput::make('title')
                     ->columnSpanFull()
                     ->label('כותרת')
                     ->required(),
-                Forms\Components\Select::make('type')
+                Select::make('type')
                     ->label('סוג')
                     ->options([
                         'info' => 'מידע',
@@ -42,7 +51,7 @@ class CustomNotificationResource extends Resource
                         'error' => 'שגיאה',
                     ])
                     ->required(),
-                Forms\Components\Select::make('status')
+                Select::make('status')
                     ->label('סטטוס')
                     ->options([
                         'draft' => 'טיוטה',
@@ -50,11 +59,11 @@ class CustomNotificationResource extends Resource
                         'sent' => 'נשלח',
                     ])
                     ->required(),
-                Forms\Components\RichEditor::make('body')
+                RichEditor::make('body')
                     ->columnSpanFull()
                     ->label('תוכן ההודעה')
                     ->required(),
-                Forms\Components\Select::make('recipients')
+                Select::make('recipients')
                     ->relationship('recipientsUsers', 'name')
                     ->searchable()
                     ->preload()
@@ -69,25 +78,25 @@ class CustomNotificationResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')
+                TextColumn::make('title')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('type')
+                TextColumn::make('type')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->searchable()
                     ->sortable(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -102,9 +111,9 @@ class CustomNotificationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCustomNotifications::route('/'),
+            'index' => ListCustomNotifications::route('/'),
 //            'create' => Pages\CreateCustomNotification::route('/create'),
-            'edit' => Pages\EditCustomNotification::route('/{record}/edit'),
+            'edit' => EditCustomNotification::route('/{record}/edit'),
         ];
     }
 }

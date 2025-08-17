@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use Illuminate\Contracts\Cache\Lock;
 use App\Events\CallActivityEvent;
 use App\Http\Controllers\WebhookGisController;
 use App\Models\Call;
@@ -104,7 +105,7 @@ class ProcessGisWebhookJob implements ShouldQueue
                     return;
                 }
 
-                if ($lock instanceof \Illuminate\Contracts\Cache\Lock) {
+                if ($lock instanceof Lock) {
                     $lock->release();
                 }
             }

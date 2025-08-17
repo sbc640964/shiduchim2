@@ -9,9 +9,9 @@ class Tasks extends BaseDashboard
 {
     protected static string $routePath = '/tasks';
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament-panels::pages.dashboard';
+    protected string $view = 'filament-panels::pages.dashboard';
 
     protected static ?string $slug = 'tasks';
     protected static ?string $navigationLabel = 'משימות';
@@ -20,7 +20,7 @@ class Tasks extends BaseDashboard
 
     protected static ?int $navigationSort = -2;
 
-    public function getColumns(): int|string|array
+    public function getColumns(): int|array
     {
         return 1;
     }

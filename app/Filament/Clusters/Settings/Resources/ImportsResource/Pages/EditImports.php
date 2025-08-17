@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\Settings\Resources\ImportsResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\Settings\Resources\ImportsResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditImports extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

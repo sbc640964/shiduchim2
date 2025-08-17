@@ -2,12 +2,18 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use App\Filament\Clusters\Settings\Resources\CityResource\Pages\ListCities;
+use App\Filament\Clusters\Settings\Resources\CityResource\Pages\CreateCity;
 use App\Filament\Clusters\Settings;
 use App\Models\City;
 USE App\Filament\Clusters\Settings\Resources\CityResource\Pages;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -23,16 +29,16 @@ class CityResource extends Resource
 
     protected static ?string $label = 'עיר';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-map-1';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-map-1';
 
     protected static ?string $pluralLabel = 'ערים';
 
     //    protected static ?string $navigationIcon = 'heroicon-o-home-modern';
     protected static ?string $recordTitleAttribute = 'name';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             TextInput::make('name')
                 ->label('שם')
                 ->required(),
@@ -63,14 +69,14 @@ class CityResource extends Resource
                 ->sortable(),
         ])
             ->filters([
-                Tables\Filters\SelectFilter::make('country')
+                SelectFilter::make('country')
                     ->label('מדינה')
                     ->options(City::select('country')->distinct()->pluck('country')->mapWithKeys(fn ($country) => [$country => $country])->filter()->toArray() ?? []),
-            ])->actions([
-                Tables\Actions\Action::make('join')
+            ])->recordActions([
+                Action::make('join')
                     ->iconButton()
                     ->color('gray')
-                    ->form([
+                    ->schema([
                         Select::make('cities')
                             ->label('ערים')
                             ->options(fn (City $city) => City::where('id', '!=', $city->id)->pluck('name', 'id')->toArray())
@@ -81,9 +87,9 @@ class CityResource extends Resource
                         $city->mergeCities($data['cities'] ?? []);
                     })
                     ->icon('iconsax-two-recovery-convert'),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->iconButton(),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->iconButton()
                     ->modalWidth('sm'),
             ]);
@@ -92,8 +98,8 @@ class CityResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCities::route('/'),
-            'create' => Pages\CreateCity::route('/create'),
+            'index' => ListCities::route('/'),
+            'create' => CreateCity::route('/create'),
             //            'edit' => Pages\EditCity::route('/{record}/edit'),
         ];
     }

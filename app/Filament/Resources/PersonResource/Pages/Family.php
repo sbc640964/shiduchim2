@@ -2,11 +2,18 @@
 
 namespace App\Filament\Resources\PersonResource\Pages;
 
+use App\Filament\Resources\PersonResource\Widgets\FathersOverview;
+use App\Filament\Resources\PersonResource\Widgets\SelfFamilyOverview;
+use App\Filament\Resources\PersonResource\Widgets\FathersInLawOverview;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
 use App\Filament\Resources\PersonResource;
 use App\Models\Person;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,9 +28,9 @@ class Family extends ManageRelatedRecords
 
     protected static string $relationship = 'relatives';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-data-2';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-data-2';
 
-    protected static ?string $navigationGroup = 'קשרים';
+    protected static string | \UnitEnum | null $navigationGroup = 'קשרים';
 
     //    protected static bool $shouldSkipAuthorization = true;
 
@@ -56,7 +63,7 @@ class Family extends ManageRelatedRecords
         return $record->{$relationshipName}();
     }
 
-    public function getHeaderWidgetsColumns(): int|string|array
+    public function getHeaderWidgetsColumns(): int|array
     {
         return 2;
     }
@@ -68,14 +75,14 @@ class Family extends ManageRelatedRecords
 
         if (! $record->family()->exists()) {
             return [
-                PersonResource\Widgets\FathersOverview::make(),
+                FathersOverview::make(),
             ];
         }
 
         return [
-            PersonResource\Widgets\SelfFamilyOverview::make(),
-            PersonResource\Widgets\FathersOverview::make(),
-            PersonResource\Widgets\FathersInLawOverview::make(),
+            SelfFamilyOverview::make(),
+            FathersOverview::make(),
+            FathersInLawOverview::make(),
         ];
     }
 
@@ -85,11 +92,11 @@ class Family extends ManageRelatedRecords
         $this->activeTab = $tab;
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('full_name')
+        return $schema
+            ->components([
+                TextInput::make('full_name')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -124,13 +131,13 @@ class Family extends ManageRelatedRecords
             ->headerActions([
                 //                Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->icon('heroicon-o-eye')
                     ->size('xs')
                     ->tooltip('צפייה')
                     ->iconButton(),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->icon('heroicon-o-pencil')
                     ->tooltip('עריכה')
                     ->size('xs')
@@ -139,8 +146,8 @@ class Family extends ManageRelatedRecords
             ->modifyQueryUsing(function (Builder $query) {
                 $query->with(['family', 'spouse.father', 'families' => fn ($query) => $query->withCount('children')]);
             })
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                 ]),
             ]);
     }

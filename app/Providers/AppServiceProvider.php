@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use function Sentry\configureScope;
 use App\Models\User;
 use Auth;
 use Illuminate\Http\Client\RequestException;
@@ -31,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         if (app()->bound('sentry')) {
-            \Sentry\configureScope(function (Scope $scope): void {
+            configureScope(function (Scope $scope): void {
                 if (Auth::check()) {
                     $user = Auth::user();
                     $scope->setUser([

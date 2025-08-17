@@ -2,6 +2,7 @@
 
 namespace App\Filament\Imports;
 
+use Str;
 use App\Models\Person;
 use App\Models\Phone;
 use Carbon\Carbon;
@@ -67,7 +68,7 @@ class PersonImporter extends Importer
         }
 
         //update phones
-        if($this->record->current_family_id && $phone = \Str::replace('-', '', $this->originalData['phone'])){
+        if($this->record->current_family_id && $phone = Str::replace('-', '', $this->originalData['phone'])){
             Phone::updateOrCreate([
                 'number' => $phone,
             ], [
@@ -76,7 +77,7 @@ class PersonImporter extends Importer
             ]);
         }
 
-        if($phone = \Str::replace('-', '', $this->originalData['phone_a'])){
+        if($phone = Str::replace('-', '', $this->originalData['phone_a'])){
             Phone::updateOrCreate([
                 'number' => $phone,
             ], [
@@ -85,7 +86,7 @@ class PersonImporter extends Importer
             ]);
         }
 
-        if($this->record->spouse_id && $phone = \Str::replace('-', '', $this->originalData['phone_b'])){
+        if($this->record->spouse_id && $phone = Str::replace('-', '', $this->originalData['phone_b'])){
             Phone::updateOrCreate([
                 'number' => $phone,
             ], [

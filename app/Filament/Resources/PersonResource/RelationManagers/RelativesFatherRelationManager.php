@@ -2,9 +2,16 @@
 
 namespace App\Filament\Resources\PersonResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\AttachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use App\Models\Old\Person;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -19,12 +26,12 @@ class RelativesFatherRelationManager extends RelationManager
 
     protected static ?string $title = 'צד אב';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Grid::make([
-                    Forms\Components\TextInput::make('relation')
+        return $schema
+            ->components([
+                Grid::make([
+                    TextInput::make('relation')
                         ->label('קירוב')
                         ->required()
                         ->autofocus()
@@ -38,52 +45,52 @@ class RelativesFatherRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('full_name')
             ->columns([
-                Tables\Columns\TextColumn::make('ichud_id')
+                TextColumn::make('ichud_id')
                     ->label('מזהה')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('full_name')
+                TextColumn::make('full_name')
                     ->label('שם')
                     ->extraAttributes(['class' => 'font-medium'])
                     ->searchable(['last_name', 'first_name'])
                     ->sortable(['first_name', 'last_name']),
 
-                Tables\Columns\TextColumn::make('pivot.relation')
+                TextColumn::make('pivot.relation')
                     ->label('קירוב')
                     ->formatStateUsing(function (Person $record) {
                         return Person::RELATION_TYPES[$record->pivot->relation]
                             ?? $record->pivot->relation;
                     }),
 
-                Tables\Columns\TextColumn::make('father_name')
+                TextColumn::make('father_name')
                     ->label('שם האב')
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('father_in_law_name')
+                TextColumn::make('father_in_law_name')
                     ->label('שם חותן')
                     ->sortable()
                     ->searchable(),
             ])
             ->filters([
                 //relation types
-                Tables\Filters\SelectFilter::make('relation')
+                SelectFilter::make('relation')
                     ->label('קירוב')
                     ->multiple()
                     ->options(Person::RELATION_TYPES),
             ])
             ->headerActions([
                 //                Tables\Actions\CreateAction::make(),
-                Tables\Actions\AttachAction::make(),
+                AttachAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 //                Tables\Actions\EditAction::make(),
                 //                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

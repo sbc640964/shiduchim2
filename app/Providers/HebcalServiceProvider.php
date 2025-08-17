@@ -12,7 +12,7 @@ class HebcalServiceProvider extends ServiceProvider
     {
         $this->app->bind('hebcal', function () {
             return new Hebcal(
-                new \Carbon\Carbon()
+                new Carbon()
             );
         });
     }

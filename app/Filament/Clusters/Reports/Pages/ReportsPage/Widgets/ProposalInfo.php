@@ -17,5 +17,5 @@ class ProposalInfo extends Widget
     #[Reactive]
     public ?int $proposal = null;
 
-    protected static string $view = 'filament.widgets.proposal-info';
+    protected string $view = 'filament.widgets.proposal-info';
 }

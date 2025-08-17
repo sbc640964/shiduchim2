@@ -3,6 +3,12 @@
 namespace App\Filament\Clusters\Reports\Pages;
 
 
+use Filament\Pages\Dashboard;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
 use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ProposalInfo;
 use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
 use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\StatsReportOverview;
@@ -10,14 +16,13 @@ use App\Models\Person;
 use App\Models\Subscriber;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Components\Section;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
 
-class Reports extends \Filament\Pages\Dashboard
+class Reports extends Dashboard
 {
     use HasFiltersForm;
 
@@ -35,7 +40,7 @@ class Reports extends \Filament\Pages\Dashboard
         $this->proposal = $id;
     }
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-pie';
 
     protected static ?string $title = 'מנויים';
 
@@ -65,18 +70,18 @@ class Reports extends \Filament\Pages\Dashboard
     }
 
 
-    public function filtersForm(Forms\Form $form): Forms\Form
+    public function filtersForm(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Section::make()
                     ->schema([
-                        Forms\Components\Select::make('matchmaker')
+                        Select::make('matchmaker')
                             ->label('שדכן')
                             ->options(User::get()->pluck('name', 'id'))
                             ->nullable()
                             ->searchable()
-                            ->afterStateUpdated(function (Forms\Set $set) {
+                            ->afterStateUpdated(function (Set $set) {
                                 $set('person', null);
                                 $this->proposal = null;
                             })
@@ -89,10 +94,10 @@ class Reports extends \Filament\Pages\Dashboard
                             ->disableClear(false)
                             ->icon('heroicon-o-calendar')
                             ->placeholder('בחר תאריכים'),
-                        Forms\Components\Select::make('person')
+                        Select::make('person')
                             ->label('תלמיד')
                             ->optionsLimit(200)
-                            ->afterStateUpdated(function (Forms\Set $set, $state) {
+                            ->afterStateUpdated(function (Set $set, $state) {
                                 if (! $state) {
                                     $set('subscription', null);
                                     return;
@@ -100,7 +105,7 @@ class Reports extends \Filament\Pages\Dashboard
                                 $set('subscription', Person::find($state)->lastSubscription->id);
                                 $this->proposal = null;
                             })
-                            ->options(fn (Forms\Get $get) =>
+                            ->options(fn (Get $get) =>
                                 Person::query()
                                     ->whereHas('subscriptions', function (Builder $query) use ($get) {
                                         $dates = collect(explode(' - ', $get('dates_range')))
@@ -123,16 +128,16 @@ class Reports extends \Filament\Pages\Dashboard
                             ->searchable()
                             ->placeholder('כולם'),
 
-                        Forms\Components\Select::make('subscription')
+                        Select::make('subscription')
                             ->label('מנוי')
-                            ->visible(fn (Forms\Get $get) => $get('person'))
-                            ->afterStateUpdated(function (Forms\Set $set) {
+                            ->visible(fn (Get $get) => $get('person'))
+                            ->afterStateUpdated(function (Set $set) {
                                 $this->proposal = null;
                             })
-                            ->default(function (Forms\Get $get) {
+                            ->default(function (Get $get) {
                                 return Person::find($get('person'))?->lastSubscription?->id ?? null;
                             })
-                            ->options(function (Forms\Get $get) {
+                            ->options(function (Get $get) {
                                 $dates = collect(explode(' - ', $get('dates_range')))
                                     ->map(fn ($date) => $date ? now()->createFromFormat('d/m/Y', $date) : null)
                                     ->filter()

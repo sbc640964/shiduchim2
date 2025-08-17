@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use Str;
 use App\Models\Person;
 use App\Models\Phone;
 use Illuminate\Bus\Queueable;
@@ -47,7 +48,7 @@ class AfterImportPeopleJob implements ShouldQueue
                 }
 
                 //update phones
-                if($person->current_family_id && $phone = \Str::replace('-', '', $dataImport['phone'])){
+                if($person->current_family_id && $phone = Str::replace('-', '', $dataImport['phone'])){
                     $hasPhone = $person->family->phones->firstWhere('number', $phone);
 
                     if(!$hasPhone){
@@ -59,7 +60,7 @@ class AfterImportPeopleJob implements ShouldQueue
                     }
                 }
 
-                if($phone = \Str::replace('-', '', $dataImport['phone_a'])){
+                if($phone = Str::replace('-', '', $dataImport['phone_a'])){
                     $hasPhone = $person->phones->firstWhere('number', $phone);
 
                     if(!$hasPhone){
@@ -71,7 +72,7 @@ class AfterImportPeopleJob implements ShouldQueue
                     }
                 }
 
-                if($person->spouse_id && $phone = \Str::replace('-', '', $dataImport['phone_b'])){
+                if($person->spouse_id && $phone = Str::replace('-', '', $dataImport['phone_b'])){
                     $hasPhone = $person->spouse->phones->firstWhere('number', $phone);
 
                     if(!$hasPhone){

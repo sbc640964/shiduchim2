@@ -12,7 +12,7 @@ class OverViewProposal extends Page
 
     protected static string $resource = ProposalResource::class;
 
-    protected static string $view = 'filament.resources.proposal-resource.pages.over-view-proposal';
+    protected string $view = 'filament.resources.proposal-resource.pages.over-view-proposal';
 
     protected static ?string $title = 'סקירה כללית';
 

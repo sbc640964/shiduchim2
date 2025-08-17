@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Validator;
+use Exception;
 use App\Jobs\ProcessGisWebhookJob;
 use App\Models\Call;
 use App\Models\Diary;
@@ -18,7 +20,7 @@ class WebhookGisController extends Controller
             'gis_api' => true,
         ]);
 
-        $validate = \Validator::make($request->all(), [
+        $validate = Validator::make($request->all(), [
             'key' => 'required|in:'.config('app.phonecall.in_api_key'),
             'action' => 'required',
             'original_call_id' => 'required',
@@ -55,7 +57,7 @@ class WebhookGisController extends Controller
             ProcessGisWebhookJob::dispatch($data, $webhook->id)->afterCommit();
 
             return 'Webhook received and processing';
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $webhook->setError([
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

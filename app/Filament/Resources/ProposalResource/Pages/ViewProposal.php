@@ -2,6 +2,18 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Textarea;
+use Filament\Actions\ActionGroup;
+use App\Filament\Resources\ProposalResource\Widgets\CallOverview;
+use App\Filament\Resources\ProposalResource\Widgets\ContactsWidget;
+use App\Filament\Resources\ProposalResource\Widgets\DiaryListWidget;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Infolists\Components\TextEntry;
+use Blade;
+use Filament\Forms\Components\RichEditor;
+use Filament\Infolists\Components\ViewEntry;
 use App\Filament\Actions\Call;
 use App\Filament\Resources\ProposalResource;
 use App\Filament\Resources\ProposalResource\Widgets;
@@ -13,7 +25,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Infolists\Components;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,7 +33,7 @@ class ViewProposal extends ViewRecord
     protected static string $resource = ProposalResource::class;
     protected static ?string $navigationLabel = 'מבט כללי';
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-pie';
 
     protected function resolveRecord(int|string $key): Model
     {
@@ -86,9 +97,9 @@ class ViewProposal extends ViewRecord
                 ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כסגורה?')
                 ->requiresConfirmation()
                 ->modalContent($text)
-                ->form(fn (Forms\Form $form, Proposal $proposal) => $form
-                    ->schema([
-                        Forms\Components\Textarea::make('description')
+                ->schema(fn (Schema $schema, Proposal $proposal) => $schema
+                    ->components([
+                        Textarea::make('description')
                             ->rules('required')
                             ->minLength(20)
                             ->label('סיבת סגירה'),
@@ -97,7 +108,7 @@ class ViewProposal extends ViewRecord
                 ->visible(fn (Proposal $proposal) => auth()->user()->can('open_proposals')
                     && $proposal->opened_at !== null && $proposal->closed_at === null),
 
-            \Filament\Actions\ActionGroup::make([
+            ActionGroup::make([
                 Action::make('activities')
                     ->visible(auth()->user()->can('activity_log'))
                     ->label('היסטוריית מנוי')
@@ -122,11 +133,11 @@ class ViewProposal extends ViewRecord
     protected function getHeaderWidgets(): array
     {
         return [
-            Widgets\CallOverview::class,
+            CallOverview::class,
         ];
     }
 
-    public function getHeaderWidgetsColumns(): int|string|array
+    public function getHeaderWidgetsColumns(): int|array
     {
         return 3;
     }
@@ -134,31 +145,31 @@ class ViewProposal extends ViewRecord
     protected function getFooterWidgets(): array
     {
         return [
-            Widgets\ContactsWidget::make([
+            ContactsWidget::make([
                 'record' => $this->getRecord(),
                 'side' => 'guy',
             ]),
 
-            Widgets\ContactsWidget::make([
+            ContactsWidget::make([
                 'record' => $this->getRecord(),
                 'side' => 'girl',
             ]),
 
-            Widgets\DiaryListWidget::make([
+            DiaryListWidget::make([
                 'record' => $this->getRecord(),
             ]),
         ];
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
         return $infolist->schema([
-            Components\Section::make()
+            Section::make()
                 ->schema([
-                    Components\Grid::make(4)->schema([
-                        Components\TextEntry::make('status')
+                    Grid::make(4)->schema([
+                        TextEntry::make('status')
                             ->label('סטטוס')
-                            ->formatStateUsing(fn (Proposal $proposal, $state) => \Blade::render(
+                            ->formatStateUsing(fn (Proposal $proposal, $state) => Blade::render(
                                 <<<'HTML'
 <span class="flex gap-2 justify-between w-full">
 <span>סטטוס:</span>
@@ -176,20 +187,20 @@ HTML
                             ->hiddenLabel()
 //                        ->inlineLabel()
                             ->html(),
-                        Components\TextEntry::make('created_at')
+                        TextEntry::make('created_at')
                             ->date('d/m/Y')
                             ->label('תאריך יצירה'),
-                        Components\TextEntry::make('createdByUser.name')
+                        TextEntry::make('createdByUser.name')
                             ->label('נוצר על ידי')
                     ]),
-                    Components\TextEntry::make('description')
-                        ->hintAction(Components\Actions\Action::make('edit-proposal')
+                    TextEntry::make('description')
+                        ->hintAction(Action::make('edit-proposal')
                             ->label('ערוך')
                             ->tooltip('עריכת הערה/תיאור')
                             ->action(fn (Proposal $proposal, array $data) => $proposal->update($data))
-                            ->form(fn (Forms\Form $form, Proposal $proposal) => $form
-                                ->schema([
-                                    Forms\Components\RichEditor::make('description')
+                            ->schema(fn (Schema $schema, Proposal $proposal) => $schema
+                                ->components([
+                                    RichEditor::make('description')
                                         ->default($proposal->description)
                                         ->label('תיאור/הערה'),
                                 ])))
@@ -211,24 +222,24 @@ HTML
         $ucFirst = ucfirst($side);
 
         if(! $this->record->{$side}) {
-            return Components\Section::make("ה$label")
+            return Section::make("ה$label")
                 ->columnSpan(1)
                 ->columns(1)
                 ->statePath($side)
                 ->schema([]);
         }
 
-        return Components\Section::make("ה$label")
+        return Section::make("ה$label")
             ->columnSpan(1)
             ->columns(1)
             ->statePath($side)
             ->headerActions([
-                Components\Actions\Action::make('to_family')
+                Action::make('to_family')
                     ->label('למשפחה')
                     ->size('xs')
                     ->url(ProposalResource::getUrl('families', ['record' => $this->record->id, 'side' => $side]))
                     ->outlined(),
-                Components\Actions\Action::make('to_proposals')
+                Action::make('to_proposals')
                     ->label('להצעות')
                     ->badge($this->record->{$side}->loadCount('proposals')->proposals_count)
 //                    ->visible($this->record->{$side}->proposals_count > 1)
@@ -239,11 +250,11 @@ HTML
                     ->outlined(),
             ])
             ->schema([
-                Components\TextEntry::make('full_name')
+                TextEntry::make('full_name')
                     ->hiddenLabel()
                     ->extraAttributes(['class' => "[&_.fi-in-text-item]:block [&_.fi-in-text-item]:w-full [&_.max-w-max]:w-full [&_.max-w-max]:max-w-full"])
                     ->columnSpanFull()
-                    ->formatStateUsing(fn (Proposal $proposal, $state) => \Blade::render(
+                    ->formatStateUsing(fn (Proposal $proposal, $state) => Blade::render(
 <<<'HTML'
 <span class="flex justify-between w-full">
 <span>{{ $state }}</span>
@@ -262,7 +273,7 @@ HTML
                     ->weight('bold')
                     ->label("שם ה$label"),
 
-                Components\Section::make()
+                Section::make()
                     ->extraAttributes(fn (Proposal $proposal) => [
                         'class' => '[&_svg]:w-8 [&_svg]:h-8 '.($proposal->nextDateIsPast($side)
                                 ? '!bg-danger-50 !ring-danger-300/50 [&_svg]:!text-danger-500'
@@ -278,7 +289,7 @@ HTML
                     ->columns(1)
                     ->visible(fn (Proposal $proposal) => $proposal->{"{$side}_next_time"} !== null)
                     ->schema([
-                        Components\TextEntry::make("{$side}_next_time")
+                        TextEntry::make("{$side}_next_time")
                             ->state(function (Proposal $proposal) use ($ucFirst, $side) {
                                 return
                                     '<div class="leading-normal">'
@@ -298,7 +309,7 @@ HTML
                             ->label('תאריך טיפול הבא'),
                     ]),
 
-                Components\ViewEntry::make($side)
+                ViewEntry::make($side)
                     ->view('filament.resources.proposal-resource.entries.side-info-view-proposal')
                     ->registerActions([
                         ...Call::getInfolistActionForProposal($this->getRecord(), $side),

@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use Str;
+use Exception;
+use Log;
 use App\Models\City;
 use App\Models\Family;
 use App\Models\Person;
@@ -137,7 +140,7 @@ class ImportStudentJob implements ShouldQueue
         }
 
         return Carbon::createFromFormat(
-            \Str::contains($born_at, '/') ? 'd/m/Y' : 'Y-m-d',
+            Str::contains($born_at, '/') ? 'd/m/Y' : 'Y-m-d',
             $born_at
         );
     }
@@ -224,7 +227,7 @@ class ImportStudentJob implements ShouldQueue
         ];
 
         foreach ($phones as $key => $phone) {
-            $phone = \Str::replace(['-', ' '], '', $phone);
+            $phone = Str::replace(['-', ' '], '', $phone);
 
             if (blank($phone)) {
                 continue;
@@ -235,8 +238,8 @@ class ImportStudentJob implements ShouldQueue
                     ?->updateOrCreate([
                         'number' => $phone,
                     ]);
-            } catch (\Exception $e) {
-                \Log::error($e->getMessage());
+            } catch (Exception $e) {
+                Log::error($e->getMessage());
             }
 
         }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\FirstFillData;
 
+use DB;
 use App\Models\Family;
 use App\Models\Person;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +24,7 @@ class CreateFamiliesJob extends AbstractToBatchJob implements ShouldQueue
 
         $people->each(function (Person $person) {
 
-            \DB::transaction(function () use ($person) {
+            DB::transaction(function () use ($person) {
                 $family = Family::create([
                     'name' => $person->last_name,
                     'address' => $person->address,

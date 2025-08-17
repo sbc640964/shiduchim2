@@ -2,12 +2,12 @@
 
 namespace App\Filament\Clusters\Reports\Pages\OpenProposalPage;
 
+use Filament\Actions\Action;
+use Filament\Support\Enums\Width;
 use App\Models\Person;
 use App\Models\Proposal;
 use Filament\Forms\Components\Textarea;
 use Filament\Support\Enums\FontWeight;
-use Filament\Support\Enums\MaxWidth;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -55,10 +55,10 @@ class OpenProposalsTable extends BaseWidget
                     ->width(300)
                     ->wrap()
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('edit-reason')
                     ->action(fn () => null)
-                    ->modalWidth(MaxWidth::Small)
+                    ->modalWidth(Width::Small)
                     ->icon('heroicon-o-pencil')
                     ->tooltip('ערוך סיבת סגירה')
                     ->iconButton()
@@ -66,7 +66,7 @@ class OpenProposalsTable extends BaseWidget
                     ->size('xs')
                     ->modalHeading('ערוך סיבת סגירה')
                     ->modalSubmitActionLabel('עדכן')
-                    ->form([
+                    ->schema([
                         Textarea::make('reason')
                             ->rows(6)
                             ->default(fn (Proposal $proposal) => $proposal->reason_closed)

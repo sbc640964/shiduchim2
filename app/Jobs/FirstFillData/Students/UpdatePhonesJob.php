@@ -2,6 +2,7 @@
 
 namespace App\Jobs\FirstFillData\Students;
 
+use Str;
 use App\Jobs\FirstFillData\AbstractToBatchJob;
 use App\Models\Person;
 use App\Models\Phone;
@@ -25,9 +26,9 @@ class UpdatePhonesJob extends AbstractToBatchJob implements ShouldQueue
 
         DB::transaction(function () use ($people) {
             $people->each(function (Person $person) {
-                $parentsFamilyPhone = trim(\Str::replace('-', '', data_get($person->data_raw, 'phone', '')));
-                $fatherPhone = trim(\Str::replace('-', '', data_get($person->data_raw, 'father_phone', '')));
-                $motherPhone = trim(\Str::replace('-', '', data_get($person->data_raw, 'mother_phone', '')));
+                $parentsFamilyPhone = trim(Str::replace('-', '', data_get($person->data_raw, 'phone', '')));
+                $fatherPhone = trim(Str::replace('-', '', data_get($person->data_raw, 'father_phone', '')));
+                $motherPhone = trim(Str::replace('-', '', data_get($person->data_raw, 'mother_phone', '')));
 
                 $existingPhones = Phone::whereIn('number', [
                     $parentsFamilyPhone,

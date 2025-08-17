@@ -9,7 +9,7 @@ class SelfFamilyOverview extends Widget
 {
     public ?Person $record = null;
 
-    protected static string $view = 'filament.resources.person-resource.widgets.self-family-overview';
+    protected string $view = 'filament.resources.person-resource.widgets.self-family-overview';
 
     protected int|string|array $columnSpan = 2;
 

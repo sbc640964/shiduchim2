@@ -2,6 +2,11 @@
 
 namespace App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets;
 
+use Filament\Actions\Action;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Flex;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
 use App\Filament\Widgets\FilterReportsTrait;
 use App\Infolists\Components\AudioEntry;
 use App\Models\Call;
@@ -10,9 +15,7 @@ use App\Models\Family;
 use App\Models\Person;
 use Carbon\Carbon;
 use Filament\Infolists\Components as InfolistComponents;
-use Filament\Infolists\Components\Split;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -34,8 +37,8 @@ class CallsTableWidget extends BaseWidget
     {
         return $table
             ->heading('שיחות')
-            ->actions([
-                Tables\Actions\Action::make('speaker-recording')
+            ->recordActions([
+                Action::make('speaker-recording')
                     ->iconButton()
                     ->icon('heroicon-o-speaker-wave')
                     ->modalWidth('lg')
@@ -45,8 +48,8 @@ class CallsTableWidget extends BaseWidget
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('סגור')
                     ->tooltip('הקלטת שיחה')
-                    ->infolist(fn (Infolist $infolist) => $infolist->schema([
-                        Split::make([
+                    ->schema(fn (Schema $schema) => $schema->components([
+                        Flex::make([
                             TextEntry::make('duration')
                                 ->label('משך הקלטה')
                                 ->formatStateUsing(fn (Call $call) => gmdate('H:i:s', $call->duration))
@@ -59,7 +62,7 @@ class CallsTableWidget extends BaseWidget
 
                         InfolistComponents\TextEntry::make('text_call')
                             ->label('טקסט שיחה')
-                            ->hintAction(InfolistComponents\Actions\Action::make('refresh_call_text')
+                            ->hintAction(Action::make('refresh_call_text')
                                 ->icon('heroicon-o-arrow-path')
                                 ->iconButton()
                                 ->tooltip('נתח מחדש את הטקסט של השיחה')
@@ -106,7 +109,7 @@ class CallsTableWidget extends BaseWidget
 //                    ->label('משתמש')
 //                    ->visible(auth()->user()->canAccessAllCalls())
 //                    ->searchable(),
-                Tables\Columns\IconColumn::make('group')
+                IconColumn::make('group')
                     ->icons([
                         'iconsax-bul-call-incoming' => 'incoming',
                         'iconsax-bul-call-outgoing' => 'outgoing',
@@ -125,7 +128,7 @@ class CallsTableWidget extends BaseWidget
                         'primary' => 'outgoing',
                         'danger' => 'missed',
                     ]),
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->label('מספר')
                     ->formatStateUsing(fn ($state) => str($state)
                         ->whenStartsWith('05',
@@ -161,18 +164,18 @@ class CallsTableWidget extends BaseWidget
                     })
                     ->weight(FontWeight::Bold)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('תאריך')
                     ->formatStateUsing(fn (Carbon $state) => $state->diffForHumans())
                     ->description(fn (Carbon $state) => $state->format('H:i:s d/m/y'))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('duration')
+                TextColumn::make('duration')
                     ->label('משך')
                     ->formatStateUsing(fn ($state) => gmdate('H:i:s', $state))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('proposals')
+                TextColumn::make('proposals')
                     ->label('הצעות קשורות')
                     ->badge()
                     ->color('gray')

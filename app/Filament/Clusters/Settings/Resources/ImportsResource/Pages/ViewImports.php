@@ -2,6 +2,9 @@
 
 namespace App\Filament\Clusters\Settings\Resources\ImportsResource\Pages;
 
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use App\Filament\Clusters\Settings\Resources\ImportsResource\Widgets\ImportStates;
 use App\Filament\Clusters\Settings\Resources\ImportsResource;
 use App\Models\ImportBatch;
 use Filament\Actions;
@@ -20,8 +23,8 @@ class ViewImports extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
-            Actions\Action::make('run')
+            EditAction::make(),
+            Action::make('run')
                 ->label('הפעל')
                 ->requiresConfirmation()
                 ->visible(fn () => $this->getRecord()->allowRun() ||  $this->getRecord()->allowRerun())
@@ -38,7 +41,7 @@ class ViewImports extends ViewRecord
     protected function getHeaderWidgets(): array
     {
         return [
-            ImportsResource\Widgets\ImportStates::make([
+            ImportStates::make([
                 'record' => $this->getRecord(),
             ]),
         ];

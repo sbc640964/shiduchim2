@@ -2,6 +2,7 @@
 
 namespace App\Filament\Exports;
 
+use DB;
 use App\Models\Proposal;
 use Carbon\CarbonInterface;
 use Filament\Actions\Exports\ExportColumn;
@@ -43,12 +44,12 @@ class ProposalExporter extends Exporter
             ExportColumn::make('total_diaries_guy')
                 ->label('סה"כ יומנים בחור')
                 ->counts([
-                    'diaries' => fn (Builder $query) => $query->whereColumn('model_id', \DB::raw('MAX(CASE WHEN `p-0005`.`gender` = "B" THEN `p-0005`.`id` ELSE NULL END)')),
+                    'diaries' => fn (Builder $query) => $query->whereColumn('model_id', DB::raw('MAX(CASE WHEN `p-0005`.`gender` = "B" THEN `p-0005`.`id` ELSE NULL END)')),
                 ]),
             ExportColumn::make('total_diaries_girl')
                 ->label('סה"כ יומנים בחורה')
                 ->counts([
-                    'diaries' => fn (Builder $query) => $query->whereColumn('model_id', \DB::raw('MAX(CASE WHEN `p-0005`.`gender` = "G" THEN `p-0005`.`id` ELSE NULL END)')),
+                    'diaries' => fn (Builder $query) => $query->whereColumn('model_id', DB::raw('MAX(CASE WHEN `p-0005`.`gender` = "G" THEN `p-0005`.`id` ELSE NULL END)')),
                 ]),
             ExportColumn::make('last_diary_created_at')
                 ->label('תאריך יומן אחרון'),

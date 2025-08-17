@@ -2,6 +2,8 @@
 
 namespace App\Infolists\Components;
 
+use Closure;
+use Str;
 use Filament\Infolists\Components\Entry;
 use File;
 
@@ -9,24 +11,24 @@ class FileEntry extends Entry
 {
     protected string $view = 'filament.infolists.entries.file-entry';
 
-    protected null|string|\Closure $notFoundMessage = null;
+    protected null|string|Closure $notFoundMessage = null;
 
-    protected string|\Closure $fileAttribute = 'file';
+    protected string|Closure $fileAttribute = 'file';
 
-    protected string|\Closure $nameAttribute = 'name';
+    protected string|Closure $nameAttribute = 'name';
 
-    protected string|\Closure $prefix = 'storage/';
+    protected string|Closure $prefix = 'storage/';
 
     protected bool $grid = false;
 
-    public function fileAttribute(string|\Closure $attribute): static
+    public function fileAttribute(string|Closure $attribute): static
     {
         $this->fileAttribute = $attribute;
 
         return $this;
     }
 
-    public function nameAttribute(string|\Closure $attribute): static
+    public function nameAttribute(string|Closure $attribute): static
     {
         $this->nameAttribute = $attribute;
 
@@ -43,7 +45,7 @@ class FileEntry extends Entry
         return $this->evaluate($this->nameAttribute);
     }
 
-    public function grid(bool|\Closure $boolean = true): static
+    public function grid(bool|Closure $boolean = true): static
     {
         $this->grid = $boolean;
 
@@ -125,7 +127,7 @@ class FileEntry extends Entry
 
     public function isExternalAudio(): bool
     {
-        return \Str::startsWith(
+        return Str::startsWith(
             $this->getState($this->getFileAttribute()),
             'https://api.phonecall'
         );
@@ -140,7 +142,7 @@ class FileEntry extends Entry
         return File::exists($this->publicPath() ?? 'null');
     }
 
-    public function notFoundMessage(string|\Closure|null $message): static
+    public function notFoundMessage(string|Closure|null $message): static
     {
         $this->notFoundMessage = $message;
 
@@ -170,7 +172,7 @@ class FileEntry extends Entry
         };
     }
 
-    public function prefixPath(string|\Closure $prefix): static
+    public function prefixPath(string|Closure $prefix): static
     {
         $this->prefix = $prefix;
 

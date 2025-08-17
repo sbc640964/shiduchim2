@@ -2,14 +2,20 @@
 
 namespace App\Filament\Resources\PersonResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Support\Enums\Width;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use App\Actions\RunPayments;
 use App\Filament\Resources\PersonResource;
 use App\Models\CreditCard;
 use App\Models\Person;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
@@ -20,7 +26,7 @@ class CreditCards extends ManageRelatedRecords
 
     protected static string $relationship = 'cards';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-card';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-card';
 
     protected static ?string $title = 'כרטיסי אשראי';
 
@@ -33,7 +39,7 @@ class CreditCards extends ManageRelatedRecords
 //        return 'כרטיסי אשראי';
 //    }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
         /*
         brand
@@ -42,27 +48,27 @@ class CreditCards extends ManageRelatedRecords
         is_active
         data
         */
-        return $form
+        return $schema
             ->columns(1)
-            ->schema(static::formFields());
+            ->components(static::formFields());
     }
 
     public static function formFields(): array
     {
         return [
-            Forms\Components\TextInput::make('card')
+            TextInput::make('card')
                 ->label('כרטיס אשראי')
 //                    ->rule('digits_between:7,16')
                 ->mask('9999 9999 9999 9999')
                 ->required(),
 
-            Forms\Components\TextInput::make('exp')
+            TextInput::make('exp')
                 ->label('תוקף')
                 ->mask('99/99')
 //                    ->rule('digits:4')
                 ->required(),
 
-            Forms\Components\TextInput::make('cvv')
+            TextInput::make('cvv')
                 ->label('CVV')
                 ->rule('digits:3')
                 ->required(),
@@ -74,27 +80,27 @@ class CreditCards extends ManageRelatedRecords
         return $table
             ->recordTitleAttribute('כרטיסי אשראי')
             ->columns([
-                Tables\Columns\ToggleColumn::make('is_active'),
-                Tables\Columns\TextColumn::make('last4'),
-                Tables\Columns\TextColumn::make('token'),
+                ToggleColumn::make('is_active'),
+                TextColumn::make('last4'),
+                TextColumn::make('token'),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->modalWidth(MaxWidth::Small)
+                CreateAction::make()
+                    ->modalWidth(Width::Small)
                     ->label('כרטיס אשראי')
                     ->icon('heroicon-o-credit-card')
                     ->modalHeading('הוסף כרטיס אשראי')
-                    ->action(function ($data, Form $form, HasTable $livewire, Tables\Actions\CreateAction $action) {
+                    ->action(function ($data, Schema $schema, HasTable $livewire, CreateAction $action) {
                         $record = $livewire->getRecord();
                         static::createNewCreditCard($record, $action, $data);
                     }),
 //                Tables\Actions\AssociateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\Action::make('transfer')
+            ->recordActions([
+                Action::make('transfer')
                     ->label('החלף בעלים')
                     ->icon('heroicon-o-arrows-right-left')
                     ->action(function ($action, $record, $data) {
@@ -111,9 +117,9 @@ class CreditCards extends ManageRelatedRecords
 
                         $action->success();
                     })
-                    ->modalWidth(MaxWidth::Small)
-                    ->form([
-                        Forms\Components\Select::make('person_id')
+                    ->modalWidth(Width::Small)
+                    ->schema([
+                        Select::make('person_id')
                             ->label('בעלים חדש')
                             ->getOptionLabelUsing(fn($value) => Person::find($value)?->select_option_html)
                             ->searchable()
@@ -132,7 +138,7 @@ class CreditCards extends ManageRelatedRecords
 //                Tables\Actions\DissociateAction::make(),
 //                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
 //                Tables\Actions\BulkActionGroup::make([
 //                    Tables\Actions\DissociateBulkAction::make(),
 //                    Tables\Actions\DeleteBulkAction::make(),

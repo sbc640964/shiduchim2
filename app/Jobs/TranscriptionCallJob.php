@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use Exception;
 use App\Models\Call;
 use App\Models\Diary;
 use App\Models\Person;
@@ -35,7 +36,7 @@ class TranscriptionCallJob implements ShouldQueue
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle(): void
     {
@@ -199,7 +200,7 @@ class TranscriptionCallJob implements ShouldQueue
     public function getAudioBase64(array $chunk): Audio
     {
         if(!isset($chunk['file']) || !file_exists($chunk['file'])) {
-            throw new \Exception("Audio file does not exist for chunk: " . json_encode($chunk));
+            throw new Exception("Audio file does not exist for chunk: " . json_encode($chunk));
         }
 
         return Audio::fromLocalPath($chunk['file']);

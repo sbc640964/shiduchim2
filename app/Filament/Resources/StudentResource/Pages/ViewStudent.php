@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
+use Blade;
 use App\Filament\Resources\StudentResource;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Contracts\Support\Htmlable;
@@ -12,11 +13,11 @@ class ViewStudent extends ViewRecord
 
     protected static ?string $navigationLabel = 'צפה בתלמיד';
 
-    protected static ?string $navigationIcon = '';
+    protected static string | \BackedEnum | null $navigationIcon = '';
 
     public function getSubheading(): string|Htmlable|null
     {
-        return str(\Blade::render(
+        return str(Blade::render(
             <<<'HTML'
             <div class="flex gap-1 items-center">
                 <x-filament::badge color="{{ $age > 20 ? 'danger' : 'warning'}}" class="me-2">

@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use Lang;
 use Carbon\Carbon;
 
 class Hebcal
@@ -124,7 +125,7 @@ class Hebcal
 
         $month = $months[$this->month() - 1];
 
-        if ($local = \Lang::get('hebrew_date.months.'.$month, fallback: false)) {
+        if ($local = Lang::get('hebrew_date.months.'.$month, fallback: false)) {
             return $local;
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DB;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -45,7 +46,7 @@ class City extends Model
             return false;
         }
 
-        return \DB::transaction(function () use ($cities) {
+        return DB::transaction(function () use ($cities) {
             Person::whereIn('city_id', $cities)->update(['city_id' => $this->id]);
             Family::whereIn('city_id', $cities)->update(['city_id' => $this->id]);
             School::whereIn('city_id', $cities)->update(['city_id' => $this->id]);

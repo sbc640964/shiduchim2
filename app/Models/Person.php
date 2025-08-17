@@ -2,6 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasFormEntries;
+use App\Models\Traits\HasPersonFormFields;
+use App\Models\Traits\HasPersonFilamentTableColumns;
+use Cache;
+use Exception;
+use Throwable;
+use Arr;
 use App\Filament\Resources\PersonResource;
 use App\Models\Pivot\PersonFamily;
 use App\Models\Traits\HasActivities;
@@ -30,9 +37,9 @@ class Person extends Model
     use HasRelationships,
         HasTableAlias,
         HasTags,
-        Traits\HasFormEntries,
-        Traits\HasPersonFormFields,
-        Traits\HasPersonFilamentTableColumns,
+        HasFormEntries,
+        HasPersonFormFields,
+        HasPersonFilamentTableColumns,
         HasActivities;
 
 
@@ -491,7 +498,7 @@ class Person extends Model
 
     public function olderSiblings(): Collection
     {
-        return \Cache::remember(
+        return Cache::remember(
             'older_siblings_'.$this->id,
             now()->addMinutes(10),
             fn() => Person::query()
@@ -538,7 +545,7 @@ class Person extends Model
         }
 
         if($this->current_family_id || $person->current_family_id) {
-            throw new \Exception('לא יכול להתחתן, אחד האנשים כבר נשוי.');
+            throw new Exception('לא יכול להתחתן, אחד האנשים כבר נשוי.');
         }
 
         $thisPerson = $this;
@@ -571,7 +578,7 @@ class Person extends Model
     }
 
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function reMarried(?Proposal $proposal = null, ?Family $family = null): Family
     {
@@ -612,7 +619,7 @@ class Person extends Model
 
             return $family;
 
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             DB::rollBack();
             throw $th;
         }
@@ -787,7 +794,7 @@ class Person extends Model
             ->when($data['father_first_name'] ?? null, fn (Builder $query, $value) => $query->whereRelation('father', 'first_name', 'like', "%$value%"))
             ->when($data['school'] ?? null, fn (Builder $query, $value) => $query->whereRelation('schools', 'id', $value))
             ->when($data['synagogue'] ?? null, fn (Builder $query, $value) => $query->whereRelation('father.school', 'id', $value))
-            ->when($data['city'] ?? null, fn (Builder $query, $value) => $query->whereRelation('parentsFamily.city', fn ($query) => $query->whereIn('id', \Arr::wrap($value))))
+            ->when($data['city'] ?? null, fn (Builder $query, $value) => $query->whereRelation('parentsFamily.city', fn ($query) => $query->whereIn('id', Arr::wrap($value))))
             ->when($data['age'] ?? null, function (Builder $query, $value) use ($data) {
                 $operator = $data['age_operator'] ?? '=';
 
@@ -945,7 +952,7 @@ class Person extends Model
             DB::commit();
 
             return $this;
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             DB::rollBack();
             throw $th;
         }

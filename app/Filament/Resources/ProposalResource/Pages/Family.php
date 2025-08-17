@@ -2,16 +2,23 @@
 
 namespace App\Filament\Resources\ProposalResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Tables\Table;
+use Filament\Tables\Grouping\Group;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\Action;
+use Filament\Support\Enums\Width;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use App\Filament\Actions\Call;
 use App\Filament\Resources\PersonResource;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Person;
 use App\Models\Proposal;
 use Filament\Forms;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,7 +31,7 @@ class Family extends ManageRelatedRecords
 
     protected static string $relationship = 'family';
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $title = 'משפחה';
 
@@ -114,14 +121,14 @@ class Family extends ManageRelatedRecords
         return $tabs;
     }
 
-    public function table(Tables\Table $table): Tables\Table
+    public function table(Table $table): Table
     {
         /** @var Proposal $proposal */
         $proposal = $this->getOwnerRecord();
 
         return static::familyTable($table, $proposal, $this->side)
             ->defaultGroup(
-                Tables\Grouping\Group::make('current_family_id')
+                Group::make('current_family_id')
                     ->label('')
                     ->getTitleFromRecordUsing(fn (Person $person) => $person->family->husband->full_name ?? 'לא נשואים')
             )
@@ -135,7 +142,7 @@ class Family extends ManageRelatedRecords
             ->modifyQueryUsing(fn (Builder $query) => $this->modifyQueryTable($query));
     }
 
-    static public function familyTable(Tables\Table $table, $proposal, $side, ?bool $withChildren = true): Tables\Table
+    static public function familyTable(Table $table, $proposal, $side, ?bool $withChildren = true): Table
     {
         $isProposal = $proposal instanceof Proposal;
 
@@ -144,7 +151,7 @@ class Family extends ManageRelatedRecords
                 Person::nameColumn(),
                 ...Person::baseColumns(),
                 Person::childrenColumn($isProposal ? $proposal : null, $side),
-                Tables\Columns\TextColumn::make('age')
+                TextColumn::make('age')
                     ->label('גיל')
                     ->badge()
                     ->alignCenter()
@@ -152,26 +159,26 @@ class Family extends ManageRelatedRecords
                     ->color(fn (Person $person) => $person->gender === 'B' ? Color::Blue : 'danger')
                     ->prefix(fn (Person $person) => $person->gender === 'B' ? 'בן ' : 'בת '),
             ])
-            ->actions(static::getTableFamilyActions($isProposal ? $proposal : null, $side));
+            ->recordActions(static::getTableFamilyActions($isProposal ? $proposal : null, $side));
     }
 
     static public function getTableFamilyActions(?Proposal $proposal = null, ?string $side = null): array
     {
         $proposalActions = $proposal ? [
             Call::tableAction($proposal, $side),
-            Tables\Actions\Action::make('add-contact')
+            Action::make('add-contact')
                 ->label('הוסף לאנשי קשר')
                 ->tooltip('הוסף לאנשי קשר')
                 ->iconButton()
-                ->modalWidth(MaxWidth::Small)
+                ->modalWidth(Width::Small)
                 ->visible(fn (Person $person) => ! $proposal->contacts->where('id', $person->id)->count())
-                ->form(fn (Forms\Form $form) => $form
-                    ->schema([
-                        Forms\Components\TextInput::make('type_contact')
+                ->schema(fn (Schema $schema) => $schema
+                    ->components([
+                        TextInput::make('type_contact')
                             ->label('סוג איש קשר')
                             ->placeholder('למשל: אח שאחראי על השידוכים...')
                             ->required(),
-                        Forms\Components\ToggleButtons::make('create_auto')
+                        ToggleButtons::make('create_auto')
                             ->label('יצירת איש קשר אוטומטית')
                             ->boolean()
                             ->grouped()
@@ -185,7 +192,7 @@ class Family extends ManageRelatedRecords
                             ->default(false),
                     ]),
                 )
-                ->action(function (Person $person, array $data, Tables\Actions\Action $action) use ($side, $proposal) {
+                ->action(function (Person $person, array $data, Action $action) use ($side, $proposal) {
                     if ($data['create_auto'] ?? false) {
                         $proposal->{$side}->addAutoContact($person, $data['type_contact']);
                     }
@@ -204,7 +211,7 @@ class Family extends ManageRelatedRecords
         ]: [];
 
         return array_merge($proposalActions, [
-            Tables\Actions\Action::make('show')
+            Action::make('show')
                 ->label('הצג')
                 ->tooltip('הצג')
                 ->iconButton()

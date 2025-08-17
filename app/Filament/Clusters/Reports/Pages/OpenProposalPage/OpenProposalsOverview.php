@@ -11,7 +11,7 @@ class OpenProposalsOverview extends BaseWidget
     use FiltersOpenProposalsPage;
     protected function getStats(): array
     {
-        $dates = $this->normalizeDates($this->filters['dates'] ?? null);
+        $dates = $this->normalizeDates($this->pageFilters['dates'] ?? null);
 
         return [
             Stat::make(

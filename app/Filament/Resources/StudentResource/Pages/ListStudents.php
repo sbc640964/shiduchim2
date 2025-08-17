@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
+use Str;
 use App\Filament\Imports\StudentImporter;
 use App\Filament\Resources\GoldListResource;
 use App\Filament\Resources\StudentResource;
@@ -10,7 +12,6 @@ use App\Models\Person;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\ImportAction;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -78,7 +79,7 @@ class ListStudents extends ListRecords
                         'hold' => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state) => match (\Str::trim($state)) {
+                    ->formatStateUsing(fn ($state) => match (Str::trim($state)) {
                         'active' => 'פעיל',
                         'hold' => 'מושהה',
                         'pending' => 'ממתין',
@@ -88,8 +89,8 @@ class ListStudents extends ListRecords
                 ToggleColumn::make('lastSubscription.is_published')
                     ->label('פרסום')
                     ->sortable()
-                    ->getStateUsing(fn (Person $record) => \Str::trim($record->lastSubscription->status) === 'pending' ? $record->lastSubscription->is_published : null)
-                    ->disabled(fn (Person $record) => \Str::trim($record->lastSubscription->status) !== 'pending')
+                    ->getStateUsing(fn (Person $record) => Str::trim($record->lastSubscription->status) === 'pending' ? $record->lastSubscription->is_published : null)
+                    ->disabled(fn (Person $record) => Str::trim($record->lastSubscription->status) !== 'pending')
                     ->visible(fn () => $this->activeTab === 'subscriptions'),
                 TextColumn::make('lastSubscription.matchmaker.name')
                     ->label('שדכן')

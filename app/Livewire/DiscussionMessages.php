@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Components\Select;
 use App\Events\MessageCreatedEvent;
 use App\Filament\Pages\Inbox;
 use App\Models\Discussion;
@@ -22,7 +24,7 @@ use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 #[Lazy]
-class DiscussionMessages extends Component implements Forms\Contracts\HasForms, HasActions
+class DiscussionMessages extends Component implements HasForms, HasActions
 {
     use InteractsWithForms;
     use InteractsWithActions;
@@ -256,11 +258,11 @@ class DiscussionMessages extends Component implements Forms\Contracts\HasForms, 
                     ->modalDescription('האם אתה בטוח שברצונך למחוק את החדר?')
                     ->successRedirectUrl(Inbox::getUrl()),
             ])
-            ->form([
+            ->schema([
                 TextInput::make('title')
                     ->label('כותרת')
                     ->placeholder('כותרת'),
-                Forms\Components\Select::make('usersAssigned')
+                Select::make('usersAssigned')
                     ->label('נמענים')
                     ->live()
                     ->preload()

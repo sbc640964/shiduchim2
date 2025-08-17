@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Arr;
 use App\Jobs\AfterImportPeopleJob;
 use App\Models\Person;
 use App\Models\Phone;
@@ -79,7 +80,7 @@ class PeopleImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithBatch
 
     public function afterBatch(AfterBatch $event)
     {
-        AfterImportPeopleJob::dispatch(\Arr::pluck($this->rows, 'id'));
+        AfterImportPeopleJob::dispatch(Arr::pluck($this->rows, 'id'));
         $this->rows = [];
     }
 }

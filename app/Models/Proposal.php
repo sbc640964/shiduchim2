@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use DB;
+use View;
+use Arr;
+use Filament\Actions\Action;
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use App\Filament\Resources\ProposalResource;
 use App\Models\Traits\HasActivities;
@@ -388,7 +392,7 @@ class Proposal extends Model
             return;
         }
 
-        \DB::transaction(function () use ($reason, $status) {
+        DB::transaction(function () use ($reason, $status) {
 
             $family = $this->getSpoken('guy')
                 ->reMarried($this, $this->family);
@@ -507,7 +511,7 @@ class Proposal extends Model
     {
         $status = $this->getStatus($side);
 
-        return \View::make('components.status-option-in-select', [
+        return View::make('components.status-option-in-select', [
             'status' => $status,
             'isColumn' => true,
             'rawStatus' => $this->status,
@@ -701,7 +705,7 @@ class Proposal extends Model
 
     public function share(int|array $id): Collection
     {
-        $result = $this->users()->syncWithoutDetaching(\Arr::wrap($id));
+        $result = $this->users()->syncWithoutDetaching(Arr::wrap($id));
 
         if(count($result['attached']) === 0) {
             return collect();
@@ -714,7 +718,7 @@ class Proposal extends Model
             ->title('שותפה אתך הצעת שידוך')
             ->body(auth()->user()->name . " שיתף איתך הצעת שידוך " . $this->guy->full_name . ' ו' . $this->girl->full_name)
             ->actions([
-                \Filament\Notifications\Actions\Action::make('get_to_page')
+                Action::make('get_to_page')
                     ->label('פתח הצעת שידוך')
                     ->markAsRead()
                     ->url(ProposalResource::getUrl('view', ['record' => $this->getKey()]))

@@ -2,14 +2,21 @@
 
 namespace app\Filament\Clusters\Settings\Resources\SchoolResource\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Actions\Action;
+use Filament\Support\Enums\Width;
+use Filament\Forms\Components\Select;
+use Filament\Actions\DetachAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DetachBulkAction;
 use app\Filament\Clusters\Settings\Resources\SchoolResource;
 use App\Models\Contact;
 use App\Models\Person;
 use App\Models\School;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Pages\ManageRelatedRecords;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,15 +27,15 @@ class Contacts extends ManageRelatedRecords
 
     protected static string $relationship = 'contacts';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-user-square';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-user-square';
 
     protected static ?string $title = 'אנשי קשר';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -42,7 +49,7 @@ class Contacts extends ManageRelatedRecords
             ->modelLabel('איש קשר')
             ->columns([
                 Person::nameColumn(),
-                Tables\Columns\TextInputColumn::make('pivot.type')
+                TextInputColumn::make('pivot.type')
                     ->updateStateUsing(function ($state, Person $person) {
                         $person->pivot->update(['type' => $state]);
                     })
@@ -52,13 +59,13 @@ class Contacts extends ManageRelatedRecords
                 //
             ])
             ->headerActions([
-                Tables\Actions\Action::make('create-new')
+                Action::make('create-new')
                     ->label('שייך חדש')
                     ->color('gray')
-                    ->modalWidth(MaxWidth::Small)
-                    ->form(function (Form $form) {
-                        return $form->schema([
-                            Forms\Components\Select::make('person_id')
+                    ->modalWidth(Width::Small)
+                    ->schema(function (Schema $schema) {
+                        return $schema->components([
+                            Select::make('person_id')
                                 ->searchable()
                                 ->getSearchResultsUsing(function ($search) {
                                     $query = Person::query()->limit(60);
@@ -80,7 +87,7 @@ class Contacts extends ManageRelatedRecords
                                 ->allowHtml()
                                 ->label('איש קשר')
                                 ->required(),
-                            Forms\Components\TextInput::make('type')
+                            TextInput::make('type')
                                 ->label('סוג קשר')
                                 ->datalist(Contact::whereModelType(School::class)
                                     ->whereRelation('model', 'type', $this->getOwnerRecord()->type)->pluck('type', 'type')
@@ -101,13 +108,13 @@ class Contacts extends ManageRelatedRecords
                     ->outlined()
                     ->modalHeading('הוספת איש קשר'),
             ])
-            ->actions([
-                Tables\Actions\DetachAction::make()
+            ->recordActions([
+                DetachAction::make()
                     ->iconButton(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DetachBulkAction::make(),
                 ]),
             ]);
     }

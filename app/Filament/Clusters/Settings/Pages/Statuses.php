@@ -2,28 +2,44 @@
 
 namespace App\Filament\Clusters\Settings\Pages;
 
+use Filament\Infolists\Contracts\HasInfolists;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Flex;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Actions\Action;
+use Filament\Infolists\Components\ColorEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Actions;
+use Filament\Support\Enums\Size;
+use DB;
 use App\Filament\Clusters\Settings;
 use App\Models\Proposal;
 use App\Models\SettingOld as Setting;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Infolists;
-use Filament\Infolists\Infolist;
 use Filament\Pages\Page;
 use Filament\Support\Colors\Color;
 use Filament\Support\Components\Component as FilamentComponent;
-use Filament\Support\Enums\ActionSize;
 use Filament\Support\Enums\IconSize;
 use Illuminate\Support\Collection;
 
-class Statuses extends Page implements Infolists\Contracts\HasInfolists
+class Statuses extends Page implements HasInfolists
 {
     use HasPageShield;
 
-    protected static string $view = 'filament.pages.statuses';
+    protected string $view = 'filament.pages.statuses';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-setting-4';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-setting-4';
 
     protected static ?string $title = 'סטטוסים';
 
@@ -34,33 +50,33 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
 //        return static::canView();
 //    }
 
-    public function statusForm(Form $form, ?Setting $statuses = null): Form
+    public function statusForm(Schema $schema, ?Setting $statuses = null): Schema
     {
         $statuses = $statuses ?? Setting::firstOrNew(['key' => 'statuses_proposal_person'], ['value' => []]);
 
-        return $form->schema([
-            Forms\Components\Split::make([
-                Forms\Components\ColorPicker::make('color')->grow(false),
-                Forms\Components\TextInput::make('name')
+        return $schema->components([
+            Flex::make([
+                ColorPicker::make('color')->grow(false),
+                TextInput::make('name')
                     ->label('שם')
                     ->required(),
             ]),
-            Forms\Components\Checkbox::make('update_existing_proposals')
+            Checkbox::make('update_existing_proposals')
                 ->label('עדכן הצעות קיימות')
                 ->default(true)
                 ->helperText('במידה ושם הסטטוס ישתנה ישתנה גם בהצעות קיימות'),
 
-            Forms\Components\Textarea::make('description')
+            Textarea::make('description')
                 ->label('תיאור'),
-            Forms\Components\Section::make('הגדרת שינוי סטטוס')
+            Section::make('הגדרת שינוי סטטוס')
                 ->schema([
-                    Forms\Components\ToggleButtons::make('is_not_include')
+                    ToggleButtons::make('is_not_include')
                         ->label('סוג רשימה')
                         ->boolean('לבנה', 'שחורה')
                         ->inline()
                         ->grouped()
                         ->default(false),
-                    Forms\Components\Select::make('list')
+                    Select::make('list')
                         ->options(collect($statuses->value)->mapWithKeys(fn ($value) => [$value['name'] => $value['name']])->toArray())
                         ->label('רשימה')
                         ->multiple()
@@ -69,10 +85,10 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
                 ->collapsed()
                 ->description('הגדר לאיזה סטטוסים ניתן להעביר במקרה שזה הסטטוס הנוכחי'),
 
-            Forms\Components\Section::make('הגדרת תאריך טיפול הבא')
+            Section::make('הגדרת תאריך טיפול הבא')
                 ->columns(2)
                 ->schema([
-                    Forms\Components\Select::make('next_date_delta')
+                    Select::make('next_date_delta')
                         ->native(false)
                         ->options([
                             'none' => 'ללא',
@@ -85,15 +101,15 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
                         ->live()
                         ->label('יחידת זמן')
                         ->default('day'),
-                    Forms\Components\TextInput::make('next_date_delta_value')
-                        ->visible(fn (Forms\Get $get) => $get('next_date_delta') !== 'none')
+                    TextInput::make('next_date_delta_value')
+                        ->visible(fn (Get $get) => $get('next_date_delta') !== 'none')
                         ->numeric()
                         ->extraInputAttributes(['min' => 1])
                         ->minValue(1)
                         ->label('ערך')
                         ->default(1),
 
-                    Forms\Components\Toggle::make('change_other_side_too')
+                    Toggle::make('change_other_side_too')
                         ->columnSpanFull()
                         ->label('שנה גם לצד השני')
                         ->helperText('עדכון תאריך ישנה את התאריך לטיפול הבא בשני הצדדים')
@@ -102,41 +118,41 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
                 ->collapsed()
                 ->description('הגדר את ברירת המחדל עבור תאריך טיפול הבא'),
 
-            Forms\Components\Toggle::make('is_default')
+            Toggle::make('is_default')
                 ->label('סטטוס ברירת מחדל')
                 ->helperText('סטטוס ברירת מחדל יוגדר אוטומטית במקרה שלא נבחר סטטוס אחר'),
 
-            Forms\Components\Toggle::make('is_closed_status')
+            Toggle::make('is_closed_status')
                 ->label('סטטוס סגור')
                 ->helperText('סטטוס סגור יבחר באופן אוטומטי עבור הצעות שנסגרות, לא ניתן לבחור סטטוס זה באופן ידני.')
                 ->default(false),
 
-            Forms\Components\Toggle::make('hidden_by_default')
+            Toggle::make('hidden_by_default')
                 ->label('הסתר')
                 ->helperText('בברירת מחדל סטטוס זה יהיה מוסתר ברשימת ההצעות')
                 ->default(false),
         ]);
     }
 
-    public function guyGirlStatusesInfolist(Infolist $infolist): Infolist
+    public function guyGirlStatusesInfolist(Schema $schema): Schema
     {
         $guyGirlStatuses = Setting::firstOrNew(['key' => 'statuses_proposal_person'], ['value' => []]);
         //        $proposalStatuses = Setting::firstOrNew(['key' => 'statuses_proposal'], ['value' => []]);
 
-        return $infolist
+        return $schema
             ->record($guyGirlStatuses)
-            ->schema([
+            ->components([
                 $this->getStatusesList($guyGirlStatuses, 'סטטוסים עבור בחור/בחורה בהצעה'),
             ]);
     }
 
-    public function proposalStatuses(Infolist $infolist): Infolist
+    public function proposalStatuses(Schema $schema): Schema
     {
         $proposalStatuses = Setting::firstOrNew(['key' => 'statuses_proposal'], ['value' => []]);
 
-        return $infolist
+        return $schema
             ->record($proposalStatuses)
-            ->schema([
+            ->components([
                 $this->getStatusesList($proposalStatuses, 'סטטוסים עבור הצעה'),
             ]);
     }
@@ -162,7 +178,7 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
     public function getRepeaterEntryState($component)
     {
         $parent = $component->getContainer()?->getParentComponent();
-        if ($parent instanceof Infolists\Components\RepeatableEntry) {
+        if ($parent instanceof RepeatableEntry) {
             return $parent->getState();
         }
 
@@ -171,65 +187,65 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
 
     private function getStatusesList(Setting $statuses, string $heading)
     {
-        return Infolists\Components\Section::make($heading)
+        return Section::make($heading)
             ->key(base64_encode($heading))
             ->headerActions([
-                Infolists\Components\Actions\Action::make('add')
+                Action::make('add')
                     ->label('הוסף סטטוס')
                     ->iconButton()
-                    ->form(fn ($form) => $this->statusForm($form, $statuses))
+                    ->schema(fn ($form) => $this->statusForm($form, $statuses))
                     ->action(fn ($data, $action) => $this->addOrUpdateStatus($data, $statuses) && $action->success())
                     ->icon('heroicon-o-plus'),
             ])
             ->schema([
                 //                Infolists\Components\View::make('empty-statuses'),
-                Infolists\Components\RepeatableEntry::make('value')
+                RepeatableEntry::make('value')
                     ->hiddenLabel()
                     ->contained(fn () => false)
                     ->extraAttributes(['class' => 'lite-repeater-container'])
                     ->hidden(count($statuses['value']) === 0)
                     ->schema(function () use ($statuses) {
                         return [
-                            Infolists\Components\Split::make([
-                                Infolists\Components\ColorEntry::make('color')
+                            Flex::make([
+                                ColorEntry::make('color')
                                     ->hiddenLabel()
                                     ->grow(false)
                                     ->default(Color::Gray[600])
                                     ->label('צבע'),
-                                Infolists\Components\TextEntry::make('name')
+                                TextEntry::make('name')
                                     ->hiddenLabel()
                                     ->extraAttributes(['class' => 'leading-none-text'])
                                     ->grow()
                                     ->helperText(fn ($component) => $this->getIndex($component, true)['description'] ?? null)
                                     ->label('שם'),
-                                Infolists\Components\Actions::make([
-                                    Infolists\Components\Actions\Action::make('edit')
+                                Actions::make([
+                                    Action::make('edit')
                                         ->icon('heroicon-o-pencil')
                                         ->iconButton()
                                         ->tooltip('ערוך')
                                         ->color(Color::Gray)
-                                        ->size(ActionSize::Small)
+                                        ->size(Size::Small)
                                         ->iconSize(IconSize::Small)
                                         ->fillForm(fn ($component) => $this->getIndex($component, true))
-                                        ->form(fn ($form) => $this->statusForm($form, $statuses))
+                                        ->schema(fn ($form) => $this->statusForm($form, $statuses))
                                         ->successNotificationTitle('עודכן בהצלחה')
                                         ->modalHeading('ערוך סטטוס')
                                         ->modalWidth('lg')
                                         ->modalSubmitActionLabel('עדכן')
-                                        ->action(function ($component, $data, Setting $record, Infolists\Components\Actions\Action $action) {
-                                            if (\DB::transaction(fn ()
+                                        ->action(function ($component, $data, Setting $record, Action $action) {
+                                            if (DB::transaction(fn ()
                                                 => $this->addOrUpdateStatus($data, $record, $this->getIndex($component)))
                                             ) {
                                                 $action->success();
                                             }
                                         }),
 
-                                    Infolists\Components\Actions\Action::make('trash')
+                                    Action::make('trash')
                                         ->icon('heroicon-o-trash')
                                         ->iconButton()
                                         ->tooltip('מחק')
                                         ->color('danger')
-                                        ->size(ActionSize::Small)
+                                        ->size(Size::Small)
                                         ->iconSize(IconSize::Small)
                                         ->requiresConfirmation()
                                         ->modalHeading('מחק סטטוס')
@@ -252,10 +268,10 @@ class Statuses extends Page implements Infolists\Contracts\HasInfolists
                         ];
                     }),
 
-                Infolists\Components\Actions::make([
-                    Infolists\Components\Actions\Action::make('add')
+                Actions::make([
+                    Action::make('add')
                         ->label('הוסף סטטוס')
-                        ->form(fn ($form) => $this->statusForm($form, $statuses))
+                        ->schema(fn ($form) => $this->statusForm($form, $statuses))
                         ->action(fn ($data, $action) => $this->addOrUpdateStatus($data, $statuses) && $action->success())
                         ->icon('heroicon-o-plus-circle'),
                 ]),

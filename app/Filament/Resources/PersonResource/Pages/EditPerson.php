@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\PersonResource\Pages;
 
+use Filament\Support\Enums\Width;
+use DB;
+use Filament\Schemas\Schema;
 use App\Filament\Resources\PersonResource;
 use App\Filament\Resources\StudentResource;
 use App\Models\Call;
@@ -13,17 +16,15 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Resources\Pages\EditRecord;
-use Filament\Support\Enums\MaxWidth;
 
 class EditPerson extends EditRecord
 {
     protected static string $resource = PersonResource::class;
 
-    protected static ?string $navigationIcon = 'iconsax-bul-edit-2';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-edit-2';
 
     protected static ?string $title = 'עריכה';
 
@@ -32,7 +33,7 @@ class EditPerson extends EditRecord
         return [
             ActionGroup::make([
                 Action::make('merge_people')
-                    ->modalWidth(MaxWidth::Small)
+                    ->modalWidth(Width::Small)
                     ->label('מיזוג אנשים')
                     ->action(function (array $data, Action $action) {
                         $basePerson = $data['base_person'] === 'this' ? $this->record : Person::find($data['person_id']);
@@ -43,7 +44,7 @@ class EditPerson extends EditRecord
                             $action->failure();
                         }
                     })
-                    ->form([
+                    ->schema([
                         Select::make('person_id')
                             ->label('אדם למיזוג')
                             ->placeholder('בחר אדם...')
@@ -70,9 +71,9 @@ class EditPerson extends EditRecord
                     ]),
                 Action::make('update_prev_wife')
                     ->label('עדכון אשה מנישואים קודמים')
-                    ->modalWidth(MaxWidth::Small)
+                    ->modalWidth(Width::Small)
                     ->hidden($this->getRecord()->gender === 'G')
-                    ->form([
+                    ->schema([
                         Select::make('prev_wife_id')
                             ->label('אשה קודמת')
                             ->placeholder('בחר אשה...')
@@ -91,7 +92,7 @@ class EditPerson extends EditRecord
                         /** @var Person $record */
                         $record = $this->getRecord();
 
-                        $transaction = \DB::transaction(function () use ($data, $record, $action) {
+                        $transaction = DB::transaction(function () use ($data, $record, $action) {
 
                             $otherRecord = Person::find($data['prev_wife_id']);
 
@@ -129,8 +130,8 @@ class EditPerson extends EditRecord
 
                 Action::make('death')
                     ->label('עדכון פטירה')
-                    ->form(function (Form $form) {
-                        return $form->schema([
+                    ->schema(function (Schema $schema) {
+                        return $schema->components([
                             DatePicker::make('died_at')
                                 ->label('תאריך פטירה')
                                 ->helperText('ניתן להזין תאריך פטירה, במקרה ואינך יודע השאר ריק בבקשה!'),
@@ -145,9 +146,9 @@ class EditPerson extends EditRecord
 
                 Action::make('add_to_students')
                     ->label('הוספה למערכת תלמידים')
-                    ->form(function (Form $form) {
+                    ->schema(function (Schema $schema) {
                         //change the students_external_code with numeric code
-                        return $form->schema([
+                        return $schema->components([
                             TextInput::make('external_code_students')
                                 ->label('קוד תלמידים חיצוני')
                                 ->numeric()

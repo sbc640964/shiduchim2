@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
+use DB;
+use Arr;
+use Exception;
 use App\Filament\Resources\StudentResource;
 use App\Models\Person;
 use Filament\Resources\Pages\EditRecord;
@@ -14,7 +17,7 @@ class EditStudent extends EditRecord
 
     protected static ?string $navigationLabel = 'ערוך תלמיד';
 
-    protected static ?string $navigationIcon = '';
+    protected static string | \BackedEnum | null $navigationIcon = '';
 
     protected function getActions(): array
     {
@@ -26,12 +29,12 @@ class EditStudent extends EditRecord
     public function handleRecordUpdate(Model|Person $record, array $data): Model
     {
 
-        \DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             $record->load('parentsFamily');
 
-            $record->fill(\Arr::only($data, [
+            $record->fill(Arr::only($data, [
                 'first_name',
                 'last_name',
                 'parents_family_id',
@@ -95,9 +98,9 @@ class EditStudent extends EditRecord
                 });
             }
 
-            \DB::commit();
-        } catch (\Exception $e) {
-            \DB::rollBack();
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
             throw $e;
         }
 

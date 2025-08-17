@@ -2,6 +2,8 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
 use App\Filament\Resources\ProposalResource\Pages\Family;
 use App\Models\Person;
 use App\Models\Proposal;
@@ -14,8 +16,9 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Livewire\Component;
 
-class FamilyTable extends Component implements HasTable, HasForms, HasInfolists
+class FamilyTable extends Component implements HasTable, HasForms, HasInfolists, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithInfolists;
     use InteractsWithForms;
     use InteractsWithTable;

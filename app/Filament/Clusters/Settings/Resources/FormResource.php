@@ -2,13 +2,36 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Group;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Repeater;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\Settings\Resources\FormResource\Pages\ListForms;
+use App\Filament\Clusters\Settings\Resources\FormResource\Pages\CreateForm;
+use App\Filament\Clusters\Settings\Resources\FormResource\Pages\EditForm;
+use Illuminate\Support\Collection;
+use Cache;
+use Blade;
 use App;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\FormResource\Pages;
 use App\Models\Form;
 use BladeUI\Icons\Factory as IconFactory;
 use Filament\Forms;
-use Filament\Forms\Form as FilamentForm;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,7 +41,7 @@ class FormResource extends Resource
 {
     protected static ?string $model = Form::class;
 
-    protected static ?string $navigationIcon = 'iconsax-bul-layer';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-layer';
 
     protected static ?string $cluster = Settings::class;
 
@@ -26,20 +49,20 @@ class FormResource extends Resource
 
     protected static ?string $pluralLabel = 'טפסים';
 
-    public static function form(FilamentForm $form): FilamentForm
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Tabs::make('')
+        return $schema
+            ->components([
+                Tabs::make('')
                     ->tabs([
-                        Forms\Components\Tabs\Tab::make('general')
+                        Tab::make('general')
                             ->label('פרטים כלליים')
                             ->schema([
-                                Forms\Components\TextInput::make('name')
+                                TextInput::make('name')
                                     ->label('שם')
                                     ->required()
                                     ->placeholder('הכנס את שם הטופס'),
-                                Forms\Components\Select::make('resource')
+                                Select::make('resource')
                                     ->native(false)
                                     ->options([
                                         'people' => 'אנשים',
@@ -48,23 +71,23 @@ class FormResource extends Resource
                                     ])
                                     ->label('משאב')
                                     ->required(),
-                                Forms\Components\Group::make([
-                                    Forms\Components\Checkbox::make('is_active')
+                                Group::make([
+                                    Checkbox::make('is_active')
                                         ->default(true)
                                         ->label('פעיל'),
-                                    Forms\Components\Checkbox::make('is_multiple')
+                                    Checkbox::make('is_multiple')
                                         ->default(false)
                                         ->label('מרובה רשומות'),
                                 ])->columns(2),
                             ]),
 
-                        Forms\Components\Tabs\Tab::make('fields')
+                        Tab::make('fields')
                             ->label('שדות')
                             ->schema([
-                                Forms\Components\Repeater::make('fields')
+                                Repeater::make('fields')
                                     ->hiddenLabel()
                                     ->collapsed()
-                                    ->deleteAction(fn (\Filament\Forms\Components\Actions\Action $action) => $action->requiresConfirmation()
+                                    ->deleteAction(fn (Action $action) => $action->requiresConfirmation()
                                         ->icon('iconsax-bul-trash')
                                         ->modalHeading('מחיקת שדה')
                                     )
@@ -73,7 +96,7 @@ class FormResource extends Resource
                                     ->itemLabel(fn ($state) => $state['label'] ?? null)
                                     ->columns(2)
                                     ->schema([
-                                        Forms\Components\Select::make('type')
+                                        Select::make('type')
                                             ->options([
                                                 'text' => 'טקסט',
                                                 'textarea' => 'טקסט ארוך',
@@ -87,29 +110,29 @@ class FormResource extends Resource
                                             ->live()
                                             ->label('סוג')
                                             ->required(),
-                                        Forms\Components\TextInput::make('label')
+                                        TextInput::make('label')
                                             ->label('תווית')
                                             ->live()
                                             ->required(),
-                                        Forms\Components\TextInput::make('placeholder')
+                                        TextInput::make('placeholder')
                                             ->label('שומר מקום'),
-                                        Forms\Components\Checkbox::make('required')
+                                        Checkbox::make('required')
                                             ->label('חובה'),
-                                        Forms\Components\Textarea::make('help')
+                                        Textarea::make('help')
                                             ->label('טקסט עזרה')
                                             ->columnSpanFull(),
-                                        Forms\Components\Group::make(fn ($state) => collect([
+                                        Group::make(fn ($state) => collect([
                                             Form::generateField([...$state, 'label' => 'ברירת מחדל'])
                                                 ?->required(false),
                                         ])->filter()->toArray())
                                             ->visible(fn ($state) => ! empty($state['type']) && ! empty($state['label']))
                                             ->columnSpanFull(),
-                                        Forms\Components\Group::make([
-                                            Forms\Components\Repeater::make('options')
+                                        Group::make([
+                                            Repeater::make('options')
                                                 ->label('אפשרויות')
                                                 ->columnSpanFull()
                                                 ->addActionLabel('הוסף אפשרות')
-                                                ->simple(Forms\Components\TextInput::make('name')
+                                                ->simple(TextInput::make('name')
                                                     ->label('שם')
                                                     ->required()
                                                 ),
@@ -119,20 +142,20 @@ class FormResource extends Resource
                                     ]),
                             ]),
 
-                        Forms\Components\Tabs\Tab::make('edit_pleases')
+                        Tab::make('edit_pleases')
                             ->label('מיקומי עריכה/יצירה')
                             ->schema([
-                                Forms\Components\Group::make([
-                                    Forms\Components\Repeater::make('edit_pleases')
+                                Group::make([
+                                    Repeater::make('edit_pleases')
                                         ->label('עריכה')
                                         ->hiddenLabel()
                                         ->columnSpanFull()
                                         ->addActionLabel('הוסף פעולה')
                                         ->maxItems(3)
                                         ->schema([
-                                            Forms\Components\Grid::make(5)
+                                            Grid::make(5)
                                                 ->schema([
-                                                    Forms\Components\ToggleButtons::make('place')
+                                                    ToggleButtons::make('place')
                                                         ->options([
                                                             'list' => 'פעולת רשימה',
                                                             'view' => 'פעולת צפייה',
@@ -149,17 +172,17 @@ class FormResource extends Resource
                                                         ->label('מקום')
                                                         ->columnSpan(4)
                                                         ->required(),
-                                                    Forms\Components\Toggle::make('is_grouped')
+                                                    Toggle::make('is_grouped')
                                                         ->label('קיבוץ'),
                                                 ]),
 
-                                            Forms\Components\Grid::make(5)->schema([
-                                                Forms\Components\TextInput::make('label')
+                                            Grid::make(5)->schema([
+                                                TextInput::make('label')
                                                     ->label('תווית')
                                                     ->live()
                                                     ->columnSpan(4)
                                                     ->required(),
-                                                Forms\Components\Select::make('type_label')
+                                                Select::make('type_label')
                                                     ->label('סוג תווית')
                                                     ->options([
                                                         'normal' => 'רגיל',
@@ -167,18 +190,18 @@ class FormResource extends Resource
                                                     ]),
                                             ]),
 
-                                            Forms\Components\Grid::make(5)
+                                            Grid::make(5)
                                                 ->schema([
-                                                    Forms\Components\Select::make('icon')
+                                                    Select::make('icon')
                                                         ->label('אייקון')
 //                                                        ->options(fn (Forms\Get $get) => static::getIcons($get('set')))
-                                                        ->getSearchResultsUsing(fn (Forms\Get $get, $search) => static::getIcons($get('set'), $search))
+                                                        ->getSearchResultsUsing(fn (Get $get, $search) => static::getIcons($get('set'), $search))
                                                         ->allowHtml()
                                                         ->searchable()
                                                         ->columnSpan(4)
                                                         ->optionsLimit(50)
                                                         ->required(),
-                                                    Forms\Components\Select::make('set')
+                                                    Select::make('set')
                                                         ->label('סט')
                                                         ->live()
                                                         ->default('iconsax')
@@ -190,20 +213,20 @@ class FormResource extends Resource
                                 ]),
                             ]),
 
-                        Forms\Components\Tabs\Tab::make('view_pleases')
+                        Tab::make('view_pleases')
                             ->label('מיקומי צפייה')
                             ->schema([
-                                Forms\Components\Group::make([
-                                    Forms\Components\Repeater::make('view_pleases')
+                                Group::make([
+                                    Repeater::make('view_pleases')
                                         ->label('צפייה')
                                         ->hiddenLabel()
                                         ->columnSpanFull()
                                         ->addActionLabel('הוסף פעולה')
                                         ->maxItems(3)
                                         ->schema([
-                                            Forms\Components\Grid::make(5)
+                                            Grid::make(5)
                                                 ->schema([
-                                                    Forms\Components\ToggleButtons::make('place')
+                                                    ToggleButtons::make('place')
                                                         ->options([
                                                             'list' => 'פעולת רשימה',
                                                             'view' => 'פעולת צפייה',
@@ -220,17 +243,17 @@ class FormResource extends Resource
                                                         ->label('מקום')
                                                         ->columnSpan(4)
                                                         ->required(),
-                                                    Forms\Components\Toggle::make('is_grouped')
+                                                    Toggle::make('is_grouped')
                                                         ->label('קיבוץ'),
                                                 ]),
 
-                                            Forms\Components\Grid::make(5)->schema([
-                                                Forms\Components\TextInput::make('label')
+                                            Grid::make(5)->schema([
+                                                TextInput::make('label')
                                                     ->label('תווית')
                                                     ->live()
                                                     ->columnSpan(4)
                                                     ->required(),
-                                                Forms\Components\Select::make('type_label')
+                                                Select::make('type_label')
                                                     ->label('סוג תווית')
                                                     ->options([
                                                         'normal' => 'רגיל',
@@ -238,18 +261,18 @@ class FormResource extends Resource
                                                     ]),
                                             ]),
 
-                                            Forms\Components\Grid::make(5)
+                                            Grid::make(5)
                                                 ->schema([
-                                                    Forms\Components\Select::make('icon')
+                                                    Select::make('icon')
                                                         ->label('אייקון')
 //                                                        ->options(fn (Forms\Get $get) => static::getIcons($get('set')))
-                                                        ->getSearchResultsUsing(fn (Forms\Get $get, $search) => static::getIcons($get('set'), $search))
+                                                        ->getSearchResultsUsing(fn (Get $get, $search) => static::getIcons($get('set'), $search))
                                                         ->allowHtml()
                                                         ->searchable()
                                                         ->columnSpan(4)
                                                         ->optionsLimit(50)
                                                         ->required(),
-                                                    Forms\Components\Select::make('set')
+                                                    Select::make('set')
                                                         ->label('סט')
                                                         ->live()
                                                         ->default('iconsax')
@@ -268,12 +291,12 @@ class FormResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('שם')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('resource')
+                TextColumn::make('resource')
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'people' => 'אנשים',
                         'students' => 'תלמידים',
@@ -287,12 +310,12 @@ class FormResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -307,13 +330,13 @@ class FormResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListForms::route('/'),
-            'create' => Pages\CreateForm::route('/create'),
-            'edit' => Pages\EditForm::route('/{record}/edit'),
+            'index' => ListForms::route('/'),
+            'create' => CreateForm::route('/create'),
+            'edit' => EditForm::route('/{record}/edit'),
         ];
     }
 
-    public static function getIcons(?string $set = null, ?string $search = null): array|\Illuminate\Support\Collection
+    public static function getIcons(?string $set = null, ?string $search = null): array|Collection
     {
         $key = 'sbc-icons-picker';
 
@@ -325,7 +348,7 @@ class FormResource extends Resource
             $key .= '.'.$search;
         }
 
-        return \Cache::remember($key, now()->addWeek(), function () use ($search, $set) {
+        return Cache::remember($key, now()->addWeek(), function () use ($search, $set) {
             $icons = static::loadIcons();
 
             if (filled($set)) {
@@ -342,7 +365,7 @@ class FormResource extends Resource
 
     public static function loadIcons(): array
     {
-        return \Cache::remember('sbc-icons', now()->addWeek(), function () {
+        return Cache::remember('sbc-icons', now()->addWeek(), function () {
             $sets = collect(App::make(IconFactory::class)->all());
 
             $icons = $sets->mapWithKeys(fn ($set) => [$set['prefix'] => []])->toArray();
@@ -352,7 +375,7 @@ class FormResource extends Resource
                 foreach ($set['paths'] as $path) {
                     foreach (File::files($path) as $file) {
                         $filename = $prefix.'-'.$file->getFilenameWithoutExtension();
-                        $icons[$prefix][$filename] = \Blade::render(
+                        $icons[$prefix][$filename] = Blade::render(
                             <<<'HTML'
                             <div class="flex items-center space-x-2 rtl:space-x-reverse text-current">
                                 <span><x-icon :name="$value" class="w-5 h-5" /></span>

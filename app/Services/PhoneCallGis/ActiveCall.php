@@ -2,6 +2,7 @@
 
 namespace App\Services\PhoneCallGis;
 
+use Cache;
 use App\Models\Person;
 use App\Models\Proposal;
 use Illuminate\Database\Eloquent\Collection;
@@ -111,7 +112,7 @@ class ActiveCall
         $cacheKey = 'current-calls/'.$data['extension'];
         $externalPhone = $data['is_outgoing'] ? $data['target_phone'] : $data['from_phone'];
 
-        $currentCalls = \Cache::get($cacheKey) ?? [];
+        $currentCalls = Cache::get($cacheKey) ?? [];
 
         $currentCalls = collect($currentCalls)->map(function (ActiveCall $call) use ($externalPhone, $data) {
             if ($call->extension === static::normalizedExtension($data['extension'] ?? null)
@@ -125,7 +126,7 @@ class ActiveCall
             return $call;
         })->toArray();
 
-        \Cache::put($cacheKey, $currentCalls);
+        Cache::put($cacheKey, $currentCalls);
     }
 
     public static function make(
@@ -137,11 +138,11 @@ class ActiveCall
         ?Proposal $proposal = null,
         ?Collection $allProposals = null,
     ): static {
-        $currentCalls = \Cache::get('current-calls/'.$extension) ?? [];
+        $currentCalls = Cache::get('current-calls/'.$extension) ?? [];
 
         $currentCalls[] = $newCall = new static($extension, $phone, $isOutgoing, $callId, $person, $proposal, $allProposals);
 
-        \Cache::put('current-calls/'.$extension, $currentCalls);
+        Cache::put('current-calls/'.$extension, $currentCalls);
 
         return $newCall;
     }

@@ -8,7 +8,7 @@ use Filament\Clusters\Cluster;
 
 class Settings extends Cluster
 {
-    protected static ?string $navigationIcon = 'iconsax-bul-setting-2';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-setting-2';
 
     protected static ?string $title = 'הגדרות';
 

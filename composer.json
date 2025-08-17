@@ -9,19 +9,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "awcodes/filament-gravatar": "^2.0",
-        "bezhansalleh/filament-shield": "^3.3",
-        "davidhsianturi/blade-bootstrap-icons": "^1.5",
+        "awcodes/filament-gravatar": "^v3.0.0",
+        "bezhansalleh/filament-shield": "^4.0.0-beta2",
+        "davidhsianturi/blade-bootstrap-icons": "^2.1",
         "derrickob/gemini-api": "^1.1",
         "elipzis/laravel-cacheable-model": "^0.4.0",
-        "filament/filament": "^3.2",
-        "filament/spatie-laravel-tags-plugin": "^3.1",
-        "guava/calendar": "^1.12",
-        "guava/filament-clusters": "^1.1",
+        "filament/filament": "~4.0",
+        "filament/spatie-laravel-tags-plugin": "~4.0",
+        "guava/calendar": "^2.0.0-beta.1",
         "ibrahim-bougaoua/filaprogress": "^0.1.0",
         "itsgoingd/clockwork": "^5.2",
-        "jeffgreco13/filament-breezy": "v2.4.5",
-        "kenepa/banner": "^0.0.9",
         "laravel/framework": "^11.0",
         "laravel/horizon": "^5.21",
         "laravel/nightwatch": "^1.7",
@@ -34,21 +31,19 @@
         "league/flysystem-aws-s3-v3": "^3.0",
         "maatwebsite/excel": "^3.1",
         "mallardduck/blade-lucide-icons": "^1.23",
-        "malzariey/filament-daterangepicker-filter": "^3.1",
-        "novadaemon/filament-pretty-json": "^2.5",
+        "malzariey/filament-daterangepicker-filter": "^4.0.6",
         "prism-php/prism": "^0.81.0",
         "saade/blade-iconsax": "^1.1",
-        "saade/filament-fullcalendar": "^3.2",
         "sentry/sentry-laravel": "^4.13",
         "spatie/laravel-ignition": "^2.9",
         "staudenmeir/eloquent-has-many-deep": "^1.7",
         "staudenmeir/eloquent-json-relations": "^1.1",
         "staudenmeir/laravel-merged-relations": "^1.9",
-        "stechstudio/filament-impersonate": "^3.6.1",
-        "tomatophp/filament-alerts": "^2.2"
+        "stechstudio/filament-impersonate": "^4.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "filament/upgrade": "4.0",
         "laravel/pail": "^1.1",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
@@ -106,5 +101,13 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "comments": {
+        "guava/filament-clusters": "^1.5.0",
+        "kenepa/banner": "^0.1.0",
+        "novadaemon/filament-pretty-json": "^2.6",
+        "tomatophp/filament-alerts": "^2.2.2",
+        "jeffgreco13/filament-breezy": "^2.6",
+        "saade/filament-fullcalendar": "^v3.2"
+    }
 }

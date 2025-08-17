@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Str;
 use App\Services\PhoneCallGis\CallPhone;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -63,7 +64,7 @@ class Phone extends Model
 
     public function getNumberAttribute($value): string
     {
-        if (!\Str::startsWith($value, '0')) {
+        if (!Str::startsWith($value, '0')) {
             return '00' . $value;
         }
 

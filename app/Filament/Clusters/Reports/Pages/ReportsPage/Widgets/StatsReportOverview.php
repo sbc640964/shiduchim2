@@ -14,7 +14,7 @@ class StatsReportOverview extends BaseWidget
 {
     use FilterReportsTrait;
 
-    protected static ?string $pollingInterval = null;
+    protected ?string $pollingInterval = null;
 
     protected function getStats(): array
     {

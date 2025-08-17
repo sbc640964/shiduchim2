@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Filament\Forms\Components\Select;
+use Blade;
+use DB;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -54,7 +57,7 @@ class Family extends Model
 
     static public function filamentSelect(string $name, ?Family $currentValue = null)
     {
-        return \Filament\Forms\Components\Select::make($name)
+        return Select::make($name)
             ->getOptionLabelFromRecordUsing(fn (Family $record) => $record->option_select)
             ->getSearchResultsUsing(fn ($search, $record) =>
                 array_merge(
@@ -173,7 +176,7 @@ class Family extends Model
 
         $parentNames = $this->husband->renderPivotSideAndAddress(false);
 
-        return \Blade::render(
+        return Blade::render(
 <<<'HTML'
 
 <div class="flex justify-between">
@@ -209,7 +212,7 @@ HTML
 
     public function divorce(): bool
     {
-        return \DB::transaction(fn()  =>
+        return DB::transaction(fn()  =>
             $this->people->each->update([
                 'spouse_id' => null,
                 'father_in_law_id' => null,
@@ -223,7 +226,7 @@ HTML
     {
         $this->loadMissing('people');
 
-        return \DB::transaction(function () {
+        return DB::transaction(function () {
             $this->wife->update([
                 'spouse_id' => $this->husband->id,
                 'father_in_law_id' => $this->husband->father_id,
@@ -253,6 +256,6 @@ HTML
             </div>
         Blade;
 
-        return \Blade::compileString($html);
+        return Blade::compileString($html);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Models\Traits;
 
+use View;
+use Filament\Forms\Components\Select;
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use Filament\Forms;
 
@@ -15,14 +17,14 @@ trait HasProposalFilamentFormsFields
         )
             ->mapWithKeys(function ($status) {
                 return [
-                    $status['name'] => \View::make('components.status-option-in-select', [
+                    $status['name'] => View::make('components.status-option-in-select', [
                         'status' => $status,
                     ])->render(),
                 ];
             })
             ->toArray();
 
-        return Forms\Components\Select::make($name ?? 'statuses.proposal')
+        return Select::make($name ?? 'statuses.proposal')
             ->options($statuses)
             ->default($this->status)
             ->searchValues()
@@ -33,12 +35,12 @@ trait HasProposalFilamentFormsFields
 
     public function itemStatusField($side)
     {
-        return Forms\Components\Select::make("statuses.$side")
+        return Select::make("statuses.$side")
             ->label($side === 'girl' ? 'סטטוס בחורה' : 'סטטוס בחור')
             ->options($this->allowedBeDefinedStatuses($side, true)
                 ->mapWithKeys(function ($status) {
                     return [
-                        $status['name'] => \View::make('components.status-option-in-select', [
+                        $status['name'] => View::make('components.status-option-in-select', [
                             'status' => $status,
                         ])->render(),
                     ];

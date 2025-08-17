@@ -2,6 +2,10 @@
 
 namespace App\Livewire;
 
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Tables\Columns\Layout\Grid;
+use Filament\Tables\Columns\ViewColumn;
 use App\Models\Call;
 use App\Models\Diary;
 use App\Models\Family;
@@ -19,8 +23,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-class ActiveCallLastCalls extends Component implements HasForms, HasTable
+class ActiveCallLastCalls extends Component implements HasForms, HasTable, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithTable;
     use InteractsWithForms;
 
@@ -78,8 +83,8 @@ class ActiveCallLastCalls extends Component implements HasForms, HasTable
             ->defaultPaginationPageOption(10)
             ->recordClasses('[&>div>div]:py-0 [&>div>div>div>div]:px-0 ')
             ->columns([
-                Columns\Layout\Grid::make(1)->schema([
-                    Columns\ViewColumn::make('cell')
+                Grid::make(1)->schema([
+                    ViewColumn::make('cell')
                         ->extraAttributes([
                             'class' => 'w-full',
                         ])
@@ -96,10 +101,10 @@ class ActiveCallLastCalls extends Component implements HasForms, HasTable
                     ->default(true)
                     ->query(fn (Builder $query) => $query->whereHas('diaries'))
             ])
-            ->actions([
+            ->recordActions([
                 // ...
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // ...
             ]);
     }

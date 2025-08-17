@@ -9,7 +9,7 @@ class FathersInLawOverview extends Widget
 {
     public ?Person $record = null;
 
-    protected static string $view = 'filament.resources.person-resource.widgets.parent-in-law-overview';
+    protected string $view = 'filament.resources.person-resource.widgets.parent-in-law-overview';
 
     public function mount(Person $record): void
     {

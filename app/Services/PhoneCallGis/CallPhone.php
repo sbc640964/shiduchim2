@@ -2,6 +2,7 @@
 
 namespace App\Services\PhoneCallGis;
 
+use Http;
 use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
@@ -76,6 +77,6 @@ class CallPhone
 
     public function get($params): PromiseInterface|Response
     {
-        return \Http::get(self::$baseUrl, $this->getDefaultParams($params));
+        return Http::get(self::$baseUrl, $this->getDefaultParams($params));
     }
 }

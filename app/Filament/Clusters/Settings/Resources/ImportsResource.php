@@ -2,6 +2,22 @@
 
 namespace App\Filament\Clusters\Settings\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Arr;
+use Filament\Forms\Components\FileUpload;
+use Filament\Schemas\Components\Fieldset;
+use App\Filament\Clusters\Settings\Resources\ImportsResource\Pages\ViewImports;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Infolists\Components\TextEntry;
+use App\Filament\Clusters\Settings\Resources\ImportsResource\Pages\ListImports;
 use App\Filament\Clusters\Settings;
 use App\Filament\Clusters\Settings\Resources\ImportsResource\Pages;
 use App\Filament\Clusters\Settings\Resources\ImportsResource\RelationManagers;
@@ -11,8 +27,6 @@ use App\Services\Imports\Students\Importer;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Models\Import;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Infolists\Infolist;
 use Filament\Infolists;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -28,7 +42,7 @@ class ImportsResource extends Resource
 {
     protected static ?string $model = ImportBatch::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrow-up-tray';
 
     protected static ?string $cluster = Settings::class;
 
@@ -41,22 +55,22 @@ class ImportsResource extends Resource
         return auth()->user()->can('import_manager');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->columns(1)
-            ->schema([
-                Forms\Components\Select::make('type')
+            ->components([
+                Select::make('type')
                     ->label('סוג')
                     ->live()
-                    ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function (Set $set, Get $get) {
                         if(! $get('file')) {
                             return;
                         }
 
                         HeadingRowFormatter::default('none');
 
-                        $headers = (new HeadingRowImport)->toArray(\Arr::first($get('file')))[0][0];
+                        $headers = (new HeadingRowImport)->toArray(Arr::first($get('file')))[0][0];
 
                         $selectOptions = array_combine($headers, $headers);
 
@@ -73,7 +87,7 @@ class ImportsResource extends Resource
                         'students' => 'תלמידים',
                         'teachers' => 'עדכון גור',
                     ]),
-                Forms\Components\FileUpload::make('file')
+                FileUpload::make('file')
                     ->label('קובץ')
                     ->hiddenOn('edit')
                     ->storeFiles(false)
@@ -84,11 +98,11 @@ class ImportsResource extends Resource
                     ])
                     ->required(),
 
-                Forms\Components\Fieldset::make('mapping')
+                Fieldset::make('mapping')
                     ->label('מיפוי עמודות')
-                    ->schema(function (Forms\Get $get, $livewire) {
+                    ->schema(function (Get $get, $livewire) {
 
-                        if($livewire instanceof Pages\ViewImports) {
+                        if($livewire instanceof ViewImports) {
                             $headers = $livewire->getRecord()->headers ?? [];
                         } else {
                             $file = $get('file');
@@ -98,7 +112,7 @@ class ImportsResource extends Resource
                             }
 
                             HeadingRowFormatter::default('none');
-                            $headers = (new HeadingRowImport)->toArray(\Arr::first($file))[0][0];
+                            $headers = (new HeadingRowImport)->toArray(Arr::first($file))[0][0];
                         }
 
                         if(count($headers) === 0) {
@@ -113,9 +127,9 @@ class ImportsResource extends Resource
                         });
 
                         return $fields->map(function ($field) use ($livewire, $selectOptions, $fields) {
-                            return Forms\Components\Select::make($field['name'])
+                            return Select::make($field['name'])
                                 ->label($field['label'])
-                                ->when($livewire instanceof Pages\ViewImports, fn (Forms\Components\Select $component) =>
+                                ->when($livewire instanceof ViewImports, fn (Select $component) =>
                                     $component->statePath(
                                     'options.mapping.' . $field['name']
                                     ))
@@ -123,7 +137,7 @@ class ImportsResource extends Resource
                                 ->required($field['required'] ?? false);
                         })->toArray();
                     })
-                    ->hidden(fn (Forms\Get $get, $livewire) => ! $get('file') && !($livewire instanceof Pages\ViewImports))
+                    ->hidden(fn (Get $get, $livewire) => ! $get('file') && !($livewire instanceof ViewImports))
             ]);
     }
 
@@ -131,16 +145,16 @@ class ImportsResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('total')
+                TextColumn::make('total')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('success')
+                TextColumn::make('success')
                     ->color('success')
                     ->badge()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('failed')
+                TextColumn::make('failed')
                     ->color('danger')
                     ->badge()
                     ->sortable(),
@@ -148,22 +162,22 @@ class ImportsResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist->schema([
-            Infolists\Components\TextEntry::make('name'),
+        return $schema->components([
+            TextEntry::make('name'),
         ]);
     }
 
@@ -177,10 +191,10 @@ class ImportsResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListImports::route('/'),
+            'index' => ListImports::route('/'),
 //            'create' => Pages\CreateImports::route('/create'),
 //            'edit' => Pages\EditImports::route('/{record}/edit'),
-            'view' => Pages\ViewImports::route('/{record}'),
+            'view' => ViewImports::route('/{record}'),
         ];
     }
 }

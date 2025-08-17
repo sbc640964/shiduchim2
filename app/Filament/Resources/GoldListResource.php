@@ -2,11 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Layout\Split;
+use Arr;
+use Filament\Tables\Columns\Layout\Panel;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use App\Filament\Resources\GoldListResource\Pages\ListGoldLists;
+use Filament\Tables\Columns\Layout\Stack;
+use Str;
 use App\Filament\Resources\GoldListResource\Pages;
 use App\Models\Subscriber;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
@@ -21,7 +34,7 @@ class GoldListResource extends Resource
 {
     protected static ?string $model = Subscriber::class;
 
-    protected static ?string $navigationIcon = 'iconsax-bul-flag';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-flag';
 
     protected static ?string $label = "תלמיד";
 
@@ -62,10 +75,10 @@ class GoldListResource extends Resource
 
     protected static ?int $navigationSort = 100;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -74,13 +87,13 @@ class GoldListResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\Layout\Split::make([
+                Split::make([
                     TextColumn::make('student.full_name')
                         ->label('שם')
                         ->html()
                         ->searchable(['first_name', 'last_name'])
                         ->formatStateUsing(fn(Subscriber $record) => str($record->student->full_name . " <span class='opacity-50 text-xs'>({$record->student->external_code_students})</span>")->toHtmlString())
-                        ->description(fn(Subscriber $record) => \Arr::join([
+                        ->description(fn(Subscriber $record) => Arr::join([
                             'ב"ר ',
                             $record->student->father->first_name,
                             $record->student->mother ? ' ו' : '',
@@ -91,7 +104,7 @@ class GoldListResource extends Resource
                         : static::getMatchmakerColumns()
                     ),
                 ]),
-                Tables\Columns\Layout\Panel::make([
+                Panel::make([
                     TextColumn::make('last_name')
                 ])->collapsible()
             ])
@@ -102,10 +115,10 @@ class GoldListResource extends Resource
                         return $data['created_at'] ? 'מתאריך: ' . $data['created_at'] : null;
                     })
                     ->label('תאריך רישום'),
-                Tables\Filters\Filter::make('filter')
+                Filter::make('filter')
                     ->visible(static::isManager())
-                    ->form([
-                        Forms\Components\ToggleButtons::make('no_select_matchmaker')
+                    ->schema([
+                        ToggleButtons::make('no_select_matchmaker')
                             ->boolean('לא מוקצה', 'מוקצה')
                             ->icons([
                                 0 => 'heroicon-o-check',
@@ -117,14 +130,14 @@ class GoldListResource extends Resource
                             ])
                             ->grouped()
                             ->label('לא מוקצה לשדכן'),
-                        Forms\Components\Select::make('matchmaker')
+                        Select::make('matchmaker')
                             ->label('שדכן')
                             ->relationship('matchmaker', 'name')
                             ->preload()
-                            ->hidden(fn(Forms\Get $get) => $get('no_select_matchmaker'))
+                            ->hidden(fn(Get $get) => $get('no_select_matchmaker'))
                             ->searchable(),
 
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->label('סטטוס')
                             ->options([
                                 'active' => 'פעיל',
@@ -136,7 +149,7 @@ class GoldListResource extends Resource
                                 'completed' => 'הושלם',
                             ])
                             ->searchable(),
-                        Forms\Components\Select::make('lastTransactionStatus')
+                        Select::make('lastTransactionStatus')
                             ->label('סטטוס תשלום')
                             ->visible(static::isManager())
                             ->options([
@@ -145,7 +158,7 @@ class GoldListResource extends Resource
                                 'Error' => 'נכשל',
                                 'refunded' => 'הוחזר',
                             ]),
-                        Forms\Components\Select::make('work_day')
+                        Select::make('work_day')
                             ->label('יום')
                             ->options([
                                 1 => 'ראשון',
@@ -225,10 +238,10 @@ class GoldListResource extends Resource
                             ->when($data['lastTransactionStatus'] ?? null, fn(Builder $query, $value) => $query->whereRelation('lastTransaction', 'status', $value));
                     }),
             ])
-            ->filtersLayout(Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersLayout(FiltersLayout::AboveContent)
             ->filtersFormColumns(1)
-            ->actions([
-                Tables\Actions\Action::make('view')
+            ->recordActions([
+                Action::make('view')
                     ->iconButton()
                     ->icon('heroicon-o-eye')
                     ->url(fn(Subscriber $record) => static::isManager()
@@ -236,8 +249,8 @@ class GoldListResource extends Resource
                         : StudentResource::getUrl('proposals', ['record' => $record->student->id])
                     ),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                 ]),
             ]);
     }
@@ -252,7 +265,7 @@ class GoldListResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListGoldLists::route('/'),
+            'index' => ListGoldLists::route('/'),
         ];
     }
 
@@ -275,7 +288,7 @@ class GoldListResource extends Resource
                 })
                 ->formatStateUsing(fn(Subscriber $record) => $record->work_month . '/' . $record->payments . ' חודשים')
                 ->sortable(['balance_payments', 'payments']),
-            Tables\Columns\Layout\Stack::make([
+            Stack::make([
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn($state) => match ($state) {
@@ -284,7 +297,7 @@ class GoldListResource extends Resource
                         default => 'gray',
                     })
                     ->grow(false)
-                    ->formatStateUsing(fn($state) => match (\Str::trim($state)) {
+                    ->formatStateUsing(fn($state) => match (Str::trim($state)) {
                         'active' => 'פעיל',
                         'hold' => 'מושהה',
                         'pending' => 'ממתין',
@@ -299,13 +312,13 @@ class GoldListResource extends Resource
                     ->onIcon('heroicon-o-check')
                     ->alignStart()
                     ->grow(false)
-                    ->tooltip(fn($state, Subscriber $record) => \Str::trim($record->status) === 'pending' ? ($state ? 'פורסם לשדכנים' : 'לא פורסם') : 'מוקצא לשדכן')
+                    ->tooltip(fn($state, Subscriber $record) => Str::trim($record->status) === 'pending' ? ($state ? 'פורסם לשדכנים' : 'לא פורסם') : 'מוקצא לשדכן')
                     ->offIcon('heroicon-o-x-mark')
                     ->sortable()
-                    ->getStateUsing(fn(Subscriber $record) => \Str::trim($record->status) === 'pending' ? $record->is_published : null)
-                    ->disabled(fn(Subscriber $record) => \Str::trim($record->status) !== 'pending')
+                    ->getStateUsing(fn(Subscriber $record) => Str::trim($record->status) === 'pending' ? $record->is_published : null)
+                    ->disabled(fn(Subscriber $record) => Str::trim($record->status) !== 'pending')
             ]),
-            Tables\Columns\Layout\Stack::make([
+            Stack::make([
                 TextColumn::make('label_matchmaker')
                     ->state(fn(Subscriber $record) => $record->matchmaker ? 'מוקצא לשדכן:' : 'לא הוקצא')
                     ->color(fn(Subscriber $record) => $record->matchmaker ? 'success' : Color::Gray)
@@ -327,13 +340,13 @@ class GoldListResource extends Resource
                 ->label('סכום')
                 ->money('ILS')
                 ->formatStateUsing(fn($state) => Number::currency($state, 'ILS') . ' לחודש')
-                ->description(fn(Subscriber $record) => $record->balance_payments ? str(\Arr::join([
+                ->description(fn(Subscriber $record) => $record->balance_payments ? str(Arr::join([
                     "נותרו $record->balance_payments חודשים",
                     '<br/>',
                     '<span class="font-bold">תשלום הבא: ' . ($record->next_payment_date?->format('d/m/Y') ?? '---') . '</span>',
                 ], ''))->toHtmlString() : null),
 
-            Tables\Columns\Layout\Stack::make([
+            Stack::make([
                 TextColumn::make('label_last_diary')
                     ->description(fn(Subscriber $record) => $record->student->lastDiary ? 'פעילות אחרונה:' : 'לא נרשמה פעילות')
                     ->weight('bold'),

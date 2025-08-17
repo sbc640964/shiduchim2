@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Throwable;
 use App\Jobs\RunImportRowJob;
 use App\Jobs\RunImportRowsJob;
 use App\Services\Imports\Students\RunRow;
@@ -75,7 +76,7 @@ class ImportBatch extends Model
                     $rows->each(fn ($row) => RunImportRowJob::dispatch($row, $pendingOnly));
                 });
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->update(['status' => 'pending', 'error' => $e->getMessage()]);
             dump($e);
         }

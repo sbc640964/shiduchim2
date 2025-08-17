@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DB;
 use App\Events\MessageCreatedEvent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -82,7 +83,7 @@ class Discussion extends Model
             return $query;
         }
 
-        return $query->addSelect(['read_at' => \DB::query()
+        return $query->addSelect(['read_at' => DB::query()
             ->select('read_at')
             ->from('discussion_read_user')
             ->whereColumn('discussion_read_user.discussion_id', 'discussions.id')
@@ -99,7 +100,7 @@ class Discussion extends Model
         }
 
         return $query->addSelect(['is_unread' =>
-            \DB::query()->selectRaw('COUNT(*)')
+            DB::query()->selectRaw('COUNT(*)')
                 ->from('discussion_read_user')
                 ->whereColumn('discussion_id', 'discussions.id')
                 ->where('user_id', $user->id)

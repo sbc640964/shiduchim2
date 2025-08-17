@@ -2,6 +2,31 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Actions;
+use Filament\Actions\Action;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\SelectFilter;
+use App\Filament\Resources\PersonResource\Pages\ListPeople;
+use App\Filament\Resources\PersonResource\Pages\CreatePerson;
+use App\Filament\Resources\PersonResource\Pages\EditPerson;
+use App\Filament\Resources\PersonResource\Pages\Proposals;
+use App\Filament\Resources\PersonResource\Pages\CreditCards;
+use Filament\Resources\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\Repeater;
+use Filament\Support\Enums\Width;
+use DB;
+use Arr;
+use Filament\Forms\Components\Placeholder;
+use Filament\Support\Enums\Size;
+use Filament\Forms\Components\Textarea;
 use App\Filament\Resources\PersonResource\Pages;
 use App\Models\Family;
 use App\Models\Matchmaker;
@@ -9,15 +34,10 @@ use App\Models\Person;
 use App\Models\Proposal;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Form;
 use Filament\Infolists\Components\KeyValueEntry;
-use Filament\Infolists\Infolist;
-use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\ActionSize;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,7 +49,7 @@ class PersonResource extends Resource
 
     protected static ?string $slug = 'people';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-house';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-house';
 
     protected static ?string $navigationLabel = 'אנשים';
 
@@ -39,20 +59,20 @@ class PersonResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Grid::make(3)
+        return $schema->components([
+            Grid::make(3)
                 ->schema([
-                    Forms\Components\Grid::make(1)
+                    Grid::make(1)
                         ->label('פרטים אישיים')
                         ->columnSpan(1)
                         ->schema([
-                            Forms\Components\Section::make('גור')
+                            Section::make('גור')
                                 ->schema([
                                     Person::externalCodeColumn()
                                 ]),
-                            Forms\Components\Section::make('כללי')
+                            Section::make('כללי')
                                 ->columns(1)
                                 ->columnSpan(1)
                                 ->schema([
@@ -70,25 +90,25 @@ class PersonResource extends Resource
                                     Family::filamentSelect('parents_family_id')
                                         ->label('משפחת הורים'),
 
-                                    Forms\Components\TextInput::make('first_name')
+                                    TextInput::make('first_name')
                                         ->label('שם פרטי')
                                         ->required(),
 
-                                    Forms\Components\TextInput::make('last_name')
+                                    TextInput::make('last_name')
                                         ->label('שם משפחה')
                                         ->required(),
 
-                                    Forms\Components\TextInput::make('address')
+                                    TextInput::make('address')
                                         ->label('כתובת'),
 
-                                    Forms\Components\Select::make('city_id')
+                                    Select::make('city_id')
                                         ->relationship('city', 'name')
                                         ->label('עיר')
                                         ->searchable()
                                         ->preload(),
 
-                                    Forms\Components\Group::make([
-                                        Forms\Components\Fieldset::make('פרטי אשה')
+                                    Group::make([
+                                        Fieldset::make('פרטי אשה')
                                             ->columns(1)
                                             ->schema([
 
@@ -96,7 +116,7 @@ class PersonResource extends Resource
                                                     ->label('משפחת הורים')
                                                     ->relationship('family'),
 
-                                                Forms\Components\TextInput::make('wife_first_name')
+                                                TextInput::make('wife_first_name')
                                                     ->label('שם פרטי')
                                                     ->required(),
                                             ])
@@ -108,23 +128,23 @@ class PersonResource extends Resource
                                     //                                        ->required(),
                                 ]),
                         ]),
-                    Forms\Components\Grid::make(1)
+                    Grid::make(1)
                         ->columnSpan(2)
                         ->schema([
                             static::familiesCard()->columnSpanFull()->visibleOn('edit'),
                             static::phonesCard()->columnSpanFull(),
                         ]),
-                    Forms\Components\Section::make('פעולות')
+                    Section::make('פעולות')
                         ->visibleOn('edit')
                         ->columnSpanFull()
                         ->schema([
-                            Forms\Components\Actions::make([
-                                Forms\Components\Actions\Action::make('data-raw')
+                            Actions::make([
+                                Action::make('data-raw')
                                     ->action(fn () => null)
-                                    ->infolist(function (Infolist $infolist, $record) {
-                                        return $infolist
+                                    ->schema(function (Schema $schema, $record) {
+                                        return $schema
                                             ->record($record)
-                                            ->schema([
+                                            ->components([
                                                 KeyValueEntry::make('data_raw'),
                                             ]);
                                     }),
@@ -146,7 +166,7 @@ class PersonResource extends Resource
                     ]);
             })
             ->filters([
-                Tables\Filters\TernaryFilter::make('without_families')
+                TernaryFilter::make('without_families')
                     ->label('סינון מצב רשומה')
                     ->default(true)
                     ->selectablePlaceholder(false)
@@ -161,13 +181,13 @@ class PersonResource extends Resource
                             ),
                         false: fn ($query) => $query
                     ),
-                Tables\Filters\SelectFilter::make('city')
+                SelectFilter::make('city')
                     ->relationship('city', 'name')
                     ->label('עיר')
                     ->placeholder('בחר עיר')
                     ->preload()
                     ->searchable(),
-                Tables\Filters\SelectFilter::make('status_family')
+                SelectFilter::make('status_family')
                     ->options([
                         'single' => 'רווק/ה',
                         'married' => 'נשוי/ה',
@@ -190,7 +210,7 @@ class PersonResource extends Resource
                         }
                     })
                     ->placeholder('הכל'),
-                Tables\Filters\SelectFilter::make('gender')
+                SelectFilter::make('gender')
                     ->options([
                         'B' => 'בן',
                         'G' => 'בת',
@@ -221,22 +241,22 @@ class PersonResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPeople::route('/'),
-            'create' => Pages\CreatePerson::route('/create'),
-            'edit' => Pages\EditPerson::route('/{record}/edit'),
+            'index' => ListPeople::route('/'),
+            'create' => CreatePerson::route('/create'),
+            'edit' => EditPerson::route('/{record}/edit'),
             'family' => Pages\Family::route('/{record}/family'),
-            'proposals' => Pages\Proposals::route('/{record}/proposals'),
-            'cards' => Pages\CreditCards::route('/{record}/cards'),
+            'proposals' => Proposals::route('/{record}/proposals'),
+            'cards' => CreditCards::route('/{record}/cards'),
         ];
     }
 
-    public static function getRecordSubNavigation(\Filament\Resources\Pages\Page $page): array
+    public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\EditPerson::class,
+            EditPerson::class,
             Pages\Family::class,
-            Pages\Proposals::class,
-            Pages\CreditCards::class,
+            Proposals::class,
+            CreditCards::class,
         ]);
     }
 
@@ -248,7 +268,7 @@ class PersonResource extends Resource
     public static function tableColumns(): array
     {
         return [
-            Tables\Columns\TextColumn::make('external_code')
+            TextColumn::make('external_code')
                 ->label('קוד איחוד')
                 ->searchable()
                 ->toggleable()
@@ -257,22 +277,22 @@ class PersonResource extends Resource
 
             Person::nameColumn()->searchable(['first_name', 'last_name'], isIndividual: true),
 
-            Tables\Columns\TextColumn::make('phones.number')
+            TextColumn::make('phones.number')
                 ->label('טלפון נייד')
                 ->searchable(),
 
-            Tables\Columns\TextColumn::make('family.phones.number')
+            TextColumn::make('family.phones.number')
                 ->label('טלפון בבית')
                 ->searchable(),
 
             ...Person::baseColumns(callback: [
-                'father' => fn (Tables\Columns\TextColumn $col) => $col->searchable(isIndividual: true),
-                'father_in_law' => fn (Tables\Columns\TextColumn $col) => $col->searchable(['first_name', 'last_name'], isIndividual: true),
+                'father' => fn (TextColumn $col) => $col->searchable(isIndividual: true),
+                'father_in_law' => fn (TextColumn $col) => $col->searchable(['first_name', 'last_name'], isIndividual: true),
             ]),
 
             Person::childrenColumn(),
 
-            Tables\Columns\TextColumn::make('family.status')
+            TextColumn::make('family.status')
                 ->badge()
                 ->sortable()
                 ->color(fn ($state) => match ($state) {
@@ -294,28 +314,28 @@ class PersonResource extends Resource
 
     private static function familiesCard()
     {
-        return Forms\Components\Group::make([
-            Forms\Components\Repeater::make('families')
-                ->hintAction(Forms\Components\Actions\Action::make('add_family')
+        return Group::make([
+            Repeater::make('families')
+                ->hintAction(Action::make('add_family')
                     ->label('נישואים שניים')
                     ->visible(fn ($record) => ! $record->isMarried())
-                    ->form(function (Form $form) {
-                        return $form->schema([
+                    ->schema(function (Schema $schema) {
+                        return $schema->components([
                             static::spouseSelect(),
-                            Forms\Components\DatePicker::make('engagement_at')
+                            DatePicker::make('engagement_at')
                                 ->label('תאריך אירוסין')
                                 ->required(),
 
-                            Forms\Components\TextInput::make('address')
+                            TextInput::make('address')
                                 ->label('כתובת'),
 
-                            Forms\Components\Select::make('city_id')
+                            Select::make('city_id')
                                 ->relationship('city', 'name')
                                 ->label('עיר')
                                 ->searchable()
                                 ->preload(),
 
-                            Forms\Components\Select::make('matchmaker_id')
+                            Select::make('matchmaker_id')
                                 ->relationship('matchmaker.person', modifyQueryUsing: fn ($query) => $query->whereIn('id', Matchmaker::pluck('person_id')->toArray()))
                                 ->label('שדכן')
                                 ->getOptionLabelFromRecordUsing(fn (Person $record) => $record->select_option_html)
@@ -324,13 +344,13 @@ class PersonResource extends Resource
                         ]);
                     })
                     ->visible(fn ($record) => ! $record->isMarried())
-                    ->modalWidth(MaxWidth::ExtraSmall)
-                    ->action(function ($record, array $data, Forms\Components\Actions\Action $action) {
+                    ->modalWidth(Width::ExtraSmall)
+                    ->action(function ($record, array $data, Action $action) {
 
-                        $inserted = \DB::transaction(function () use ($record, $data) {
+                        $inserted = DB::transaction(function () use ($record, $data) {
                             $spouse = Person::find($data['spouse_id']);
 
-                            $family = Family::create(array_merge(\Arr::except($data, 'spouse_id'), [
+                            $family = Family::create(array_merge(Arr::except($data, 'spouse_id'), [
                                 'status' => 'married',
                                 'name' => $record->gender === 'B' ? $record->last_name : $spouse->last_name,
                             ]));
@@ -354,35 +374,35 @@ class PersonResource extends Resource
                 ->deletable(false)
                 ->hiddenOn('create')
                 ->schema(fn (Person $person) => [
-                        Forms\Components\Placeholder::make('wife')
+                        Placeholder::make('wife')
                             ->content(fn (Family $record) => new HtmlString($record->people->firstWhere('id', '!=', $person->id)->select_option_html))
                             ->label('בן/בת זוג'),
-                        Forms\Components\Placeholder::make('marriage_date')
+                        Placeholder::make('marriage_date')
                             ->label('תאריך אירוסין')
                             ->content(fn (Family $record) => $record->engagement_at?->hebcal()->hebrewDate(false, true) ?? '-'),
-                        Forms\Components\Placeholder::make('status')
+                        Placeholder::make('status')
                             ->label('מצב משפחתי')
                             ->content(fn (Family $record) => $record->status_label),
-                        Forms\Components\Fieldset::make('פעולות')
+                        Fieldset::make('פעולות')
                             ->columns(1)
                             ->columnSpan(1)
                             ->extraAttributes(['class' => '!p-2'])
                             ->schema([
-                            Forms\Components\Actions::make([
-                                Forms\Components\Actions\Action::make('edit')
+                            Actions::make([
+                                Action::make('edit')
                                     ->label('עריכה')
                                     ->icon('heroicon-o-pencil')
-                                    ->size(ActionSize::ExtraSmall)
+                                    ->size(Size::ExtraSmall)
                                     ->url(fn (Family $record) =>
                                         PersonResource::getUrl('edit', ['record' => $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->id]),
                                         true
                                     ),
-                                Forms\Components\Actions\Action::make('cancel_close_proposal')
+                                Action::make('cancel_close_proposal')
                                     ->label('בטל סגירת שידוך')
                                     ->icon('heroicon-o-x-mark')
-                                    ->size(ActionSize::ExtraSmall)
+                                    ->size(Size::ExtraSmall)
                                     ->disabled(fn (Family $record) => !$record->proposal?->canReopen())
-                                    ->form(fn (Form $form, Family $record) => $form->schema([
+                                    ->schema(fn (Schema $schema, Family $record) => $schema->components([
                                         Proposal::make()->statusField(true, 'status')
                                             ->default($record->proposal->lastDiary->data['statuses']['proposal'] ?? null)
                                             ->helperText($record->proposal->lastDiary->data['statuses']['proposal'] ?? null
@@ -390,14 +410,14 @@ class PersonResource extends Resource
                                                 : null
                                             )
                                             ->required(),
-                                        Forms\Components\Textarea::make('reason_status')
+                                        Textarea::make('reason_status')
                                             ->label('הערה')
                                             ->default('נפתח מחדש ע"י '.auth()->user()->name),
                                     ]))
                                     ->modalWidth('sm')
                                     ->modalSubmitActionLabel('ביטול סגירה')
                                     ->action(fn (Family $record, array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
-                                Forms\Components\Actions\Action::make('divorce')
+                                Action::make('divorce')
                                     ->label('גירושין')
                                     ->disabled(fn ($record) =>
                                         !auth()->user()->can('update_divorce')
@@ -409,12 +429,12 @@ class PersonResource extends Resource
                                             ? Color::Blue
                                             : Color::Red
                                     )
-                                    ->size(ActionSize::ExtraSmall)
+                                    ->size(Size::ExtraSmall)
                                     ->requiresConfirmation()
                                     ->successNotification(function (Notification $notification) use ($person) {
                                         return $notification
                                             ->actions([
-                                                NotificationAction::make('cancel')
+                                                Action::make('cancel')
                                                     ->label('ביטול')
                                                     ->action(function () use ($person){
                                                         $person->rollbackDivorces();
@@ -426,16 +446,16 @@ class PersonResource extends Resource
                                     ->label('עדכון גירושין')
                                     ->outlined()
                                     ->icon('iconsax-bul-arrow-square')
-                                    ->action(function ($record, Forms\Components\Actions\Action $action, $livewire): void {
+                                    ->action(function ($record, Action $action, $livewire): void {
                                         if( $record && $record->divorce()) {
                                             $action->success();
                                             $livewire->refreshFormDataB(['father_in_law_id', 'spouse_id', 'families']);
                                         }
                                     }),
-                                Forms\Components\Actions\Action::make('death')
+                                Action::make('death')
                                     ->label('עדכון פטירה')
-                                    ->form(function (Form $form) {
-                                        return $form->schema([
+                                    ->schema(function (Schema $schema) {
+                                        return $schema->components([
                                             DatePicker::make('died_at')
                                                 ->label('תאריך פטירה')
                                                 ->helperText('ניתן להזין תאריך פטירה, במקרה ואינך יודע השאר ריק בבקשה!'),
@@ -447,7 +467,7 @@ class PersonResource extends Resource
                                     )
                                     ->color('danger')
                                     ->outlined()
-                                    ->size(ActionSize::ExtraSmall)
+                                    ->size(Size::ExtraSmall)
                                     ->action(function (array $data, $record) use ($person) {
                                         $data['died_at'] = $data['died_at'] . '1970-01-02 00:00:00';
                                         $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->update($data);
@@ -471,12 +491,12 @@ class PersonResource extends Resource
 
     private static function phonesCard()
     {
-        return Forms\Components\Section::make('טלפונים')
+        return Section::make('טלפונים')
             ->columnSpan(2)
             ->columns(2)
             ->schema([
-                Forms\Components\Group::make(fn (?Person $record = null) => [
-                    Forms\Components\Select::make('phone_default_id')
+                Group::make(fn (?Person $record = null) => [
+                    Select::make('phone_default_id')
                         ->label('טלפון ברירת מחדל')
                         ->hiddenOn('create')
                         ->options((! $record) ? [] : $record->phones()
@@ -488,15 +508,15 @@ class PersonResource extends Resource
                 ])->columns(3)->columnSpanFull(),
 
 
-                Forms\Components\Repeater::make('phones')
+                Repeater::make('phones')
                     ->relationship('phones')
                     ->addActionLabel('הוסף טלפון')
-                    ->deleteAction(fn (Forms\Components\Actions\Action $action) => $action
+                    ->deleteAction(fn (Action $action) => $action
                         ->icon('heroicon-o-trash')
                     )
                     ->label('טלפונים ישירים')
                     ->simple(
-                        Forms\Components\TextInput::make('number')
+                        TextInput::make('number')
                             ->label('טלפון')
                             ->unique('phones', 'number', ignoreRecord: true)
                             ->validationMessages([
@@ -504,17 +524,17 @@ class PersonResource extends Resource
                             ])
                     ),
 
-                Forms\Components\Group::make([
-                    Forms\Components\Repeater::make('phones')
+                Group::make([
+                    Repeater::make('phones')
                         ->relationship('phones')
                         ->label('טלפונים בבית')
                         ->helperText('שים לב: טלפונים אלו מתעדכנים במשפחה שייכים לכלל הקרובים (אישה/ ילדים)')
                         ->addActionLabel('הוסף טלפון')
-                        ->deleteAction(fn (Forms\Components\Actions\Action $action) => $action
+                        ->deleteAction(fn (Action $action) => $action
                             ->icon('heroicon-o-trash')
                         )
                         ->simple(
-                            Forms\Components\TextInput::make('number')
+                            TextInput::make('number')
                                 ->label('טלפון')
                                 ->unique('phones', 'number', ignoreRecord: true)
                                 ->validationMessages([
@@ -530,10 +550,10 @@ class PersonResource extends Resource
 
     private static function parentsAndSpouseCard()
     {
-        return Forms\Components\Section::make('משפחה')
+        return Section::make('משפחה')
             ->columns()
             ->schema([
-                Forms\Components\Select::make('father_id')
+                Select::make('father_id')
                     ->relationship(
                         'father',
                         modifyQueryUsing: fn ($query) => $query->with('father', 'fatherInLaw')
@@ -547,7 +567,7 @@ class PersonResource extends Resource
 
     private static function spouseSelect()
     {
-        return Forms\Components\Select::make('spouse_id')
+        return Select::make('spouse_id')
             ->relationship('spouse')
             ->label('בן/בת זוג')
             ->getOptionLabelFromRecordUsing(fn (Person $record) => $record->select_option_html)

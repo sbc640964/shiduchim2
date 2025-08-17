@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Blade;
+use Exception;
 use App\Events\CallActivityEvent;
 use App\Jobs\TranscriptionCallJob;
 use App\Services\PhoneCallGis\ActiveCall;
@@ -137,7 +139,7 @@ class Call extends Model
         $name = $this->phoneModel?->model?->full_name;
         $startedAt = $this->started_at->format('H:i:s');
 
-        return \Blade::render(
+        return Blade::render(
             <<<'HTML'
             <div class="flex justify-between items-center">
                 <div class="flex flex-col">
@@ -303,7 +305,7 @@ HTML
         </div>
 Blade;
 
-        return \Blade::render($blade, ['text' => $text, 'withTimes' => $withTimes]);
+        return Blade::render($blade, ['text' => $text, 'withTimes' => $withTimes]);
     }
 
     public function getPersonContact()
@@ -425,7 +427,7 @@ Blade;
             " -af silencedetect=noise=-30dB:d=2 -f null - 2>&1"
         );
         if (!$process->successful()) {
-            throw new \Exception("ffmpeg failed: " . $process->errorOutput());
+            throw new Exception("ffmpeg failed: " . $process->errorOutput());
         }
         $output = $process->output();
         preg_match_all("/silence_end: ([0-9.]+)/", $output, $ends);
@@ -480,7 +482,7 @@ Blade;
                 " 2>&1"
             );
             if (!$cutProcess->successful()) {
-                throw new \Exception("ffmpeg chunk failed: " . $cutProcess->errorOutput());
+                throw new Exception("ffmpeg chunk failed: " . $cutProcess->errorOutput());
             }
             $result[] = [
                 "start" => $start,

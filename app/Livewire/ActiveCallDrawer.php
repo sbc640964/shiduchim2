@@ -2,16 +2,16 @@
 
 namespace App\Livewire;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Utilities\Set;
 use App\Filament\Resources\ProposalResource\Pages\Diaries;
 use App\Models\Family;
-use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
 use App\Models\Person;
 use App\Models\Proposal;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -129,9 +129,9 @@ class ActiveCallDrawer extends Component implements HasForms
                 ];
             }
 
-            return ['form-'. $proposal->id => Form::make($this)
+            return ['form-'. $proposal->id => Schema::make($this)
                 ->statePath('data.'. $proposal->id)
-                ->schema([
+                ->components([
                     Textarea::make('description')
                         ->label('תיאור')
                         ->rules(['required', 'min:20'])
@@ -170,7 +170,7 @@ class ActiveCallDrawer extends Component implements HasForms
         })->toArray();
     }
 
-    public function getProposalForm(Proposal $proposal): Form
+    public function getProposalForm(Proposal $proposal): Schema
     {
         return $this->{'form-'. $proposal->id};
     }

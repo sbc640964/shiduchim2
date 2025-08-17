@@ -2,6 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Components\FusedGroup;
+use Filament\Schemas\Schema;
+use App\Filament\Resources\StudentResource\Pages\Subscription;
+use App\Filament\Resources\StudentResource\Pages\ViewStudent;
+use Filament\Actions\Action;
+use App\Filament\Resources\StudentResource\Pages\AddProposal;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Enums\TextSize;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Grid;
+use App\Filament\Resources\StudentResource\Pages\ListStudents;
+use App\Filament\Resources\StudentResource\Pages\CreateStudent;
+use App\Filament\Resources\StudentResource\Pages\EditStudent;
+use App\Filament\Resources\StudentResource\Pages\ManageProposals;
+use App\Filament\Resources\StudentResource\Pages\Family;
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Tables\Filters\Filter;
+use Filament\Schemas\Components\Group;
 use App\Filament\Clusters\Settings\Resources\MatchmakerResource;
 use App\Filament\Resources\StudentResource\Forms\CreateForm;
 use App\Filament\Resources\StudentResource\Pages;
@@ -11,20 +29,15 @@ use App\Models\Person;
 use App\Models\School;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
 use Filament\Infolists\Components;
-use Filament\Infolists\Infolist;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\SpatieTagsColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -47,13 +60,13 @@ class StudentResource extends Resource
 
     protected static ?string $pluralLabel = 'תלמידים';
 
-    protected static ?string $navigationIcon = 'iconsax-bul-personalcard';
+    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-personalcard';
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return (new CreateForm)($form);
+        return (new CreateForm)($schema);
     }
 
     public static function getEloquentQuery(): Builder
@@ -80,8 +93,8 @@ class StudentResource extends Resource
             })
             ->recordUrl(fn (Model $record, $livewire) =>
                 $livewire->activeTab === 'subscriptions'
-                    ? Pages\Subscription::getUrl(['record' => $record])
-                    : Pages\ViewStudent::getUrl(['record' => $record])
+                    ? Subscription::getUrl(['record' => $record])
+                    : ViewStudent::getUrl(['record' => $record])
             )
             ->columns([
                 ...$extraColumns,
@@ -171,12 +184,12 @@ class StudentResource extends Resource
                 ->sortable(),
         ])
             ->paginationPageOptions([5, 10, 25, 50, 100, 250])
-            ->actions([
+            ->recordActions([
                 Action::make('go-to-search-proposal')
                     ->tooltip('לחיפוש הצעה')
                     ->label('חיפוש הצעה')
                     ->iconButton()
-                    ->url(fn (Person $record) => Pages\AddProposal::getUrl(['record' => $record]))
+                    ->url(fn (Person $record) => AddProposal::getUrl(['record' => $record]))
                     ->icon('iconsax-bul-user-search'),
                 ...FormModel::getActions('students'),
                 Action::make('marriage')
@@ -184,7 +197,7 @@ class StudentResource extends Resource
                     ->iconButton()
                     ->icon('iconsax-bul-crown')
                     ->modalWidth('sm')
-                    ->form(fn (Form $form) => $form->schema([
+                    ->schema(fn (Schema $schema) => $schema->components([
                         Select::make('with')
                             ->searchable()
                             ->allowHtml()
@@ -209,10 +222,10 @@ class StudentResource extends Resource
                                 ->pluck('select_option_html', 'matchmaker.id')
                             )
                             ->exists('matchmakers', 'id')
-                            ->createOptionAction(fn (\Filament\Forms\Components\Actions\Action $action) => $action
+                            ->createOptionAction(fn (Action $action) => $action
                                 ->modalWidth('sm')
                             )
-                            ->createOptionForm(fn (Form $form) => MatchmakerResource::form($form))
+                            ->createOptionForm(fn (Schema $form) => MatchmakerResource::form($schema))
                             ->label('שדכן'),
 
                         DatePicker::make('date')
@@ -247,49 +260,49 @@ class StudentResource extends Resource
             );
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        $classPage = $infolist->getLivewire()::class;
+        $classPage = $schema->getLivewire()::class;
 
-        return parent::infolist($infolist)
-            ->schema([
-                Components\TextEntry::make('proposals_exists')
-                    ->visible(fn (Person $record) => $classPage === Pages\AddProposal::class && $record->proposals_exists === true)
+        return parent::infolist($schema)
+            ->components([
+                TextEntry::make('proposals_exists')
+                    ->visible(fn (Person $record) => $classPage === AddProposal::class && $record->proposals_exists === true)
                     ->hiddenLabel()
-                    ->size(Components\TextEntry\TextEntrySize::Large)
+                    ->size(TextSize::Large)
                     ->formatStateUsing(fn ($state) => $state ? 'יש הצעה' : null)
                     ->badge()
                     ->color(fn ($state) => $state ? Color::Green : null),
 
-                Components\Actions::make([
-                    Components\Actions\Action::make('add-proposal')
+                Actions::make([
+                    Action::make('add-proposal')
                         ->label('הוסף הצעה')
                         ->visible(function ($livewire, Person $record) {
-                            return $livewire::class === Pages\AddProposal::class
+                            return $livewire::class === AddProposal::class
                                 && $record->proposals_exists === false;
                         })
                         ->action(function ($livewire, Person $record) {
                             $livewire->addProposal($record);
                         }),
                 ]),
-                Components\Grid::make(2)->schema([
+                Grid::make(2)->schema([
 
-                    Components\Grid::make(1)
+                    Grid::make(1)
                         ->schema([
-                            Components\TextEntry::make('full_name')
+                            TextEntry::make('full_name')
                                 ->label('שם מלא')
                                 ->weight(FontWeight::Bold)
-                                ->size(Components\TextEntry\TextEntrySize::Large),
+                                ->size(TextSize::Large),
 
-                            Components\TextEntry::make('father_name')
+                            TextEntry::make('father_name')
                                 ->label('שם האב')
                                 ->weight(FontWeight::Bold)
-                                ->size(Components\TextEntry\TextEntrySize::Large),
+                                ->size(TextSize::Large),
 
-                            Components\TextEntry::make('mother_name')
+                            TextEntry::make('mother_name')
                                 ->label('שם האם')
                                 ->weight(FontWeight::Bold)
-                                ->size(Components\TextEntry\TextEntrySize::Large),
+                                ->size(TextSize::Large),
                         ]),
                 ]),
             ]); // TODO: Change the autogenerated stub
@@ -298,15 +311,15 @@ class StudentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStudents::route('/'),
-            'create' => Pages\CreateStudent::route('/create'),
-            'edit' => Pages\EditStudent::route('/{record}/edit'),
-            'view' => Pages\ViewStudent::route('/{record}'),
+            'index' => ListStudents::route('/'),
+            'create' => CreateStudent::route('/create'),
+            'edit' => EditStudent::route('/{record}/edit'),
+            'view' => ViewStudent::route('/{record}'),
             //            'proposals_guy' => Pages\ManageProposalsGuy::route('/{record}/proposals'),
-            'proposals' => Pages\ManageProposals::route('/{record}/proposals'),
-            'family' => Pages\Family::route('/{record}/family'),
-            'add_proposal' => Pages\AddProposal::route('/{record}/add_proposal'),
-            'subscription' => Pages\Subscription::route('/{record}/subscription'),
+            'proposals' => ManageProposals::route('/{record}/proposals'),
+            'family' => Family::route('/{record}/family'),
+            'add_proposal' => AddProposal::route('/{record}/add_proposal'),
+            'subscription' => Subscription::route('/{record}/subscription'),
         ];
     }
 
@@ -315,30 +328,30 @@ class StudentResource extends Resource
         return [];
     }
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ViewStudent::class,
-            Pages\ManageProposals::class,
-            Pages\EditStudent::class,
-            Pages\Family::class,
-            Pages\Subscription::class,
-            Pages\AddProposal::class,
+            ViewStudent::class,
+            ManageProposals::class,
+            EditStudent::class,
+            Family::class,
+            Subscription::class,
+            AddProposal::class,
         ]);
     }
 
     private static function filters()
     {
         return [
-            Filters\Filter::make('table_columns')
+            Filter::make('table_columns')
                 ->columnSpanFull()
                 ->columns(1)
                 ->query(function (Builder $query, array $data) {
                     return $query->filterStudent($data);
                 })
-                ->form([
+                ->schema([
                     Group::make([
                         TextInput::make('external_code_students')
                             ->placeholder('מספר תלמיד')
@@ -368,7 +381,7 @@ class StudentResource extends Resource
                             ->label('עיר')
                             ->multiple()
                             ->options(City::orderBy('name')->pluck('name', 'id')),
-                        Cluster::make([
+                        FusedGroup::make([
                             Select::make('tags')
                                 ->multiple()
                                 ->hidden(fn ($get) => $get('tags_operator') === 'like')
@@ -405,11 +418,10 @@ class StudentResource extends Resource
                             ->columns(4)
                             ->label('תיוגים'),
 
-                        Cluster::make([
+                        FusedGroup::make([
                             ToggleButtons::make('gender')
                                 ->grouped()
                                 ->default('all')
-                                ->extraAttributes(['class' => 'rounded-e-none [&>label:nth-last-child(1_of_.fi-btn)]:rounded-e-none'])
                                 ->options([
                                     'all' => 'הכל',
                                     'B' => 'בן',
@@ -421,9 +433,10 @@ class StudentResource extends Resource
                             TextInput::make('class')
                                 ->placeholder('כיתה'),
                         ])
+                            ->columns(3)
                             ->label('מין / גיל / כתה')
 
-                    ])->columns(6)->hiddenLabel(),
+                    ])->columns(6),
                 ]),
         ];
     }

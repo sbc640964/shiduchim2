@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\Settings\Resources\ImportsResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Arr;
 use App\Filament\Clusters\Settings\Resources\ImportsResource;
 use App\Services\Imports\Students\BatchStore;
 use Filament\Actions;
@@ -14,10 +16,10 @@ class ListImports extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->action(function (array $data) {
 
-                    $mapping = \Arr::except($data, ['type', 'file']);
+                    $mapping = Arr::except($data, ['type', 'file']);
                     
                     match ($data['type']) {
                         'students' => BatchStore::make($data['file'], $mapping)->handle(),

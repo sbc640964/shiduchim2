@@ -2,6 +2,14 @@
 
 namespace App\Filament\Resources\StudentResource\Widgets;
 
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\Width;
+use Filament\Forms\Components\Textarea;
+use DB;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\TextInput;
 use App\Filament\Resources\PersonResource\Pages\CreditCards;
 use App\Filament\Resources\StudentResource;
 use App\Models\CreditCard;
@@ -15,9 +23,7 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Forms;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Support\RawJs;
 use Filament\Widgets\Widget;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,7 +35,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
 
     public Person $record;
 
-    protected static string $view = 'filament.resources.student-resource.widgets.subscription-info';
+    protected string $view = 'filament.resources.student-resource.widgets.subscription-info';
 
     public function getSubscription(): Subscriber
     {
@@ -131,7 +137,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                             'record' => $livewire->record->id,
                         ]), true);
                     })
-                    ->form([
+                    ->schema([
                         ...$this->setMatchmakerFormFields(),
                         DateTimePicker::make('start_date')
                             ->label('תאריך תחילת העבודה')
@@ -203,7 +209,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
     public function setMatchmakerFormFields(): array
     {
         return [
-            Forms\Components\Select::make('user_id')
+            Select::make('user_id')
                 ->required()
                 ->model(Subscriber::class)
                 ->relationship('matchmaker', 'name')
@@ -215,11 +221,11 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                 ->default($this->getSubscription()->user_id)
                 ->live(),
 
-            Forms\Components\Select::make('work_day')
+            Select::make('work_day')
                 ->required()
                 ->label('יום פעילות לשדכן')
                 ->default($this->getSubscription()->work_day)
-                ->options(function (Forms\Get $get) {
+                ->options(function (Get $get) {
 
                     $hasDays = collect();
 
@@ -246,9 +252,9 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
     {
         return Action::make('setMatchmaker')
             ->label('הגדר שדכן')
-            ->modalWidth(MaxWidth::Small)
+            ->modalWidth(Width::Small)
             ->icon('heroicon-o-user')
-            ->form([
+            ->schema([
                 ...$this->setMatchmakerFormFields(),
             ])
             ->action(function (self $livewire, array $data){
@@ -278,8 +284,8 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
         return Action::make('cancelSubscription')
             ->label('בטל מנוי')
             ->requiresConfirmation()
-            ->form([
-                Forms\Components\Textarea::make('reason')
+            ->schema([
+                Textarea::make('reason')
                     ->label('סיבת ביטול')
                     ->required(),
             ])
@@ -311,7 +317,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             ->record($this->getSubscription())
             ->fillForm($this->getSubscription()->attributesToArray())
             ->modalSubmitActionLabel('עדכן')
-            ->modalWidth(MaxWidth::Small)
+            ->modalWidth(Width::Small)
             ->action(function ($data, Action $action){
 
                 if(($data['user_id'] ?? 0) > 0 && data_get($data, 'start_date')) {
@@ -350,7 +356,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
 
                 $originalData = $this->record->lastSubscription->getOriginal();
 
-                $updated = \DB::transaction(fn() => tap(
+                $updated = DB::transaction(fn() => tap(
                     $this->record->lastSubscription->save(),
                     fn() => $this->record->lastSubscription->recordActivity('update', [
                         'old' => collect($originalData)->only(array_keys($this->record->lastSubscription->getChanges()))->toArray(),
@@ -370,9 +376,9 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                 $action->failureNotificationTitle('הפרטים נשמרו בהצלחה');
                 $action->failure();
             })
-            ->form(function (Form $form) {
-                return $form->schema(fn (Subscriber $record) => [
-                    Forms\Components\Select::make('referrer_id')
+            ->schema(function (Schema $schema) {
+                return $schema->components(fn (Subscriber $record) => [
+                    Select::make('referrer_id')
                         ->model(Subscriber::class)
                         ->relationship('referrer', modifyQueryUsing: fn (Builder $query, ?string $search) =>
                         $query->limit(60)
@@ -392,7 +398,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         ->searchable()
                         ->allowHtml(),
 
-                    Forms\Components\Select::make('payer_id')
+                    Select::make('payer_id')
                         ->model(Subscriber::class)
                         ->relationship('payer', modifyQueryUsing: fn (Builder $query, ?string $search) =>
                         $query->limit(60)
@@ -419,7 +425,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         ->live()
                         ->required(),
 
-                    Forms\Components\Select::make('method')
+                    Select::make('method')
                         ->label('אמצעי תשלום')
                         ->options([
                             'credit_card' => 'כרטיס אשראי',
@@ -428,27 +434,27 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         ->live()
                         ->required(),
 
-                    Forms\Components\Select::make('credit_card_id')
+                    Select::make('credit_card_id')
                         ->label('כרטיס אשראי')
                         ->preload()
-                        ->options(fn (Forms\Get $get) => $get('payer_id')
+                        ->options(fn (Get $get) => $get('payer_id')
                             ? CreditCard::where('person_id', $get('payer_id'))->get()->mapWithKeys(fn(CreditCard $card) => [$card->getKey() => $card->last4])
                             : []
                         )
                         ->searchable()
-                        ->hidden(fn(Forms\Get $get) => $get('method') !== 'credit_card')
-                        ->disabled(fn(Forms\Get $get) => !$get('payer_id'))
+                        ->hidden(fn(Get $get) => $get('method') !== 'credit_card')
+                        ->disabled(fn(Get $get) => !$get('payer_id'))
                         ->native(false)
-                        ->createOptionForm(function (Forms\Get $get,  Form $form) {
-                            return $form
-                                ->schema([
-                                    Forms\Components\Hidden::make('person_id')
+                        ->createOptionForm(function (Get $get,  Schema $schema) {
+                            return $schema
+                                ->components([
+                                    Hidden::make('person_id')
                                         ->default($get('payer_id'))
                                         ->required(),
                                     ...CreditCards::formFields(),
                                 ]);
                         })
-                        ->createOptionAction(fn ($action) => $action->modalWidth(MaxWidth::Small))
+                        ->createOptionAction(fn ($action) => $action->modalWidth(Width::Small))
                         ->createOptionUsing(function ($data) {
                             $record = Person::findOrFail($data['person_id']);
                             $card = CreditCards::createNewCreditCard($record, $data);
@@ -456,7 +462,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         })
                         ->required(),
 
-                    Forms\Components\TextInput::make('amount')
+                    TextInput::make('amount')
                         ->numeric()
                         ->label('סכום')
                         ->type('number')
@@ -464,7 +470,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
                         ->stripCharacters(',')
                         ->required(),
 
-                    Forms\Components\TextInput::make('payments')
+                    TextInput::make('payments')
                         ->label("מס תשלומים/חודשי עבודה")
                         ->numeric()
                         ->live()
