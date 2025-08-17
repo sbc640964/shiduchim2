@@ -2,7 +2,7 @@
 
 namespace App\Filament\Imports;
 
-use App\Models\Old\School;
+use App\Models\School;
 use Carbon\CarbonInterface;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;

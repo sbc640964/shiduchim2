@@ -80,7 +80,7 @@ class ProposalResource extends Resource
                         ->relationship('offeredBy', modifyQueryUsing: fn (Builder $query) => $query->orderBy('first_name')->orderBy('last_name'))
                         ->getOptionLabelFromRecordUsing(fn (Person $record) => $record->full_name)
                         ->searchable()
-                        ->getSearchResultsUsing(fn (string $query) => $this->searchPerson($query))
+                        ->getSearchResultsUsing(fn (string $query) => self::searchPerson($query))
                         ->optionsLimit(60),
                 ]),
 
@@ -130,7 +130,7 @@ class ProposalResource extends Resource
                                 ->{($data['mode'] ?? 'show') === 'show' ? 'whereIn' : 'whereNotIn'}('status', $value)
                             )
                             ->when($data['status_guy'] ?? null, fn (Builder $query, $value) => $query
-                                ->{($data['mode_guy'] ?? 'show') === 'show' ? 'whereIn' : 'whereNotIn'}('status', $value)
+                                ->{($data['mode_guy'] ?? 'show') === 'show' ? 'whereIn' : 'whereNotIn'}('status_guy', $value)
                             )
                             ->when($data['status_girl'] ?? null, fn (Builder $query, $value) => $query
                                 ->{($data['mode_girl'] ?? 'show') === 'show' ? 'whereIn' : 'whereNotIn'}('status_girl', $value)
@@ -440,7 +440,7 @@ class ProposalResource extends Resource
             ->form(fn ($form, $arguments, $record) => Diaries::getDiaryForm($form, $record, $arguments['side'] ?? null));
     }
 
-    private function searchPerson(string $query): Collection
+    private static function searchPerson(string $query): Collection
     {
         $words = explode(' ', $query);
         $columns = ['first_name', 'last_name'];

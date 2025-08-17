@@ -66,21 +66,21 @@ class Call extends Model
 
     public function checkAndFinish(): void
     {
-        if($this->finished_at || ! $this->extension) {
+        if ($this->finished_at || !$this->extension) {
             return;
         }
 
         $state = (new CallPhone)->getExtensionState($this->extension);
 
-        if($state->get('UniqueID') === $this->unique_id
+        if ($state->get('UniqueID') === $this->unique_id
             || $state->get('LinkedID') === $this->unique_id
         ) {
             return;
         }
 
-        if($this->update([
-            'finished_at' => now(),
-        ]) && $this->user) {
+        if ($this->update([
+                'finished_at' => now(),
+            ]) && $this->user) {
             CallActivityEvent::dispatch($this->user, $this);
         }
     }
@@ -119,12 +119,12 @@ class Call extends Model
     {
         $extension = $extension ?: auth()->user()->ext;
 
-        if(!$extension) {
+        if (!$extension) {
             return null;
         }
 
         $call = self::whereNull('finished_at')
-            ->when($onlyStart, fn ($query) => $query->whereNotNull('started_at'))
+            ->when($onlyStart, fn($query) => $query->whereNotNull('started_at'))
             ->where('extension', $extension)
             ->latest();
 
@@ -167,7 +167,7 @@ HTML
 
     public function forceEnd(): bool
     {
-        if(! $this->finished_at){
+        if (!$this->finished_at) {
 
             return $this->update([
                 'finished_at' => now(),
@@ -180,11 +180,11 @@ HTML
     function getGroupAttribute(): string
     {
 
-        if($this->direction === 'outgoing'){
+        if ($this->direction === 'outgoing') {
             return 'outgoing';
         }
 
-        if($this->direction === 'incoming'){
+        if ($this->direction === 'incoming') {
 
             if ($this->started_at) {
                 return 'incoming';
@@ -198,9 +198,9 @@ HTML
         return 'unknown';
     }
 
-    static  public function updateModelPhones(?Phone $phone = null): void
+    static public function updateModelPhones(?Phone $phone = null): void
     {
-        if($phone){
+        if ($phone) {
             $calls = self::where('phone', $phone->number)->get();
             $calls->each->update([
                 'phone_id' => $phone->id,
@@ -308,7 +308,7 @@ Blade;
 
     public function getPersonContact()
     {
-        if(!$this->phoneModel->model){
+        if (!$this->phoneModel->model) {
             return null;
         }
 
@@ -335,11 +335,11 @@ Blade;
         $target = ActiveCall::normalizedPhoneNumber($target);
 
 
-        if(! $target) {
+        if (!$target) {
             return filled($ext) ? $ext : 'לא ידוע';
         }
 
-        if(!$html) {
+        if (!$html) {
             return $target . ' -> ' . $ext;
         }
 
@@ -350,12 +350,12 @@ Blade;
     {
         $model = $this->phoneModel?->model;
 
-        if (! $model) {
+        if (!$model) {
             return $this->phone ?? 'אין מספר';
         }
 
         if ($model instanceof Family) {
-            return "משפ' ".$model->name;
+            return "משפ' " . $model->name;
         }
 
         return $model->full_name ?? 'אין שם';
@@ -371,7 +371,7 @@ Blade;
             return 'מחייג...';
         }
 
-        if (! $this->started_at && ! $this->finished_at) {
+        if (!$this->started_at && !$this->finished_at) {
             return 'שיחה נכנסת...';
         }
 
@@ -382,7 +382,7 @@ Blade;
     {
         $diaries = $this->diaries->collect()->map(function (Diary $item) {
 
-            if(!$item->proposal) {
+            if (!$item->proposal) {
                 return null;
             }
 
@@ -393,9 +393,9 @@ Blade;
                 'id' => $item->id,
                 'proposal_id' => $item->proposal_id,
                 'description' => $item->data['description'] ?? null,
-                'proposal_name' => $guy->full_name.' - '.$girl->full_name,
-                'guy_info' => $guy->full_name.' ('.$guy->father?->full_name.' ו'.$guy->mother?->full_name.')',
-                'girl_info' => $girl->full_name.' ('.$girl->father?->full_name.' ו'.$girl->mother?->full_name.')',
+                'proposal_name' => $guy->full_name . ' - ' . $girl->full_name,
+                'guy_info' => $guy->full_name . ' (' . $guy->father?->full_name . ' ו' . $guy->mother?->full_name . ')',
+                'girl_info' => $girl->full_name . ' (' . $girl->father?->full_name . ' ו' . $girl->mother?->full_name . ')',
                 'status' => $item->proposal->status,
             ];
         });

@@ -141,4 +141,30 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->subscribers()->where('end_date', '>', now())->first();
     }
+
+    public function calls(): HasMany
+    {
+        return $this->hasMany(Call::class);
+    }
+
+    public function shouldExtendSession(): bool
+    {
+        //get the last answered call
+        $lastActiveCall = $this->calls()
+            ->query()
+            ->whereNotNull('started_at')
+            ->where(function ($query) {
+                $query->whereNull('ended_at')
+                    ->orWhere('ended_at', '>', now()->subMinutes(config('session.custom_session_lifetime')));
+            })
+            ->latest()
+            ->first();
+
+        if ($lastActiveCall) {
+            // If the user has an active call, extend the session
+            return true;
+        }
+
+        return false;
+    }
 }

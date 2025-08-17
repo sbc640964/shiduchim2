@@ -6,6 +6,7 @@ use App\Filament\Resources\PersonResource\Pages;
 use App\Models\Family;
 use App\Models\Matchmaker;
 use App\Models\Person;
+use App\Models\Proposal;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
@@ -376,6 +377,26 @@ class PersonResource extends Resource
                                         PersonResource::getUrl('edit', ['record' => $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->id]),
                                         true
                                     ),
+                                Forms\Components\Actions\Action::make('cancel_close_proposal')
+                                    ->label('בטל סגירת שידוך')
+                                    ->icon('heroicon-o-x-mark')
+                                    ->size(ActionSize::ExtraSmall)
+                                    ->disabled(fn (Family $record) => !$record->proposal?->canReopen())
+                                    ->form(fn (Form $form, Family $record) => $form->schema([
+                                        Proposal::make()->statusField(true, 'status')
+                                            ->default($record->proposal->lastDiary->data['statuses']['proposal'] ?? null)
+                                            ->helperText($record->proposal->lastDiary->data['statuses']['proposal'] ?? null
+                                                ? 'הסטטוס ברירת המחדל הינו הסטטוס האחרון שהיה לפני הסגירה'
+                                                : null
+                                            )
+                                            ->required(),
+                                        Forms\Components\Textarea::make('reason_status')
+                                            ->label('הערה')
+                                            ->default('נפתח מחדש ע"י '.auth()->user()->name),
+                                    ]))
+                                    ->modalWidth('sm')
+                                    ->modalSubmitActionLabel('ביטול סגירה')
+                                    ->action(fn (Family $record, array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
                                 Forms\Components\Actions\Action::make('divorce')
                                     ->label('גירושין')
                                     ->disabled(fn ($record) =>
