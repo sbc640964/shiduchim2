@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets;
 
 use Filament\Tables\Columns\TextColumn;
-use App\Filament\Resources\StudentResource;
+use App\Filament\Resources\Students\StudentResource;
 use App\Models\Person;
 use App\Models\Proposal;
 use App\Models\Subscriber;

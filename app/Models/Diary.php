@@ -8,7 +8,7 @@ use Str;
 use Storage;
 use Blade;
 use App\Filament\Clusters\Settings\Pages\Statuses;
-use App\Filament\Resources\ProposalResource;
+use App\Filament\Resources\Proposals\ProposalResource;
 use App\Models\Traits\HasActivities;
 use Filament\Notifications\Notification;
 use Filament\Support\Colors\Color;

@@ -9,7 +9,7 @@ use Cache;
 use Exception;
 use Throwable;
 use Arr;
-use App\Filament\Resources\PersonResource;
+use App\Filament\Resources\People\PersonResource;
 use App\Models\Pivot\PersonFamily;
 use App\Models\Traits\HasActivities;
 use App\Services\Nedarim;

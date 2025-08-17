@@ -46,7 +46,7 @@ class Reports extends Dashboard
 
     protected static ?int $navigationSort = 200;
 
-    protected static ?string $cluster = \App\Filament\Clusters\Reports::class;
+    protected static ?string $cluster = \App\Filament\Clusters\Reports\ReportsCluster::class;
 
     protected static string $routePath = '/subscriptions';
 

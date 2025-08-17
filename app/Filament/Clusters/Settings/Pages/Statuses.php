@@ -21,7 +21,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Actions;
 use Filament\Support\Enums\Size;
 use DB;
-use App\Filament\Clusters\Settings;
+use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Models\Proposal;
 use App\Models\SettingOld as Setting;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -43,7 +43,7 @@ class Statuses extends Page implements HasInfolists
 
     protected static ?string $title = 'סטטוסים';
 
-    protected static ?string $cluster = Settings::class;
+    protected static ?string $cluster = SettingsCluster::class;
 
 //    public static function canAccess(): bool
 //    {

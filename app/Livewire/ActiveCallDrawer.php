@@ -5,7 +5,7 @@ namespace App\Livewire;
 use Filament\Schemas\Schema;
 use Filament\Actions\Action;
 use Filament\Schemas\Components\Utilities\Set;
-use App\Filament\Resources\ProposalResource\Pages\Diaries;
+use App\Filament\Resources\Proposals\Pages\Diaries;
 use App\Models\Family;
 use Filament\Forms\Components\Textarea;
 use App\Models\Person;

@@ -6,7 +6,7 @@ use Closure;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
-use App\Filament\Resources\PersonResource;
+use App\Filament\Resources\People\PersonResource;
 use App\Infolists\Components\FamilyTable;
 use App\Models\Person;
 use App\Models\Proposal;

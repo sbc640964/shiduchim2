@@ -1,14 +1,14 @@
 <?php
 
 namespace App\Filament\Pages;
-use App\Filament\Clusters\Settings;
+use App\Filament\Clusters\Settings\SettingsCluster;
 use Illuminate\Support\Facades\Gate;
 //use Kenepa\Banner\BannerPlugin;
 //use Kenepa\Banner\Livewire\BannerManagerPage as Page;
 
 class BannerManagerPage //extends Page
 {
-    protected static ?string $cluster = Settings::class;
+    protected static ?string $cluster = SettingsCluster::class;
 
     public static function canAccess(): bool
     {

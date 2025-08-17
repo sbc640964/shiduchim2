@@ -3,7 +3,7 @@
 namespace App\Filament\Widgets;
 
 use Number;
-use App\Filament\Resources\StudentResource\Pages\Subscription;
+use App\Filament\Resources\Students\Pages\Subscription;
 use App\Models\Payment;
 use App\Models\Subscriber;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;

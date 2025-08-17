@@ -7,7 +7,7 @@ use View;
 use Arr;
 use Filament\Actions\Action;
 use App\Filament\Clusters\Settings\Pages\Statuses;
-use App\Filament\Resources\ProposalResource;
+use App\Filament\Resources\Proposals\ProposalResource;
 use App\Models\Traits\HasActivities;
 use App\Models\Traits\HasProposalFilamentFormsFields;
 use Carbon\CarbonInterface;

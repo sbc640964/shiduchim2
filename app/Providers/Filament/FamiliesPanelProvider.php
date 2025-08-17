@@ -4,12 +4,12 @@ namespace App\Providers\Filament;
 
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
-use App\Filament\Clusters\Settings\Resources\CallsDiariesResource;
-use App\Filament\Clusters\Settings\Resources\TimeSheetsResource;
+use App\Filament\Clusters\Settings\Resources\CallsDiaries\CallsDiariesResource;
+use App\Filament\Clusters\Settings\Resources\TimeSheets\TimeSheetsResource;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\GoldListWidget;
-use Awcodes\FilamentGravatar\GravatarPlugin;
-use Awcodes\FilamentGravatar\GravatarProvider;
+use Awcodes\Gravatar\GravatarPlugin;
+use Awcodes\Gravatar\GravatarProvider;
 use Blade;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
@@ -60,7 +60,7 @@ class FamiliesPanelProvider extends PanelProvider
             ->login()
             ->profile()
             ->maxContentWidth('full')
-//            ->defaultAvatarProvider(GravatarProvider::class)
+            ->defaultAvatarProvider(GravatarProvider::class)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -96,9 +96,9 @@ class FamiliesPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
-//                GravatarPlugin::make()
-//                    ->default('robohash')
-//                    ->size(200),
+                GravatarPlugin::make()
+                    ->default('robohash')
+                    ->size(200),
 //                BannerPlugin::make()
 //                    ->disableBannerManager()
 //                    ->persistsBannersInDatabase()

@@ -5,7 +5,7 @@ use Filament\Pages\Dashboard;
 use App\Filament\Clusters\Reports\Pages\OpenProposalPage\OpenProposalsOverview;
 use App\Filament\Clusters\Reports\Pages\OpenProposalPage\OpenProposalsTable;
 use Filament\Schemas\Schema;
-use App\Filament\Clusters\Reports;
+use App\Filament\Clusters\Reports\ReportsCluster;
 use App\Models\User;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -18,7 +18,7 @@ class OpenProposals extends Dashboard
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $cluster = Reports::class;
+    protected static ?string $cluster = ReportsCluster::class;
 
     protected static ?string $title = 'הצעות פתוחות';
 

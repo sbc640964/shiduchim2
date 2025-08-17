@@ -4,7 +4,7 @@ namespace App\Livewire;
 
 use Filament\Actions\Contracts\HasActions;
 use Filament\Actions\Concerns\InteractsWithActions;
-use App\Filament\Resources\ProposalResource\Pages\Family;
+use App\Filament\Resources\Proposals\Pages\Family;
 use App\Models\Person;
 use App\Models\Proposal;
 use Filament\Forms\Concerns\InteractsWithForms;

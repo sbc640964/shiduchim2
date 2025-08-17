@@ -4,7 +4,7 @@ namespace App\Models\Traits;
 
 use Filament\Forms\Components\TextInput;
 use Filament\Actions\Action;
-use App\Filament\Resources\PersonResource\Pages\EditPerson;
+use App\Filament\Resources\People\Pages\EditPerson;
 use App\Models\Person;
 use Filament\Forms;
 
