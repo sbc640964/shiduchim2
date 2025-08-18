@@ -26,6 +26,8 @@ class ManageProposals extends ManageRelatedRecords
 
     protected static ?string $title = 'הצעות';
 
+    protected static ?string $navigationLabel = 'הצעות';
+
     public function isGirl(): bool
     {
         return $this->record->gender === 'G';

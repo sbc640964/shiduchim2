@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\Students;
 
+use App\Filament\Tables\StudentsTable;
+use Closure;
 use Filament\Forms\Components\ModalTableSelect;
+use Filament\Forms\Components\TableSelect;
 use Filament\Schemas\Components\FusedGroup;
 use Filament\Schemas\Schema;
 use App\Filament\Resources\Students\Pages\Subscription;
@@ -19,6 +22,7 @@ use App\Filament\Resources\Students\Pages\EditStudent;
 use App\Filament\Resources\Students\Pages\ManageProposals;
 use App\Filament\Resources\Students\Pages\Family;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Filters\Filter;
 use Filament\Schemas\Components\Group;
 use App\Filament\Clusters\Settings\Resources\Matchmakers\MatchmakerResource;
@@ -51,6 +55,8 @@ class StudentResource extends Resource
 
     protected static ?string $model = Person::class;
 
+    protected static ?string $recordRouteKeyName = 'people.id';
+
     protected static ?string $slug = 'students';
 
     protected static ?string $label = 'תלמיד';
@@ -66,9 +72,9 @@ class StudentResource extends Resource
         return (new CreateForm)($schema);
     }
 
-    public static function getEloquentQuery(): Builder
+    static public function withRelationship(): array
     {
-        return parent::getEloquentQuery()->with([
+        return [
             'father.father',
             'father.mother',
             'mother.father',
@@ -77,7 +83,13 @@ class StudentResource extends Resource
             'parentsFamily.city',
             'father.school',
             'lastSubscription.matchmaker',
-        ]);
+            'city',
+        ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::modifyTableQuery(parent::getEloquentQuery());
     }
 
     public static function table(Table $table): Table
@@ -88,98 +100,13 @@ class StudentResource extends Resource
             ->when(method_exists($table->getLivewire(), 'getExtraColumns'), function (Table $table) use (&$extraColumns) {
                 $extraColumns = $table->getLivewire()->getExtraColumns();
             })
+            ->modifyQueryUsing(fn ($query) => $query->with(static::withRelationship()))
             ->recordUrl(fn (Model $record, $livewire) =>
                 $livewire->activeTab === 'subscriptions'
                     ? Subscription::getUrl(['record' => $record])
                     : ViewStudent::getUrl(['record' => $record])
             )
-            ->columns([
-                ...$extraColumns,
-            TextColumn::make('external_code_students')
-                ->label('מספר')
-                ->toggleable()
-                ->toggledHiddenByDefault()
-                ->searchable()
-                ->sortable(),
-            TextColumn::make('last_name')
-                ->label('שם משפחה')
-                ->weight('bold')
-                ->searchable()
-                ->sortable(),
-            TextColumn::make('first_name')
-                ->label('שם פרטי')
-                ->weight('bold')
-                ->searchable()
-                ->sortable(),
-            TextColumn::make('current_subscription_matchmaker')
-                ->label('שדכן מטפל')
-                ->badge(),
-            TextColumn::make('city')
-                ->state(fn (Person $person) => $person->city?->name ?? $person->parentsFamily?->city?->name)
-                ->label('עיר')
-                ->sortable(),
-
-            TextColumn::make('father.first_name')
-                ->description(fn (Person $person) => $person->father?->parents_info)
-                ->label('שם האב')
-                ->searchable()
-                ->sortable(),
-
-            TextColumn::make('mother.first_name')
-                ->description(fn (Person $person) => $person->mother?->parents_info)
-                ->label('שם האם')
-                ->searchable()
-                ->sortable(),
-
-            TextColumn::make('schools.name')
-                ->label('בית ספר')
-                ->searchable(),
-
-            TextColumn::make('data_raw.class')
-                ->label('כיתה')
-                ->sortable(),
-
-            TextColumn::make('father.schools')
-                ->state(fn (Person $person) => $person->father?->schools?->last()?->name)
-                ->label('בית כנסת')
-                ->searchable(['name'])
-                ->description(fn (Person $person) => $person->parentsFamily?->city?->name)
-                ->sortable(),
-
-            SpatieTagsColumn::make('tags')
-                ->type(Person::studentTagsKey())
-                ->label('תיוגים')
-                ->toggleable()
-                ->toggledHiddenByDefault()
-                ->searchable(['name']),
-
-            TextColumn::make('born_at')
-                ->formatStateUsing(fn (?Carbon $state) => $state ? $state->hebcal()->hebrewDate(withQuotes: true) : null)
-                ->label('תאריך לידה')
-                ->sortable(),
-
-            //            TextColumn::make('prevSchool.name')
-            //                ->label('בית ספר קודם')
-            //                ->searchable()
-            //                ->sortable(),
-
-            TextColumn::make('gender')
-                ->label('מין')
-                ->formatStateUsing(fn (string $state) => match ($state) {
-                    'B' => 'בן',
-                    'G' => 'בת',
-                    default => '?',
-                })
-                ->suffix(fn (Person $person) => ' '.$person->age)
-                ->badge()
-                ->color(fn (string $state) => match ($state) {
-                    'B' => Color::Blue,
-                    'G' => Color::Pink,
-                    default => Color::Gray,
-                })
-                ->searchable()
-                ->sortable(),
-        ])
+            ->columns(static::getTableColumns($extraColumns))
             ->paginationPageOptions([5, 10, 25, 50, 100, 250])
             ->recordActions([
                 Action::make('go-to-search-proposal')
@@ -193,19 +120,35 @@ class StudentResource extends Resource
                     ->label('נישואין')
                     ->iconButton()
                     ->icon('iconsax-bul-crown')
-                    ->modalWidth('sm')
+                    ->modalWidth(Width::TwoExtraLarge)
                     ->schema(fn (Schema $schema) => $schema->components([
-                        ModalTableSelect::make('with')
-//                            ->getSearchResultsUsing(fn (string $search, Person $person) => Person::searchName($search, $person->gender === 'B' ? 'G' : 'B')
-//                                ->single()
-//                                ->with('father')
-//                                ->limit(50)
-//                                ->get()
-//                                ->pluck('select_option_html', 'id')
-//                            )
-                            ->tableConfiguration(StudentResource::class)
+                        TableSelect::make('with')
                             ->label('עם')
-                            ->required(),
+                            ->hiddenLabel()
+                            ->tableConfiguration(StudentsTable::class)
+                            ->tableArguments(fn (Person $record) => [
+                                'gender' => $record->gender === 'B' ? 'G' : 'B'
+                            ])
+//                            ->relationshipName($this->getRelationshipName())
+//                            ->multiple()
+//                            ->maxItems($this->getMaxItems())
+//                            ->tableArguments($this->getTableArguments())
+                        ,
+//                        ModalTableSelect::make('with')
+////                            ->relationship('anywhereWith', 'name')
+////                            ->model(Person::class)
+////                            ->getSearchResultsUsing(fn (string $search, Person $person) => Person::searchName($search, $person->gender === 'B' ? 'G' : 'B')
+////                                ->single()
+////                                ->with('father')
+////                                ->limit(50)
+////                                ->get()
+////                                ->pluck('select_option_html', 'id')
+////                            )
+//                            ->tableConfiguration(StudentsTable::class)
+//                            ->getOptionLabelFromRecordUsing(fn (Person $person) => $person->full_name)
+////                            ->label('עם')
+////                            ->required()
+//                        ,
 
 //                        Select::make('with')
 //                            ->searchable()
@@ -223,6 +166,7 @@ class StudentResource extends Resource
                         Select::make('matchmaker')
                             ->searchable()
                             ->allowHtml()
+                            ->getOptionLabelUsing(fn (Person $person) => $person->select_option_html)
                             ->getSearchResultsUsing(fn (string $search) => Person::searchName($search)
                                 ->whereRelation('matchmaker', 'active', true)
                                 ->with(['father', 'matchmaker'])
@@ -244,29 +188,36 @@ class StudentResource extends Resource
                             ->native(false)
                             ->required(),
                     ]))
-                    ->action(fn (array $data, Person $person) => $person->marriedExternal(
-                        $data['with'],
-                        Carbon::make($data['date']),
-                        $data['matchmaker']
-                    )),
+                    ->action(function (array $data, Person $person){
+
+                        dump($data);
+
+                        $person->marriedExternal(
+                            $data['with'],
+                            Carbon::make($data['date']),
+                            $data['matchmaker']
+                        );
+                    }),
             ])
-            ->modifyQueryUsing(function (Builder $query) {
-                $query
-                    ->whereNotNull('external_code_students')
-                    ->leftJoin('family_person', 'people.id', '=', 'family_person.person_id')
-                    ->leftJoin('families', 'family_person.family_id', '=', 'families.id')
-                    ->select('people.*')
-                    ->where(function (Builder $query) {
-                        $query->whereNull('families.id')
-                            ->orWhere('families.status', '!=', 'married');
-                    });
-            })
             ->filters(static::filters())
             ->filtersLayout(FiltersLayout::AboveContent)
             ->defaultSort(fn ($query) => $query
                 ->orderBy('last_name')
                 ->orderBy('first_name')
             );
+    }
+
+    static public function modifyTableQuery(Builder $query)
+    {
+        return $query
+            ->whereNotNull('external_code_students')
+            ->leftJoin('family_person', 'people.id', '=', 'family_person.person_id')
+            ->leftJoin('families', 'family_person.family_id', '=', 'families.id')
+            ->select('people.*')
+            ->where(function (Builder $query) {
+                $query->whereNull('families.id')
+                    ->orWhere('families.status', '!=', 'married');
+            });
     }
 
     public static function infolist(Schema $schema): Schema
@@ -447,6 +398,95 @@ class StudentResource extends Resource
 
                     ])->columns(6),
                 ]),
+        ];
+    }
+
+    public static function getTableColumns(?array $extraColumns = []): array
+    {
+        return [
+            ...$extraColumns,
+            TextColumn::make('external_code_students')
+                ->label('מספר')
+                ->toggleable()
+                ->toggledHiddenByDefault()
+                ->searchable()
+                ->sortable(),
+            TextColumn::make('last_name')
+                ->label('שם משפחה')
+                ->weight('bold')
+                ->searchable()
+                ->sortable(),
+            TextColumn::make('first_name')
+                ->label('שם פרטי')
+                ->weight('bold')
+                ->searchable()
+                ->sortable(),
+            TextColumn::make('current_subscription_matchmaker')
+                ->label('שדכן מטפל')
+                ->badge(),
+            TextColumn::make('city')
+                ->state(fn (Person $person) => $person->city?->name ?? $person->parentsFamily?->city?->name)
+                ->label('עיר')
+                ->sortable(),
+
+            TextColumn::make('father.first_name')
+                ->description(fn (Person $person) => $person->father?->parents_info)
+                ->label('שם האב')
+                ->searchable()
+                ->sortable(),
+
+            TextColumn::make('mother.first_name')
+                ->description(fn (Person $person) => $person->mother?->parents_info)
+                ->label('שם האם')
+                ->searchable()
+                ->sortable(),
+
+            TextColumn::make('schools.name')
+                ->label('בית ספר')
+                ->searchable(),
+
+            TextColumn::make('data_raw.class')
+                ->label('כיתה')
+                ->sortable(),
+
+            TextColumn::make('father.schools.name')
+                ->state(fn (Person $person) => $person->father?->schools?->last()?->name)
+                ->label('בית כנסת')
+                ->description(fn (Person $person) => $person->parentsFamily?->city?->name)
+                ->searchable()
+                ->sortable(),
+
+            SpatieTagsColumn::make('tags')
+                ->type(Person::studentTagsKey())
+                ->label('תיוגים')
+                ->toggleable()
+                ->toggledHiddenByDefault(),
+
+            TextColumn::make('born_at')
+                ->formatStateUsing(fn (?Carbon $state) => $state ? $state->hebcal()->hebrewDate(withQuotes: true) : null)
+                ->label('תאריך לידה')
+                ->sortable(),
+
+            //            TextColumn::make('prevSchool.name')
+            //                ->label('בית ספר קודם')
+            //                ->searchable()
+            //                ->sortable(),
+
+            TextColumn::make('gender')
+                ->label('מין')
+                ->formatStateUsing(fn (string $state) => match ($state) {
+                    'B' => 'בן',
+                    'G' => 'בת',
+                    default => '?',
+                })
+                ->suffix(fn (Person $person) => ' '.$person->age)
+                ->badge()
+                ->color(fn (string $state) => match ($state) {
+                    'B' => Color::Blue,
+                    'G' => Color::Pink,
+                    default => Color::Gray,
+                })
+                ->sortable(),
         ];
     }
 }

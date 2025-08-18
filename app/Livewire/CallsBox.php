@@ -10,7 +10,6 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Illuminate\Database\Eloquent\Collection;
-use Livewire\Attributes\Reactive;
 use Livewire\Component;
 
 class CallsBox extends Component implements HasActions, HasForms

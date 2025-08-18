@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\GoldLists;
 
+use App\Filament\Resources\Students\StudentResource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\Layout\Split;
 use Arr;

@@ -7,20 +7,15 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Tables\Columns\Layout\Grid;
 use Filament\Tables\Columns\ViewColumn;
 use App\Models\Call;
-use App\Models\Diary;
 use App\Models\Family;
 use App\Models\Person;
-use Filament\Facades\Filament;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
-use Filament\Tables\Columns;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class ActiveCallLastCalls extends Component implements HasForms, HasTable, HasActions

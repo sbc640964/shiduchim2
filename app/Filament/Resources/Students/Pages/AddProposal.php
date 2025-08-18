@@ -55,11 +55,13 @@ class AddProposal extends ListRecords
 
     protected function getTableQuery(): ?Builder
     {
-        return Student::query()
-            ->where(fn ($query) => $query
-                ->whereDoesntHave('families')
-                ->orWhereRelation('family', fn (Builder $query) => $query->where('status', '!=', 'married')
-                ))
+        return StudentResource::modifyTableQuery(Student::query())
+            ->with(StudentResource::withRelationship())
+//            ->single()
+//            ->where(fn ($query) => $query
+//                ->whereDoesntHave('families')
+//                ->orWhereRelation('family', fn (Builder $query) => $query->where('status', '!=', 'married')
+//                ))
             ->where('gender', '!=', $this->getRecord()->gender);
     }
 
@@ -85,11 +87,6 @@ class AddProposal extends ListRecords
                         $action->success();
                     }),
             ])
-//            ->filtersFormWidth(MaxWidth::ExtraLarge)
-//            ->filtersTriggerAction(function (Action $action) {
-//                $action->slideOver();
-//            })
-//            ->filters($this->getFilters(), FiltersLayout::Modal)
             ->recordActions([
                 Action::make('add-proposal')
                     ->action(function (Student $student, Action $action) {

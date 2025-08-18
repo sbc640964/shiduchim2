@@ -2,11 +2,46 @@
 
 return [
 
+    'column_manager' => [
+
+        'heading' => 'עמודות',
+
+        'actions' => [
+
+            'apply' => [
+                'label' => 'החל',
+            ],
+
+            'reset' => [
+                'label' => 'איפוס',
+            ],
+
+        ],
+
+    ],
+
     'column_toggle' => [
         'heading' => 'עמודות',
     ],
 
     'columns' => [
+        'actions' => [
+            'label' => 'עמודה|עמודות',
+        ],
+
+        'select' => [
+
+            'loading_message' => 'טוען...',
+
+            'no_search_results_message' => 'אין אפשרויות תואמות לחיפוש שלך.',
+
+            'placeholder' => 'בחר אפשרות',
+
+            'searching_message' => 'מחפש...',
+
+            'search_prompt' => 'התחל להקליד כדי לחפש...',
+
+        ],
         'text' => [
             'more_list_items' => 'ו-:count פריטים נוספים',
 
@@ -59,7 +94,7 @@ return [
             'label' => 'סדר מחדש רשומות',
         ],
         'filter' => [
-            'label' => 'פילטר',
+            'label' => 'סנן',
         ],
         'group' => [
             'label' => 'קבוצה',
@@ -79,6 +114,9 @@ return [
 
     'filters' => [
         'actions' => [
+            'apply' => [
+                'label' => 'החל סננים',
+            ],
             'remove' => [
                 'label' => 'הסר סנן',
             ],
@@ -97,6 +135,10 @@ return [
         ],
         'select' => [
             'placeholder' => 'הכל',
+
+            'relationship' => [
+                'empty_option_label' => 'ללא',
+            ],
         ],
         'trashed' => [
             'label' => 'רשומות שנמחקו',
@@ -151,4 +193,5 @@ return [
         ],
     ],
 
+    'default_model_label' => 'רשומה',
 ];
