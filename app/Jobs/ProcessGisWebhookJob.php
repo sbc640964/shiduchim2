@@ -191,7 +191,10 @@ class ProcessGisWebhookJob implements ShouldQueue
             : $data['from_phone']
         );
 
-        $call = Call::whereUniqueId($data['original_call_id'])->first();
+        $call = Call::query()
+            ->where('unique_id',$data['original_call_id'])
+            ->orWhere('unique_id', $data['linkedid'])
+            ->first();
 
         if ($call) {
             return $call;
