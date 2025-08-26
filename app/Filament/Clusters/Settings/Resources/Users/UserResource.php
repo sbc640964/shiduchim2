@@ -58,6 +58,7 @@ class UserResource extends Resource
                 TextInput::make('email')
                     ->label('אימייל')
                     ->email()
+                    ->unique(ignoreRecord: true)
                     ->required(),
 
                 Select::make('ext')
