@@ -143,7 +143,7 @@ class ProcessGisWebhookJob implements ShouldQueue
 
             $updateAttributes = [
                 'data_raw' => $callEvents,
-                'unique_id' => $this->data['original_call_id'],
+                'unique_id' => $this->data['linkedid'] ?? $this->data['original_call_id'],
                 'extension' => $call->extension ?? $extension,
                 'user_id' => !$call->extension ? ($user?->id ?? null) : $call->user_id ?? null,
             ];
@@ -192,8 +192,8 @@ class ProcessGisWebhookJob implements ShouldQueue
         );
 
         $call = Call::query()
-            ->where('unique_id',$data['original_call_id'])
-            ->orWhere('unique_id', $data['linkedid'])
+            ->where('unique_id', $data['linkedid'])
+            ->orWhere('unique_id',$data['original_call_id'])
             ->first();
 
         if ($call) {
