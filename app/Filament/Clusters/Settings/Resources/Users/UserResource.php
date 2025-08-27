@@ -23,7 +23,7 @@ use App\Services\PhoneCallGis\CallPhone;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
-use STS\FilamentImpersonate\Actions\Impersonate;
+//use STS\FilamentImpersonate\Actions\Impersonate;
 
 class UserResource extends Resource
 {
@@ -135,12 +135,12 @@ class UserResource extends Resource
                     })
                     ->modalWidth('sm'),
                 ActionGroup::make([
-                    Impersonate::make()
-                        ->view('filament-actions::grouped-action')
-                        ->icon('iconsax-bul-brush-4')
-                        ->requiresConfirmation()
-                        ->label('התחברות כמשתמש')
-                        ->redirectTo('/admin'),
+//                    Impersonate::make()
+//                        ->view('filament-actions::grouped-action')
+//                        ->icon('iconsax-bul-brush-4')
+//                        ->requiresConfirmation()
+//                        ->label('התחברות כמשתמש')
+//                        ->redirectTo('/admin'),
                     DeleteAction::make()
                         ->icon('iconsax-bul-trash')
                         ->hidden(fn (User $record) => $record->id === auth()->id())
