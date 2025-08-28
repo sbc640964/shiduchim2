@@ -71,7 +71,7 @@
             </h4>
             @foreach($this->currentUserProposals() as $proposal)
                 <a
-                    href="{{ \App\Filament\Resources\ProposalResource\Pages\ViewProposal::getUrl(['record' => $proposal->getKey()]) }}"
+                    href="{{ \App\Filament\Resources\Proposals\Pages\ViewProposal::getUrl(['record' => $proposal->getKey()]) }}"
                     wire:navigate
                     class="flex justify-between text-gray-800 items-center bg-white z-0 shadow-sm hover:shadow-xl transition-shadow hover:z-10 duration-300 ease-in-out shadow-gray-300/25 rounded-lg p-4"
                 >
