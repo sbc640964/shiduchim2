@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\People;
 
+use App\Filament\Resources\People\Pages\CreditCards;
+use App\Filament\Resources\People\Pages\EditPerson;
+use App\Filament\Resources\People\Pages\Proposals;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -57,7 +60,6 @@ class PersonResource extends Resource
             Grid::make(3)
                 ->schema([
                     Grid::make(1)
-                        ->label('פרטים אישיים')
                         ->columnSpan(1)
                         ->schema([
                             Section::make('גור')
@@ -379,94 +381,93 @@ class PersonResource extends Resource
                             ->columns(1)
                             ->columnSpan(1)
                             ->extraAttributes(['class' => '!p-2'])
-                            ->schema([
-                            Actions::make([
-                                Action::make('edit')
-                                    ->label('עריכה')
-                                    ->icon('heroicon-o-pencil')
-                                    ->size(Size::ExtraSmall)
-                                    ->url(fn (Family $record) =>
-                                        PersonResource::getUrl('edit', ['record' => $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->id]),
-                                        true
-                                    ),
-                                Action::make('cancel_close_proposal')
-                                    ->label('בטל סגירת שידוך')
-                                    ->icon('heroicon-o-x-mark')
-                                    ->size(Size::ExtraSmall)
-                                    ->disabled(fn (Family $record) => !$record->proposal?->canReopen())
-                                    ->schema(fn (Schema $schema, Family $record) => $schema->components([
-                                        Proposal::make()->statusField(true, 'status')
-                                            ->default($record->proposal->lastDiary->data['statuses']['proposal'] ?? null)
-                                            ->helperText($record->proposal->lastDiary->data['statuses']['proposal'] ?? null
-                                                ? 'הסטטוס ברירת המחדל הינו הסטטוס האחרון שהיה לפני הסגירה'
-                                                : null
+                            ->schema(function ($rawState, $record) use ($person) {
+                                return  [
+                                    Actions::make([
+                                        Action::make('edit')
+                                            ->label('עריכה')
+                                            ->icon('heroicon-o-pencil')
+                                            ->size(Size::ExtraSmall)
+                                            ->url(fn () => PersonResource::getUrl('edit', ['record' => $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->id]), true),
+                                        Action::make('cancel_close_proposal')
+                                            ->label('בטל סגירת שידוך')
+                                            ->icon('heroicon-o-x-mark')
+                                            ->size(Size::ExtraSmall)
+                                            ->disabled(fn () => !$record->proposal?->canReopen())
+                                            ->schema(fn (Schema $schema) => $schema->components([
+                                                Proposal::make()->statusField(true, 'status')
+                                                    ->default($record->proposal->lastDiary->data['statuses']['proposal'] ?? null)
+                                                    ->helperText($record->proposal->lastDiary->data['statuses']['proposal'] ?? null
+                                                        ? 'הסטטוס ברירת המחדל הינו הסטטוס האחרון שהיה לפני הסגירה'
+                                                        : null
+                                                    )
+                                                    ->required(),
+                                                Textarea::make('reason_status')
+                                                    ->label('הערה')
+                                                    ->default('נפתח מחדש ע"י '.auth()->user()->name),
+                                            ]))
+                                            ->modalWidth('sm')
+                                            ->modalSubmitActionLabel('ביטול סגירה')
+                                            ->action(fn (array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
+                                        Action::make('divorce')
+                                            ->label('גירושין')
+                                            ->disabled(fn () =>
+                                                !auth()->user()->can('update_divorce')
+                                                || $record->status !== 'married'
                                             )
-                                            ->required(),
-                                        Textarea::make('reason_status')
-                                            ->label('הערה')
-                                            ->default('נפתח מחדש ע"י '.auth()->user()->name),
-                                    ]))
-                                    ->modalWidth('sm')
-                                    ->modalSubmitActionLabel('ביטול סגירה')
-                                    ->action(fn (Family $record, array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
-                                Action::make('divorce')
-                                    ->label('גירושין')
-                                    ->disabled(fn ($record) =>
-                                        !auth()->user()->can('update_divorce')
-                                        || $record->status !== 'married'
-                                    )
-                                    ->color(fn ($record) =>
-                                        !auth()->user()->can('update_divorce')
-                                        || $record->status !== 'married'
-                                            ? Color::Blue
-                                            : Color::Red
-                                    )
-                                    ->size(Size::ExtraSmall)
-                                    ->requiresConfirmation()
-                                    ->successNotification(function (Notification $notification) use ($person) {
-                                        return $notification
-                                            ->actions([
-                                                Action::make('cancel')
-                                                    ->label('ביטול')
-                                                    ->action(function () use ($person){
-                                                        $person->rollbackDivorces();
-                                                    })
-                                            ])
-                                            ->title('הגירושין נרשם בהצלחה')
-                                            ->body('הגירושין נרשם בהצלחה ונשמר במערכת');
-                                    })
-                                    ->label('עדכון גירושין')
-                                    ->outlined()
-                                    ->icon('iconsax-bul-arrow-square')
-                                    ->action(function ($record, Action $action, $livewire): void {
-                                        if( $record && $record->divorce()) {
-                                            $action->success();
-                                            $livewire->refreshFormDataB(['father_in_law_id', 'spouse_id', 'families']);
-                                        }
-                                    }),
-                                Action::make('death')
-                                    ->label('עדכון פטירה')
-                                    ->schema(function (Schema $schema) {
-                                        return $schema->components([
-                                            DatePicker::make('died_at')
-                                                ->label('תאריך פטירה')
-                                                ->helperText('ניתן להזין תאריך פטירה, במקרה ואינך יודע השאר ריק בבקשה!'),
-                                        ]);
-                                    })
-                                    ->disabled(fn ($record) =>
-                                        ! $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->isAlive()
-                                        || ! auth()->user()->can('update_death')
-                                    )
-                                    ->color('danger')
-                                    ->outlined()
-                                    ->size(Size::ExtraSmall)
-                                    ->action(function (array $data, $record) use ($person) {
-                                        $data['died_at'] = $data['died_at'] . '1970-01-02 00:00:00';
-                                        $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->update($data);
-                                    })
-                                    ->requiresConfirmation()
-                            ])
-                        ]),
+                                            ->color(fn () =>
+                                            !auth()->user()->can('update_divorce')
+                                            || $record->status !== 'married'
+                                                ? Color::Blue
+                                                : Color::Red
+                                            )
+                                            ->size(Size::ExtraSmall)
+                                            ->requiresConfirmation()
+                                            ->successNotification(function (Notification $notification) use ($person) {
+                                                return $notification
+                                                    ->actions([
+                                                        Action::make('cancel')
+                                                            ->label('ביטול')
+                                                            ->action(function () use ($person){
+                                                                $person->rollbackDivorces();
+                                                            })
+                                                    ])
+                                                    ->title('הגירושין נרשם בהצלחה')
+                                                    ->body('הגירושין נרשם בהצלחה ונשמר במערכת');
+                                            })
+                                            ->label('עדכון גירושין')
+                                            ->outlined()
+                                            ->icon('iconsax-bul-arrow-square')
+                                            ->action(function (Action $action, $livewire) use ($record): void {
+                                                if( $record && $record->divorce()) {
+                                                    $action->success();
+                                                    $livewire->refreshFormDataB(['father_in_law_id', 'spouse_id', 'families']);
+                                                }
+                                            }),
+                                        Action::make('death')
+                                            ->label('עדכון פטירה')
+                                            ->schema(function (Schema $schema) {
+                                                return $schema->components([
+                                                    DatePicker::make('died_at')
+                                                        ->label('תאריך פטירה')
+                                                        ->helperText('ניתן להזין תאריך פטירה, במקרה ואינך יודע השאר ריק בבקשה!'),
+                                                ]);
+                                            })
+                                            ->disabled(fn () =>
+                                                ! $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->isAlive()
+                                                || ! auth()->user()->can('update_death')
+                                            )
+                                            ->color('danger')
+                                            ->outlined()
+                                            ->size(Size::ExtraSmall)
+                                            ->action(function (array $data) use ($record, $person) {
+                                                $data['died_at'] = $data['died_at'] . '1970-01-02 00:00:00';
+                                                $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->update($data);
+                                            })
+                                            ->requiresConfirmation()
+                                    ])
+                                ];
+                            }),
 //                        Forms\Components\Select::make('wife')
 //                            ->relationship(
 //                                'wife',

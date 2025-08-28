@@ -16,7 +16,7 @@
         "elipzis/laravel-cacheable-model": "^0.4.0",
         "filament/filament": "~4.0",
         "filament/spatie-laravel-tags-plugin": "~4.0",
-        "guava/calendar": "^2.0.0-beta.1",
+        "guava/calendar": "^2.0.2",
         "ibrahim-bougaoua/filaprogress": "^0.1.0",
         "itsgoingd/clockwork": "^5.2",
         "laravel/framework": "^11.0",
@@ -103,7 +103,6 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "comments": {
-        "guava/filament-clusters": "^1.5.0",
         "kenepa/banner": "^0.1.0",
         "novadaemon/filament-pretty-json": "^2.6",
         "tomatophp/filament-alerts": "^2.2.2",

@@ -106,8 +106,16 @@ class Task extends Model implements Eventable
             ->end($this->due_date);
     }
 
-    public function toCalendarEvent(): array|CalendarEvent
+    public function toCalendarEvent(): CalendarEvent
     {
-        return [];
+        return CalendarEvent::make($this)
+            ->title($this->description)
+            ->start($this->due_date)
+            ->end($this->due_date)
+            ->backgroundColor('#fff')
+            ->extendedProp('is_completed', $this->completed_at?->format('Y-m-d H:s:i') ?? false)
+            ->extendedProp('proposal_names', $this->getProposalNames())
+            ->extendedProp('priority', $this->priority)
+            ->allDay();
     }
 }

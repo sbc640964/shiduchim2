@@ -150,16 +150,16 @@ class ViewProposal extends ViewRecord
                 'record' => $this->getRecord(),
                 'side' => 'girl',
             ]),
-
-            DiaryListWidget::make([
-                'record' => $this->getRecord(),
-            ]),
+//
+//            DiaryListWidget::make([
+//                'record' => $this->getRecord(),
+//            ]),
         ];
     }
 
     public function infolist(Schema $schema): Schema
     {
-        return $infolist->schema([
+        return $schema->components([
             Section::make()
                 ->schema([
                     Grid::make(4)->schema([

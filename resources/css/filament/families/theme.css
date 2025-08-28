@@ -1,9 +1,12 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../../../vendor/guava/calendar/resources/css/theme.css';
 
+@source '../../../../vendor/guava/calendar/resources/**/*';
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
 @source '../../../../resources/views/**/*';
 @source '../../../../app/livewire/*';
+@source '../../../../app/models/Task.php';
 
 
 /*@import '/vendor/filament/filament/resources/css/theme.css';*/
@@ -12,6 +15,15 @@
 
 /*@config 'tailwind.config.js';*/
 
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
 
 .fi-page.fi-resource-proposals .fi-tabs:not([aria-label=tabs]),
 .fi-page.fi-resource-students .fi-tabs:not([aria-label=tabs]),
@@ -192,4 +204,46 @@ td.description-diary p{
 
 pre.prettyjson{
     direction: ltr;
+}
+
+
+.ec-day-grid .ec-day{
+    @apply border-e border-gray-200;
+
+    &:first-child {
+        @apply border-e border-gray-200;
+    }
+
+    &:last-child {
+        @apply border-e-0;
+    }
+}
+
+.ec-events {
+    margin: 0 0 0 6px;
+
+    .ec-event {
+        @apply bg-white px-2 py-1 border border-gray-200 !mt-1 hover:!bg-gray-100 transition-all rounded-md;
+    }
+}
+
+.ec-toolbar {
+    .ec-button {
+        @apply me-0
+    }
+    .ec-today {
+        @apply ms-0 me-2
+    }
+    .ec-prev {
+        @apply rounded-e-none !rounded-s-lg;
+        i:after {
+            @apply rotate-180
+        }
+    }
+    .ec-next {
+        @apply rounded-s-none !rounded-e-lg;
+        i:after {
+            @apply rotate-180
+        }
+    }
 }

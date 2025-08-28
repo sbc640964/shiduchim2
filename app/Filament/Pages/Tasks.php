@@ -2,7 +2,8 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Widgets\CalendarWidget;
+//use App\Filament\Widgets\CalendarWidget;
+use App\Filament\Widgets\NewCalenderWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Tasks extends BaseDashboard
@@ -10,8 +11,6 @@ class Tasks extends BaseDashboard
     protected static string $routePath = '/tasks';
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
-
-    protected string $view = 'filament-panels::pages.dashboard';
 
     protected static ?string $slug = 'tasks';
     protected static ?string $navigationLabel = 'משימות';
@@ -28,7 +27,7 @@ class Tasks extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            CalendarWidget::class,
+            NewCalenderWidget::class,
         ];
     }
 }

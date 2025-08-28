@@ -1,7 +1,7 @@
 <div
     class="test-ttt h-16 group/card"
     wire:refresh-calls-box.window="$refresh"
-    x-data="{ hasCall: {{$this->hasCall()}}, toggle: () => $wire.isOpen = !$wire.isOpen }"
+    x-data="{ hasCall: {{$this->hasCall() ? 'true' : 'false'}}, toggle: () => $wire.isOpen = !$wire.isOpen }"
 >
     @if($this->hasCall())
         <button x-on:click="toggle" class="hover:bg-slate-50 px-8 text-start grid grid-cols-1 gap-2 h-16 bg-white transition-all">
@@ -32,7 +32,7 @@
         <x-filament-actions::modals />
 
         <div
-            x-data="{ hasCall: {{$this->hasCall()}}, toggle: () => $wire.isOpen = !$wire.isOpen }"
+            x-data="{ hasCall: {{$this->hasCall() ? 'true' : 'false'}}, toggle: () => $wire.isOpen = !$wire.isOpen }"
             wire:show="isOpen"
             class="drawer-opened fixed end-0 top-0 w-[420px] h-screen z-50 overflow-auto bg-white shadow-lg"
             x-transition:enter="transition ease-out duration-300"

@@ -79,8 +79,15 @@ class ProposalResource extends Resource
             );
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        dump($schema);
+        return $schema;
+    }
+
     public static function form(Schema $schema): Schema
     {
+        return $schema->components([]);
         return $schema->components([
             Textarea::make('not')
                 ->label('הערה'),
