@@ -208,7 +208,9 @@ class AddProposal extends ListRecords
     public function addProposal(Student $student, null|Action|BulkAction $action = null): void
     {
         $student->loadExists(['proposals' => function (Builder $query) use ($student) {
-            $query->where('created_by', auth()->id())
+            $query
+                ->withoutGlobalScope('withoutHidden')
+                ->where('created_by', auth()->id())
                 ->where($student->gender === 'G' ? 'guy_id' : 'girl_id', $this->getRecord()->id);
         }]);
 
