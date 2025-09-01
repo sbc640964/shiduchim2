@@ -2,8 +2,6 @@
 
 namespace App\Filament\Clusters\Settings\Resources\WebhookEntries;
 
-use App\Filament\Clusters\Settings\Resources\WebhookEnrtyResource\Pages;
-use App\Filament\Clusters\Settings\Resources\WebhookEnrtyResource\RelationManagers;
 use App\Filament\Clusters\Settings\Resources\WebhookEntries\Pages\ListWebhookEntries;
 use App\Filament\Clusters\Settings\SettingsCluster;
 use App\Models\Call;
@@ -13,7 +11,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\KeyValue;
-use Filament\Forms\Form;
+use Filament\Infolists\Components\CodeEntry;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -24,9 +22,8 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
-use Guava\FilamentClusters\Forms\Cluster;
 use Illuminate\Database\Eloquent\Builder;
-use Novadaemon\FilamentPrettyJson\Infolist\PrettyJsonEntry;
+use Phiki\Grammar\Grammar;
 
 class WebhookEntryResource extends Resource
 {
@@ -57,14 +54,17 @@ class WebhookEntryResource extends Resource
             ]),
             Fieldset::make('נתונים')
                 ->schema([
-                PrettyJsonEntry::make('headers_stack')
-                    ->label('כותרות'),
-                PrettyJsonEntry::make('body')
-                    ->label('גוף'),
+                    CodeEntry::make('headers_stack')
+                        ->label('כותרות')
+                        ->grammar(Grammar::Json),
+                CodeEntry::make('body')
+                    ->label('גוף')
+                    ->grammar(Grammar::Json),
             ]),
             Fieldset::make('שגיאה')->schema([
-                PrettyJsonEntry::make('error')
-                    ->label('שגיאה'),
+                CodeEntry::make('error')
+                    ->label('שגיאה')
+                    ->grammar(Grammar::Json),
             ])->hidden(fn ($record) => $record->is_completed),
 
             Section::make('מודל משוייך')
@@ -74,7 +74,9 @@ class WebhookEntryResource extends Resource
                         ->label('סוג מודל'),
                     TextEntry::make('model_id')
                         ->label('מזהה מודל'),
-                    PrettyJsonEntry::make('model')->label('מודל')
+                    CodeEntry::make('model')
+                        ->label('מודל')
+                        ->grammar(Grammar::Json)
                         ->getStateUsing(function (Call $state, $record) {
                             match ($state::class) {
                                  Call::class => $state->load('user:id,name', 'phoneModel.model'),

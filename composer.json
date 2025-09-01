@@ -32,6 +32,7 @@
         "maatwebsite/excel": "^3.1",
         "mallardduck/blade-lucide-icons": "^1.23",
         "malzariey/filament-daterangepicker-filter": "^4.0.6",
+        "phiki/phiki": "*",
         "prism-php/prism": "^0.81.0",
         "saade/blade-iconsax": "^1.1",
         "sentry/sentry-laravel": "^4.13",
