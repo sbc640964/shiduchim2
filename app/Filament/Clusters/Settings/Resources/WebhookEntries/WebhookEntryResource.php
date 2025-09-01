@@ -24,6 +24,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Phiki\Grammar\Grammar;
+use Phiki\Theme\Theme;
 
 class WebhookEntryResource extends Resource
 {
@@ -58,9 +59,15 @@ class WebhookEntryResource extends Resource
                     ->columns(1)
                     ->schema([
                         CodeEntry::make('headers_stack')
+                            ->copyable()
+                            ->copyMessage('התוכן הועתק בהצלחה!')
+                            ->lightTheme(Theme::GithubLight)
                             ->label('כותרות')
                             ->grammar(Grammar::Json),
                         CodeEntry::make('body')
+                            ->copyable()
+                            ->copyMessage('התוכן הועתק בהצלחה!')
+                            ->lightTheme(Theme::GithubLight)
                             ->label('גוף')
                             ->grammar(Grammar::Json),
                     ]),
@@ -68,6 +75,9 @@ class WebhookEntryResource extends Resource
                     ->columns(1)
                     ->schema([
                     CodeEntry::make('error')
+                        ->copyable()
+                        ->copyMessage('התוכן הועתק בהצלחה!')
+                        ->lightTheme(Theme::GithubLight)
                         ->label('שגיאה')
                         ->grammar(Grammar::Json),
                 ])->hidden(fn($record) => $record->is_completed),
@@ -80,7 +90,10 @@ class WebhookEntryResource extends Resource
                         TextEntry::make('model_id')
                             ->label('מזהה מודל'),
                         CodeEntry::make('model')
+                            ->copyable()
+                            ->copyMessage('התוכן הועתק בהצלחה!')
                             ->label('מודל')
+                            ->lightTheme(Theme::GithubLight)
                             ->grammar(Grammar::Json)
                             ->getStateUsing(function (Call $state, $record) {
                                 match ($state::class) {
@@ -127,9 +140,9 @@ class WebhookEntryResource extends Resource
                             ->label('גוף הבקשה')
                     ])
                     ->query(fn(Builder $query, array $data): Builder => $data['body'] ? $query->where(function ($q) use ($data) {
-                        foreach ($data['body'] as $key => $value) {
-                            if (filled($value) && filled($key))
-                                $q->where('body->' . $key, 'like', '%' . $value . '%');
+                        foreach ($data['body'] as $item) {
+                            if (filled($item['value']) && filled($item['key']))
+                                $q->where('body->' . $item['key'], 'like', '%' . $item['value'] . '%');
                         }
                     }) : $query),
             ])

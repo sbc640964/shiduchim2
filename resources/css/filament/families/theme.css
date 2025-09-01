@@ -247,3 +247,7 @@ pre.prettyjson{
         }
     }
 }
+
+.fi-in-code {
+    direction: ltr;
+}
