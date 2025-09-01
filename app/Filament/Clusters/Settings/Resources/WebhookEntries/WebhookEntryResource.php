@@ -29,7 +29,7 @@ class WebhookEntryResource extends Resource
 {
     protected static ?string $model = WebhookEntry::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = SettingsCluster::class;
 
@@ -42,57 +42,62 @@ class WebhookEntryResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return $schema->components([
-            TextEntry::make('created_at')
-                ->label('נוצר בתאריך')
-                ->dateTime('d/m/Y H:i:s'),
-            Fieldset::make('כללי')->schema([
-                TextEntry::make('url')->label('כתובת'),
-                IconEntry::make('is_completed')
-                    ->label('הושלם')
-                    ->boolean(),
-            ]),
-            Fieldset::make('נתונים')
-                ->schema([
-                    CodeEntry::make('headers_stack')
-                        ->label('כותרות')
+        return $schema
+            ->columns(1)
+            ->components([
+                TextEntry::make('created_at')
+                    ->label('נוצר בתאריך')
+                    ->dateTime('d/m/Y H:i:s'),
+                Fieldset::make('כללי')->schema([
+                    TextEntry::make('url')->label('כתובת'),
+                    IconEntry::make('is_completed')
+                        ->label('הושלם')
+                        ->boolean(),
+                ]),
+                Fieldset::make('נתונים')
+                    ->columns(1)
+                    ->schema([
+                        CodeEntry::make('headers_stack')
+                            ->label('כותרות')
+                            ->grammar(Grammar::Json),
+                        CodeEntry::make('body')
+                            ->label('גוף')
+                            ->grammar(Grammar::Json),
+                    ]),
+                Fieldset::make('שגיאה')
+                    ->columns(1)
+                    ->schema([
+                    CodeEntry::make('error')
+                        ->label('שגיאה')
                         ->grammar(Grammar::Json),
-                CodeEntry::make('body')
-                    ->label('גוף')
-                    ->grammar(Grammar::Json),
-            ]),
-            Fieldset::make('שגיאה')->schema([
-                CodeEntry::make('error')
-                    ->label('שגיאה')
-                    ->grammar(Grammar::Json),
-            ])->hidden(fn ($record) => $record->is_completed),
+                ])->hidden(fn($record) => $record->is_completed),
 
-            Section::make('מודל משוייך')
-                ->columns(2)
-                ->schema([
-                    TextEntry::make('model_type')
-                        ->label('סוג מודל'),
-                    TextEntry::make('model_id')
-                        ->label('מזהה מודל'),
-                    CodeEntry::make('model')
-                        ->label('מודל')
-                        ->grammar(Grammar::Json)
-                        ->getStateUsing(function (Call $state, $record) {
-                            match ($state::class) {
-                                 Call::class => $state->load('user:id,name', 'phoneModel.model'),
-                            };
+                Section::make('מודל משוייך')
+                    ->columns(2)
+                    ->schema([
+                        TextEntry::make('model_type')
+                            ->label('סוג מודל'),
+                        TextEntry::make('model_id')
+                            ->label('מזהה מודל'),
+                        CodeEntry::make('model')
+                            ->label('מודל')
+                            ->grammar(Grammar::Json)
+                            ->getStateUsing(function (Call $state, $record) {
+                                match ($state::class) {
+                                    Call::class => $state->load('user:id,name', 'phoneModel.model'),
+                                };
 
-                            return $state->toArray();
-                        })
-                ])->hidden(fn ($record) => !$record->model_type || !$record->model_id),
-        ]);
+                                return $state->toArray();
+                            })
+                    ])->hidden(fn($record) => !$record->model_type || !$record->model_id),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->defaultSort('id', 'desc')
-            ->poll(fn () => session('webhook_entries_poll_interval') ? "10s" : null)
+            ->poll(fn() => session('webhook_entries_poll_interval') ? "10s" : null)
             ->columns([
                 TextColumn::make('id')
                     ->sortable()
@@ -115,15 +120,15 @@ class WebhookEntryResource extends Resource
                 Filter::make('is_completed')
                     ->label('יש שגיאה')
                     ->toggle()
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('error')),
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('error')),
                 Filter::make('filters')
-                ->schema([
-                    KeyValue::make('body')
-                        ->label('גוף הבקשה')
-                ])
-                    ->query(fn (Builder $query, array $data): Builder => $data['body'] ? $query->where(function ($q) use ($data) {
+                    ->schema([
+                        KeyValue::make('body')
+                            ->label('גוף הבקשה')
+                    ])
+                    ->query(fn(Builder $query, array $data): Builder => $data['body'] ? $query->where(function ($q) use ($data) {
                         foreach ($data['body'] as $key => $value) {
-                            if(filled($value) && filled($key))
+                            if (filled($value) && filled($key))
                                 $q->where('body->' . $key, 'like', '%' . $value . '%');
                         }
                     }) : $query),
@@ -135,8 +140,8 @@ class WebhookEntryResource extends Resource
                     ->outlined(false)
                     ->tooltip('ריענון אוטמטי')
                     ->icon('heroicon-o-arrow-path')
-                    ->action(fn () => session(['webhook_entries_poll_interval' => !session('webhook_entries_poll_interval')]))
-                    ->color(fn () => session('webhook_entries_poll_interval') ? 'success' : 'secondary'),
+                    ->action(fn() => session(['webhook_entries_poll_interval' => !session('webhook_entries_poll_interval')]))
+                    ->color(fn() => session('webhook_entries_poll_interval') ? 'success' : 'secondary'),
 
                 ActionGroup::make([
 
@@ -145,7 +150,7 @@ class WebhookEntryResource extends Resource
                 ViewAction::make()
                     ->iconButton()
                     ->slideOver()
-                    ->modalHeading(fn ($record) => "וובהוק {$record->id}")
+                    ->modalHeading(fn($record) => "וובהוק {$record->id}")
                     ->icon('heroicon-o-eye')
             ])
             ->toolbarActions([
