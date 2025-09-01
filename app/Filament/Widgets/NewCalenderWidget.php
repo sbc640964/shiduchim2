@@ -25,6 +25,7 @@ use Guava\Calendar\Filament\Actions\EditAction;
 use Guava\Calendar\Filament\Actions\ViewAction;
 use \Guava\Calendar\Filament\CalendarWidget;
 use Guava\Calendar\ValueObjects\DateClickInfo;
+use Guava\Calendar\ValueObjects\EventDropInfo;
 use Guava\Calendar\ValueObjects\FetchInfo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -69,6 +70,14 @@ class NewCalenderWidget extends CalendarWidget
     protected bool $eventClickEnabled = true;
     protected ?string $defaultEventClickAction = 'viewAction'; // view and edit actions are provided by us, but you can choose any action you want, even your own custom ones
     protected bool $dateClickEnabled = true;
+
+    protected bool $eventDragEnabled = true;
+
+    protected function onEventDrop(EventDropInfo $info, \Illuminate\Database\Eloquent\Model $event): bool
+    {
+        $event->due_date = $info->event->getStart();
+        return $event->save();
+    }
 
     public function getEvents(FetchInfo $info): array|Collection|Builder
     {
@@ -174,6 +183,7 @@ Html
     {
         return [
             EditAction::make()
+                ->schema(fn (Schema $schema) => $schema->schema($this->getFormSchema()))
                 ->mountUsing(
                     function (Task $record, Schema $schema, array $arguments) {
                         $schema->fill([
