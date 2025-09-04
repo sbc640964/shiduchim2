@@ -4,6 +4,7 @@
 @source '../../../../vendor/guava/calendar/resources/**/*';
 @source '../../../../app/Filament/**/*';
 @source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/livewire/**/*';
 @source '../../../../resources/views/**/*';
 @source '../../../../app/livewire/*';
 @source '../../../../app/models/Task.php';
@@ -250,4 +251,15 @@ pre.prettyjson{
 
 .fi-in-code {
     direction: ltr;
+}
+
+.item-transcription-call {
+    @apply mb-4 rounded-md p-2;
+}
+.item-transcription-call.matchmaker-spoken-call {
+    @apply bg-gray-600/15
+}
+
+.item-transcription-call.parent-spoken-call {
+    @apply bg-gray-600/5
 }

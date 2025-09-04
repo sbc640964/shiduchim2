@@ -30,7 +30,7 @@ class TranscriptionCallJob implements ShouldQueue
 
     protected Call $call;
 
-    public function __construct(protected int $callId)
+    public function __construct(protected int $callId, protected ?int $chunkIndex = null)
     {
         $this->call = Call::findOrFail($this->callId);
     }
@@ -88,6 +88,11 @@ class TranscriptionCallJob implements ShouldQueue
             return;
         }
 
+        if ($this->chunkIndex) {
+
+            return;
+        }
+
         if (in_array($transcription->status, ['transcribing', 'split'])) {
             if($this->chunkTranscription()) {
                 if($transcription->total_steps >= $transcription->current_step)
@@ -112,31 +117,40 @@ class TranscriptionCallJob implements ShouldQueue
             $transcription->setStatus('transcribing', 'Transcribing the each chunk of audio file.');
         }
 
-        $currentStepChunk = $transcription->data['chunks'][$transcription->current_step - 1] ?? null;
+        $currentStep = $this->chunkIndex ?? ($transcription->current_step - 1);
+
+        $currentStepChunk = $transcription->data['chunks'][$currentStep] ?? null;
 
         if (!$currentStepChunk) {
             $transcription->setStatus('failed', 'No chunk found for current step.');
             return false;
         }
 
-        $response = $this->sendToLLM($currentStepChunk);
+        try {
+            $response = $this->sendToLLM($currentStepChunk);
 
-        if($response->finishReason !== FinishReason::Stop) {
-            $transcription->setStatus('failed', 'Transcription failed, ' . match ($response->finishReason) {
-                    FinishReason::Error => 'An error occurred during transcription.',
-                    FinishReason::Length => 'The response exceeded the maximum length.',
-                    FinishReason::ContentFilter => 'The content was filtered out.',
-                    FinishReason::ToolCalls => 'Tool calls were made during transcription.',
-                    FinishReason::Other => 'An unknown issue occurred.',
-                    default => 'The finish reason is unknown.',
-                });
+            if($response->finishReason !== FinishReason::Stop) {
+                $transcription->setStatus('failed', 'Transcription failed, ' . match ($response->finishReason) {
+                        FinishReason::Error => 'An error occurred during transcription.',
+                        FinishReason::Length => 'The response exceeded the maximum length.',
+                        FinishReason::ContentFilter => 'The content was filtered out.',
+                        FinishReason::ToolCalls => 'Tool calls were made during transcription.',
+                        FinishReason::Other => 'An unknown issue occurred.',
+                        default => 'The finish reason is unknown.',
+                    }, chunkIndex: $this->chunkIndex);
+                return false;
+
+            }
+
+            $transcription->addChunkTranscription(
+                $response->structured,
+                $this->chunkIndex,
+            );
+
+        } catch (Exception $e) {
+            $transcription->setStatus('failed', 'Transcription failed with exception: ' . $e->getMessage(), chunkIndex: $this->chunkIndex);
             return false;
-
         }
-
-        $transcription->addChunkTranscription(
-            $response->structured
-        );
 
         return true;
     }

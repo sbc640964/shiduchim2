@@ -24,35 +24,47 @@ class Transcription extends Model
         return $this->hasOne(Call::class);
     }
 
-    public function setStatus(string $status, string $message = '', ?array $data = []): bool
+    public function setStatus(string $status, string $message = '', ?array $data = [], ?int $chunkIndex = null): bool
     {
         $data = [
             ...$data,
             'status_message' => $message,
         ];
 
-        $data = collect($data)->dot()->merge(Arr::dot($this->data))->undot();
+        $modelData = $chunkIndex
+            ? $this->data
+            : collect($data)->dot()->merge(Arr::dot($this->data))->undot()->toArray();
+
+        if($chunkIndex) {
+            $modelData['chunks'][$chunkIndex] = [
+                ...$modelData['chunks'][$chunkIndex],
+                ...$data,
+                'error' => $status,
+            ];
+        }
 
         $this->fill([
-            'status' => $status,
-            'data' => $data,
+            'status' => $chunkIndex ? $this->status : $status,
+            'data' => $modelData,
         ]);
 
         return $this->save();
     }
 
-    public function addChunkTranscription(array $transcription): bool
+    public function addChunkTranscription(array $transcription, ?int $chunkIndex = null): bool
     {
         $data = $this->data;
-        $data['chunks'][$this->current_step - 1]['transcription'] = $transcription;
+        $data['chunks'][$chunkIndex ?? ($this->current_step - 1)]['transcription'] = $transcription;
 
         $this->data = $data;
 
-        if($this->current_step === $this->total_steps) {
-            $this->status = 'completed_transcription';
-        }
+        if(!$chunkIndex) {
+            if($this->current_step === $this->total_steps) {
+                $this->status = 'completed_transcription';
+            }
 
-        $this->current_step++;
+            $this->current_step++;
+        }
 
         return $this->save();
     }

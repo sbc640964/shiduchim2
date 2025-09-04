@@ -231,8 +231,9 @@ HTML
         TranscriptionCallJob::dispatch($this->id);
     }
 
-    function getTextCallAttribute(): string
+    function getTextCallAttribute(): array
     {
+        return $this->getCallTextToJson();
         return $this->renderCallText();
     }
 
@@ -258,6 +259,18 @@ HTML
         }
 
         return collect($chunks)
+            ->map(function ($chunk, $index) {
+                if(!isset($chunk['transcription'])) {
+                    $chunk['transcription'] = [];
+                    $chunk['transcription']['CallTranscript'] = [[
+                        'error' => $chunk['error'] ?? null,
+                        'text' => null,
+                        'index' => $index
+                    ]];
+                }
+
+                return $chunk;
+            })
             ->pluck('transcription.CallTranscript')
             ->flatten(1)
             ->toArray();
@@ -281,13 +294,21 @@ HTML
         }
 
         $blade = <<<'Blade'
-        <div class="flex flex-col gap-2 text-xs">
+        <div class="flex flex-col gap-2 text-xs border-t">
             @php($current = '')
             @foreach($text as $item)
                 @if(!$item)
-                <div class="flex items-center justify-center p-2 bg-red-100 text-red-600 rounded-lg">
-                    <span>לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו, אולי עוד כמה דקות תנסה שוב, יש מצב?</span>
-                </div>
+                    <div class="flex items-center justify-between p-2 bg-red-100 text-yellow-600 rounded-lg">
+                        <span>לא נמצא טקסט לשיחה, יכול להיות שעוד לא פיענחנו, אולי עוד כמה דקות תנסה שוב, יש מצב?</span>
+                    </div>
+                @elseif($item['text'] === null)
+                    <div class="flex items-center justify-between p-2 bg-red-100 text-red-600 rounded-lg">
+                        @if(isset($item['error']))
+                            <span>{{ $item['error'] }}: </span> <span>{{ $item['status_message'] ?? '' }}</span>
+                        @else
+                            <span>נראה שעוד לא פיענחנו את החלק הזה, כנס לכאן יותר מאוחר...</span>
+                        @endif
+                    </div>
                 @else
                     <div @class([
                         "flex flex-col gap-1 p-2 rounded-lg",
