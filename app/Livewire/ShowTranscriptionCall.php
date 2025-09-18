@@ -7,12 +7,16 @@ use App\Models\Call;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Enums\Size;
 use Livewire\Component;
 
-class ShowTranscriptionCall extends Component implements HasActions
+class ShowTranscriptionCall extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions;
+    use InteractsWithSchemas;
+
 
     public ?Call $record = null;
 
@@ -51,31 +55,34 @@ class ShowTranscriptionCall extends Component implements HasActions
             ->label('נתח מחדש קטע זה')
             ->icon('heroicon-o-arrow-path')
             ->color('gray')
+            ->nestingIndex(1)
             ->tooltip('נתח מחדש את הקטע הזה בשיחה')
-            ->successNotificationTitle('הקטע נשלח לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)')
-            ->action(function ($arguments, Action $action) use ($record) {
-                $transcription = $record->transcription()->exists();
-
-                if (!$transcription) {
-                    $action->failureNotificationTitle('לא ניתן לנתח מחדש קטע זה, כי אין תמלול קיים לשיחה זו');
-                    $action->failure();
-                    return;
-                }
-
-                if(!isset($arguments['chunk_index'])){
-                    $action->failureNotificationTitle('לא ניתן לנתח מחדש קטע זה, כי לא נבחר קטע לניתוח מחדש');
-                    $action->failure();
-                    return;
-                }
-
-                TranscriptionCallJob::dispatch($record->id, $arguments['chunk_index']);
-
-                $action->successNotificationTitle('הקטע נשלח לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)');
-                $action->success();
+            ->action(function (Action $action) {
+                dump(100);
             })
+//            ->action(function (array $arguments, Action $action) use ($record) {
+//                dump($arguments);
+//                $transcription = $record->transcription()->exists();
+//
+//                if (!$transcription) {
+//                    $action->failureNotificationTitle('לא ניתן לנתח מחדש קטע זה, כי אין תמלול קיים לשיחה זו');
+//                    $action->failure();
+//                    return;
+//                }
+//
+//                if(!isset($arguments['chunk_index'])){
+//                    $action->failureNotificationTitle('לא ניתן לנתח מחדש קטע זה, כי לא נבחר קטע לניתוח מחדש');
+//                    $action->failure();
+//                    return;
+//                }
+//
+//                TranscriptionCallJob::dispatch($record->id, $arguments['chunk_index']);
+//
+//                $action->successNotificationTitle('הקטע נשלח לניתוח ע"י המערכת, ככל הנראה התמלול יהיה מוכן בקרוב, נסה להיכנס לכאן בעוד כמה דקות שוב :)');
+//                $action->success();
+//            })
             ->size(Size::Small)
-            ->visible(fn () => $record->transcription && auth()->user()->can('ai_beta'))
-            ->requiresConfirmation();
+            ->visible(fn () => $record->transcription && auth()->user()->can('ai_beta'));
         // Dispatch job to reprocess the
     }
 

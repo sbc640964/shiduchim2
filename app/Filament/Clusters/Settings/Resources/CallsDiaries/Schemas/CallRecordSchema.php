@@ -29,7 +29,9 @@ class CallRecordSchema
                         ->hiddenLabel(),
                 ]),
                     Group::make([
-                        Livewire::make(ShowTranscriptionCall::class)->lazy(),
+                        Livewire::make(ShowTranscriptionCall::class)
+                            ->key(fn (Call $call) => $call->id)
+                            ->lazy(),
                     ])
 
 //                    InfolistComponents\TextEntry::make('text_call')

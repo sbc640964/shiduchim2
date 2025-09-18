@@ -18,6 +18,7 @@ use Filament\Navigation\MenuItem;
 use Filament\Notifications\Livewire\Notifications;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\VerticalAlignment;
@@ -30,6 +31,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Kenepa\Banner\BannerPlugin;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
@@ -162,6 +164,9 @@ class FamiliesPanelProvider extends PanelProvider
                     ->icon('iconsax-bul-call')
                     ->url(fn (): string => CallsDiariesResource::getUrl()),
             ])
+            ->assets(config('app.env') === 'local' ? [
+                Js::make('livewire-hot-reload', Vite::asset('resources/js/livewire-hot-reload.js'))->module()
+            ]: [])
             ->viteTheme('resources/css/filament/families/theme.css');
     }
 }

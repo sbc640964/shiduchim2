@@ -344,34 +344,49 @@ class Proposal extends Model
         return $this->people->firstWhere('gender', $gender === 'guy' ? 'B' : 'G');
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function close(int|array $data = []): self
     {
         $closeStatus = Statuses::getClosedProposalStatus();
 
-        if (is_array($data)) {
-            if ($family = $this->getSpoken('guy')
-                ->married(
-                    $this->getSpoken('girl'),
-                    ($data['finished_at'] ?? null) ? Carbon::make($data['finished_at']) : now(),
-                    $this
-                )
-            ) {
+        DB::beginTransaction();
+
+        try {
+            if (is_array($data)) {
+                $family = $this->getSpoken('guy')
+                    ->married(
+                        $this->getSpoken('girl'),
+                        ($data['finished_at'] ?? null) ? Carbon::make($data['finished_at']) : now(),
+                        $this
+                    );
+
+                if ($family) {
+                    $this->fill([
+                        'status' => $closeStatus,
+                        'finished_at' => $data['finished_at'] ?? now(),
+                        'reason_status' => $data['reason_status'] ?? null,
+                        'family_id' => $family->id,
+                    ])->saveOrFail() && $this->recordActivity('close-married', $data['external'] ?? false ? [
+                        'note' => 'ע"י שדכן חיצוני'
+                    ] : []);
+                } else {
+                    throw new \Exception('לא ניתן לסגור את ההצעה עם נישואין, יש בעיה ביצירת המשפחה');
+                }
+            } elseif (is_int($data)) {
                 $this->fill([
                     'status' => $closeStatus,
-                    'finished_at' => $data['finished_at'] ?? now(),
-                    'reason_status' => $data['reason_status'] ?? null,
-                    'family_id' => $family->id,
-                ])->saveOrFail() && $this->recordActivity('close-married', $data['external'] ?? false ? [
-                    'note' => 'ע"י שדכן חיצוני'
-                ] : []);
+                    'reason_status' => 'נסגר בשידוך '.$data,
+                ])->saveOrFail() && $this->recordActivity('close-married-other', [
+                    'closed_proposal_id' => $data
+                ]);
             }
-        } elseif (is_int($data)) {
-            $this->fill([
-                'status' => $closeStatus,
-                'reason_status' => 'נסגר בשידוך '.$data,
-            ])->saveOrFail() && $this->recordActivity('close-married-other', [
-                'closed_proposal_id' => $data
-            ]);
+
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            throw $th;
         }
 
         return $this;

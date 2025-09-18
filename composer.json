@@ -10,7 +10,7 @@
     "require": {
         "php": "^8.2",
         "awcodes/filament-gravatar": "^v3.0.0",
-        "bezhansalleh/filament-shield": "^4.0.0-beta2",
+        "bezhansalleh/filament-shield": "^4.0",
         "davidhsianturi/blade-bootstrap-icons": "^2.1",
         "derrickob/gemini-api": "^1.1",
         "elipzis/laravel-cacheable-model": "^0.4.0",

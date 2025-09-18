@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Proposals\Pages;
 
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\Textarea;
 use Filament\Actions\ActionGroup;
@@ -151,22 +152,23 @@ class ViewProposal extends ViewRecord
                 'side' => 'girl',
             ]),
 //
-//            DiaryListWidget::make([
-//                'record' => $this->getRecord(),
-//            ]),
+            DiaryListWidget::make([
+                'record' => $this->getRecord(),
+            ]),
         ];
     }
 
     public function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make()
-                ->schema([
-                    Grid::make(4)->schema([
-                        TextEntry::make('status')
-                            ->label('סטטוס')
-                            ->formatStateUsing(fn (Proposal $proposal, $state) => Blade::render(
-                                <<<'HTML'
+            Group::make([
+                Section::make()
+                    ->schema([
+                        Grid::make(4)->schema([
+                            TextEntry::make('status')
+                                ->label('סטטוס')
+                                ->formatStateUsing(fn (Proposal $proposal, $state) => Blade::render(
+                                    <<<'HTML'
 <span class="flex gap-2 justify-between w-full">
 <span>סטטוס:</span>
 <span>
@@ -178,33 +180,38 @@ class ViewProposal extends ViewRecord
 </span>
 HTML
 
-                                , ['proposal' => $proposal, 'state' => $state])
-                            )
-                            ->hiddenLabel()
+                                    , ['proposal' => $proposal, 'state' => $state])
+                                )
+                                ->hiddenLabel()
 //                        ->inlineLabel()
-                            ->html(),
-                        TextEntry::make('created_at')
-                            ->date('d/m/Y')
-                            ->label('תאריך יצירה'),
-                        TextEntry::make('createdByUser.name')
-                            ->label('נוצר על ידי')
-                    ]),
-                    TextEntry::make('description')
-                        ->hintAction(Action::make('edit-proposal')
-                            ->label('ערוך')
-                            ->tooltip('עריכת הערה/תיאור')
-                            ->action(fn (Proposal $proposal, array $data) => $proposal->update($data))
-                            ->schema(fn (Schema $schema, Proposal $proposal) => $schema
-                                ->components([
-                                    RichEditor::make('description')
-                                        ->default($proposal->description)
-                                        ->label('תיאור/הערה'),
-                                ])))
-                        ->markdown()
-                        ->label('תיאור/הערה'),
-                ]),
-            $this->sideCard('guy'),
-            $this->sideCard('girl'),
+                                ->html(),
+                            TextEntry::make('created_at')
+                                ->date('d/m/Y')
+                                ->label('תאריך יצירה'),
+                            TextEntry::make('createdByUser.name')
+                                ->label('נוצר על ידי')
+                        ]),
+                        TextEntry::make('description')
+                            ->hintAction(Action::make('edit-proposal')
+                                ->label('ערוך')
+                                ->tooltip('עריכת הערה/תיאור')
+                                ->action(fn (Proposal $proposal, array $data) => $proposal->update($data))
+                                ->schema(fn (Schema $schema, Proposal $proposal) => $schema
+                                    ->components([
+                                        RichEditor::make('description')
+                                            ->default($proposal->description)
+                                            ->label('תיאור/הערה'),
+                                    ])))
+                            ->markdown()
+                            ->label('תיאור/הערה'),
+                    ])
+            ])->columns(2)->columnSpanFull(),
+            Grid::make()
+                ->columnSpanFull()
+                ->components([
+                    $this->sideCard('guy'),
+                    $this->sideCard('girl'),
+                ])
         ]);
     }
 

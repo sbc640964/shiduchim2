@@ -8,6 +8,7 @@ use App\Models\Proposal;
 use App\Models\Task;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -38,6 +39,7 @@ class NewCalenderWidget extends CalendarWidget
         return true;
     }
 
+    public ?string $viewType = 'week';
     protected ?string $locale = 'he';
 
     protected array $options = [
@@ -72,6 +74,31 @@ class NewCalenderWidget extends CalendarWidget
     protected bool $dateClickEnabled = true;
 
     protected bool $eventDragEnabled = true;
+
+    public function toggleView(string $type)
+    {
+        $types = ['day', 'week', 'month', 'list'];
+
+        if(!in_array($type, $types)) {
+            $type = 'week';
+        }
+
+        $this->viewType = $type;
+
+        $this->calendarView = match ($this->viewType) {
+            'list', 'day' => CalendarViewType::ListWeek,
+            default => CalendarViewType::DayGridMonth,
+        };
+
+        $durationUnit = match ($this->viewType) {
+            'day' => 'day',
+            'month' => 'month',
+            default => 'week',
+        };
+
+        $this->setOption('duration', [$durationUnit => 1]);
+        $this->setOption('view', $this->calendarView->value);
+    }
 
     protected function onEventDrop(EventDropInfo $info, \Illuminate\Database\Eloquent\Model $event): bool
     {
@@ -279,6 +306,7 @@ Html
 
     public function getHeaderActions(): array
     {
+
         return [
             Action::make('completed-tasks')
                 ->iconButton()
@@ -290,6 +318,29 @@ Html
                 })
                 ->outlined(),
             $this->createNewTaskAction(),
+
+            ActionGroup::make(
+                array_map(fn ($type) => Action::make("view_$type")
+                    ->label(match ($type) {
+                        'day' => 'יום',
+                        'month' => 'חודש',
+                        'list' => 'רשימה',
+                        default => 'שבוע',
+                    })
+                    ->action(function () use ($type) {
+                        $this->toggleView($type);
+                    })
+                    ->color($this->viewType === $type ? 'primary' : 'gray')
+                    , ['day', 'week', 'month', 'list'])
+            )
+            ->button()
+
+            ->label(fn () => match ($this->viewType) {
+                'day' => 'יום',
+                'month' => 'חודש',
+                'list' => 'רשימה',
+                default => 'שבוע',
+            }),
         ];
     }
 

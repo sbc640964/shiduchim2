@@ -550,31 +550,28 @@ class Person extends Model
 
         $thisPerson = $this;
 
-        return DB::transaction(function () use ($proposal, $person, $date, $thisPerson) {
+        $newFamily = Family::create([
+            'status' => 'married',
+            'engagement_at' => $date,
+            'name' => $thisPerson->last_name,
+        ]);
 
-            $newFamily = Family::create([
-                'status' => 'married',
-                'engagement_at' => $date,
-                'name' => $thisPerson->last_name,
-            ]);
+        $newFamily->people()->attach([$this->id, $person->id]);
 
-            $newFamily->people()->attach([$this->id, $person->id]);
+        $proposal && $proposal->update(['family_id' => $newFamily->id]);
 
-            $proposal && $proposal->update(['family_id' => $newFamily->id]);
+        $this->updateMarriageFields($person, $newFamily->id);
+        $person->updateMarriageFields($this, $newFamily->id);
 
-            $this->updateMarriageFields($person, $newFamily->id);
-            $person->updateMarriageFields($this, $newFamily->id);
+        $otherProposals = Proposal::query()
+            ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
+            ->whereHas('people', function (Builder $query) use ($thisPerson, $person) {
+                $query->whereIn('id', [$thisPerson->id, $person->id]);
+            })->get();
 
-            $otherProposals = Proposal::query()
-                ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
-                ->whereHas('people', function (Builder $query) use ($thisPerson, $person) {
-                    $query->whereIn('id', [$thisPerson->id, $person->id]);
-                })->get();
+        $otherProposals->each->close($proposal->id ?? null);
 
-            $otherProposals->each->close($proposal->id ?? null);
-
-            return $newFamily;
-        });
+        return $newFamily;
     }
 
     /**

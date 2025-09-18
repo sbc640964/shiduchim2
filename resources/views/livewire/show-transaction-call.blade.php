@@ -14,7 +14,9 @@
                         @if(isset($item['error']))
                             <span>{{ $item['error'] }}: </span> <span>{{ $item['status_message'] ?? '' }}</span>
                             <span>
-                            {{ $this->reTranscriptionChunk()(['chunk_index' => $item['index']]) }}
+                                @if(($this->reTranscriptionChunk)(['chunk_index' => $item['index']])->isVisible())
+                                    {{ ($this->reTranscriptionChunk)(['chunk_index' => $item['index']]) }}
+                                @endif
                         </span>
                         @else
                             <span>נראה שעוד לא פיענחנו את החלק הזה, כנס לכאן יותר מאוחר...</span>
@@ -44,8 +46,9 @@
                 השיחה עדיין לא תומללה, ממש אומללה... <br>
                 אתה מוזמן לתת לא צ'אנס.
             </p>
-            {{ $this->parseTranscription() }}
+            {{ $this->parseTranscription }}
         </div>
     @endif
 
+    <x-filament-actions::modals/>
 </div>

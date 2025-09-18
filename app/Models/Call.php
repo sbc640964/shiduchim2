@@ -231,7 +231,7 @@ HTML
         TranscriptionCallJob::dispatch($this->id);
     }
 
-    function getTextCallAttribute(): array
+    function getTextCallAttribute(): ?array
     {
         return $this->getCallTextToJson();
         return $this->renderCallText();

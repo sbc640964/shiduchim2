@@ -3,18 +3,23 @@
 return [
     'shield_resource' => [
         'should_register_navigation' => false,
-        'slug' => 'shield/roles',
+        'slug' => 'roles',
         'navigation_sort' => -1,
         'navigation_badge' => true,
         'navigation_group' => true,
         'is_globally_searchable' => false,
         'show_model_path' => true,
         'is_scoped_to_tenant' => true,
+        'cluster' => \App\Filament\Clusters\Settings\SettingsCluster::class,
+        'tabs' => [
+            'pages' => true,
+            'widgets' => true,
+            'resources' => true,
+            'custom_permissions' => true,
+        ],
     ],
 
-    'auth_provider_model' => [
-        'fqcn' => 'App\\Models\\User',
-    ],
+    'auth_provider_model' => 'App\\Models\\User',
 
     'super_admin' => [
         'enabled' => true,

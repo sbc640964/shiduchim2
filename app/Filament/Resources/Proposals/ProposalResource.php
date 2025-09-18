@@ -81,7 +81,6 @@ class ProposalResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        dump($schema);
         return $schema;
     }
 
