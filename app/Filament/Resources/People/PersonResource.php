@@ -381,7 +381,7 @@ class PersonResource extends Resource
                             ->columns(1)
                             ->columnSpan(1)
                             ->extraAttributes(['class' => '!p-2'])
-                            ->schema(function ($rawState, $record) use ($person) {
+                            ->schema(function ($rawState, Family $record) use ($person) {
                                 return  [
                                     Actions::make([
                                         Action::make('edit')

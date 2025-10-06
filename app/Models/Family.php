@@ -100,7 +100,8 @@ class Family extends Model
 
     public function proposal(): HasOne
     {
-        return $this->hasOne(Proposal::class);
+        return $this->hasOne(Proposal::class)
+            ->withoutGlobalScopes();
     }
 
     public function diaries(): MorphMany
