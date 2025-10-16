@@ -406,7 +406,7 @@ class PersonResource extends Resource
                                                     ->label('הערה')
                                                     ->default('נפתח מחדש ע"י '.auth()->user()->name),
                                             ]))
-                                            ->modalWidth('sm')
+                                            ->modalWidth(Width::Small)
                                             ->modalSubmitActionLabel('ביטול סגירה')
                                             ->action(fn (array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
                                         Action::make('divorce')
