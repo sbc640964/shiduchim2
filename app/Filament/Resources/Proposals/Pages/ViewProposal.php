@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Proposals\Pages;
 
+use App\Filament\Clusters\Settings\Pages\Statuses;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\Textarea;
@@ -23,6 +24,7 @@ use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Model;
 
 class ViewProposal extends ViewRecord
@@ -73,7 +75,7 @@ class ViewProposal extends ViewRecord
 
     protected function getActions(): array
     {
-        $text = str('<div class="bg-orange-200 text-orange-950 text-center font-bold p-2 rounded-xl border border-orange-900">"שידוך פתוח הכוונה: שכרגע אם שואלים את האבא מה קורה שידוכים? הוא אומר: כן, יש לי עכשיו כזה וכזה הצעה, והוא בודק את זה"  (יוחנן) </div>')->toHtmlString();
+        $text = str('<div class="bg-orange-200 text-orange-950 text-center font-bold p-2 rounded-xl border border-orange-900">"שידוך חם הכוונה: שכרגע אם שואלים את האבא מה קורה שידוכים? הוא אומר: כן, יש לי עכשיו כזה וכזה הצעה, והוא בודק את זה"  (יוחנן) </div>')->toHtmlString();
 
         return [
             DeleteAction::make()
@@ -81,17 +83,17 @@ class ViewProposal extends ViewRecord
                 ->before(fn (Proposal $proposal) => $proposal->deleteDependencies()),
 
             Action::make('open')
-                ->label('סמן כהצעה פתוחה')
+                ->label('חמם הצעה')
                 ->requiresConfirmation()
                 ->modalContent($text)
-                ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כפתוחה?')
+                ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כחמה?')
                 ->action(fn (Proposal $proposal) => $proposal->openProposal())
                 ->visible(fn (Proposal $proposal) => auth()->user()->can('open_proposals')
                     && $proposal->opened_at === null || $proposal->closed_at !== null),
 
             Action::make('close')
-                ->label('סמן כהצעה סגורה')
-                ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כסגורה?')
+                ->label('קירור הצעה 🙁')
+                ->modalDescription('האם אתה בטוח שברצונך לסמן את ההצעה כקרירה?')
                 ->requiresConfirmation()
                 ->modalContent($text)
                 ->schema(fn (Schema $schema, Proposal $proposal) => $schema
@@ -99,11 +101,22 @@ class ViewProposal extends ViewRecord
                         Textarea::make('description')
                             ->rules('required')
                             ->minLength(20)
-                            ->label('סיבת סגירה'),
+                            ->label('סיבת קירור'),
                     ]))
                 ->action(fn (Proposal $proposal, array $data) => $proposal->closeProposal($data['description']))
                 ->visible(fn (Proposal $proposal) => auth()->user()->can('open_proposals')
                     && $proposal->opened_at !== null && $proposal->closed_at === null),
+
+            Action::make('married')
+                ->color('success')
+                ->outlined()
+                ->modalWidth(Width::Small)
+                ->modalHeading('מזל טוב!!!')
+                ->schema(fn (Schema $schema) => ProposalResource::getCloseProposalForm($schema))
+                ->hidden(fn (Proposal $proposal) =>  (! $proposal->userCanAccess()) || $proposal->status === Statuses::getClosedProposalStatus())
+                ->action(fn (Proposal $record, Action $action, array $data) => $record->closeFilamentAction($action, $data))
+                ->modalSubmitActionLabel('סגור הצעה')
+                ->label('נישואין💍'),
 
             ActionGroup::make([
                 Action::make('activities')

@@ -344,6 +344,22 @@ class Proposal extends Model
         return $this->people->firstWhere('gender', $gender === 'guy' ? 'B' : 'G');
     }
 
+    public function closeFilamentAction(Action $action, array $data): void
+    {
+        try {
+            $this->close($data);
+            $action->success();
+        } catch (\Throwable $e) {
+
+            $action->failureNotification(fn (Notification $notification) => $notification
+                ->title('סגירת הצעה נכשלה')
+                ->body($e->getMessage() . " - " . $e->getFile() . ':' . $e->getLine())
+            );
+
+            $action->failure();
+        }
+    }
+
     /**
      * @throws \Throwable
      */

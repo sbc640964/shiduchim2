@@ -595,7 +595,7 @@ class ProposalResource extends Resource
         ];
     }
 
-    private static function getCloseProposalForm(Schema $schema): Schema
+    public static function getCloseProposalForm(Schema $schema): Schema
     {
         return $schema->components([
             DatePicker::make('finished_at')
@@ -623,21 +623,7 @@ class ProposalResource extends Resource
             ->iconButton()
             ->hidden(fn (Proposal $proposal) => $proposal->status === Statuses::getClosedProposalStatus())
             ->modalHeading('מזל טוב!!!')
-            ->action(function (Proposal $proposal, Action $action, array $data) {
-                try {
-                    $proposal->close($data);
-
-                    $action->success();
-                } catch (Throwable $e) {
-
-                    $action->failureNotification(fn (Notification $notification) => $notification
-                        ->title('סגירת הצעה נכשלה')
-                        ->body($e->getMessage() . " - " . $e->getFile() . ':' . $e->getLine())
-                    );
-
-                    $action->failure();
-                }
-            });
+            ->action(fn (Proposal $proposal, Action $action, array $data) => $proposal->closeFilamentAction($action, $data));
     }
 
     public static function getOpenProposalAction(): Action
