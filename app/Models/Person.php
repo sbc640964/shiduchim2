@@ -564,7 +564,7 @@ class Person extends Model
         $person->updateMarriageFields($this, $newFamily->id);
 
         $otherProposals = Proposal::query()
-            ->withoutGlobalScopes()
+            ->withoutGlobalScopes(['accessByUser', 'withoutHidden'])
             ->when($proposal, fn (Builder $query) => $query->where('id', '!=', $proposal->id))
             ->whereHas('people', function (Builder $query) use ($thisPerson, $person) {
                 $query->whereIn('id', [$thisPerson->id, $person->id]);
