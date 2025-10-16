@@ -4,6 +4,7 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Actions\Call;
 use App\Filament\Resources\Proposals\ProposalResource;
+use App\Models\Person;
 use App\Models\Proposal;
 use App\Models\Task;
 use Carbon\CarbonInterface;
@@ -158,7 +159,7 @@ Html
                     ->time()
                     ->date()
                     ->seconds(false)
-                    ->minDate(now())
+                    ->minDate(now()->startOfDay())
                     ->required(),
                 Select::make('priority')
                     ->label('עדיפות')
@@ -171,7 +172,8 @@ Html
                         '2' => 'גבוהה',
                     ])
                     ->required(),
-                $withProposalId ? Select::make('proposal_id')
+                Select::make('proposal_id')
+                    ->visible($withProposalId)
                     ->label('הצעה')
                     ->searchable()
                     ->live()
@@ -179,7 +181,8 @@ Html
                         ->searchNameInPeople($search)
                         ->get()
                         ->pluck('families_names', 'id')->toArray()
-                    ) : null,
+                    )
+                    ->getOptionLabelUsing(fn ($value) => Proposal::find($value)?->families_names ?? null),
                 Select::make('contact_to')
                     ->visible(fn (Get $get) => $get('proposal_id'))
                     ->label('ליצור קשר עם (אם יש)')
@@ -192,6 +195,7 @@ Html
 
                         return $proposal->contacts()->searchName($search)->get()->pluck('select_option_html', 'id');
                     })
+                    ->getOptionLabelUsing(fn ($value) => Person::find($value)?->select_option_html ?? null),
             ], fn ($item) => $item !== null)),
         ];
     }
