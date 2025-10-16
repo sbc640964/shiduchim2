@@ -1,5 +1,6 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 @import '../../../../vendor/guava/calendar/resources/css/theme.css';
+@import '../../../../vendor/malzariey/filament-daterangepicker-filter/resources/css/filament-daterangepicker.css';
 
 @source '../../../../vendor/guava/calendar/resources/**/*';
 @source '../../../../app/Filament/**/*';
@@ -8,7 +9,7 @@
 @source '../../../../resources/views/**/*';
 @source '../../../../app/livewire/*';
 @source '../../../../app/models/Task.php';
-
+@source '../../../../public/js/malzariey/**/*.js';
 
 /*@import '/vendor/filament/filament/resources/css/theme.css';*/
 /*@import '/vendor/malzariey/filament-daterangepicker-filter/resources/css/filament-daterangepicker.css';*/
@@ -69,6 +70,7 @@
 
     textarea {
         @apply p-0;
+
     }
 }
 
@@ -262,4 +264,14 @@ pre.prettyjson{
 
 .item-transcription-call.parent-spoken-call {
     @apply bg-gray-600/5
+}
+
+
+.daterangepicker {
+    .ranges {
+        @apply border-e;
+    }
+    .drp-calendar.left {
+        @apply !border-s-0;
+    }
 }
