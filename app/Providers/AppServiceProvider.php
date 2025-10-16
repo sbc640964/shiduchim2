@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Filament\Widgets\NewCalendarWidget;
+use Livewire;
 use function Sentry\configureScope;
 use App\Models\User;
 use Auth;
@@ -43,5 +45,7 @@ class AppServiceProvider extends ServiceProvider
                 }
             });
         }
+
+        Livewire::component('app.filament.widgets.new-calendar-widget', NewCalendarWidget::class);
     }
 }

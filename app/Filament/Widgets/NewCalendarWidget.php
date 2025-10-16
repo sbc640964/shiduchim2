@@ -25,7 +25,7 @@ use Guava\Calendar\Filament\Actions\CreateAction;
 use Guava\Calendar\Filament\Actions\DeleteAction;
 use Guava\Calendar\Filament\Actions\EditAction;
 use Guava\Calendar\Filament\Actions\ViewAction;
-use \Guava\Calendar\Filament\CalendarWidget;
+use Guava\Calendar\Filament\CalendarWidget;
 use Guava\Calendar\ValueObjects\DateClickInfo;
 use Guava\Calendar\ValueObjects\EventDropInfo;
 use Guava\Calendar\ValueObjects\FetchInfo;
@@ -33,7 +33,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 
-class NewCalenderWidget extends CalendarWidget
+class NewCalendarWidget extends CalendarWidget
 {
     public static function canView(): bool
     {

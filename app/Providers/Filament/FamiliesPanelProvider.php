@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\NewCalendarWidget;
+use App\Filament\Widgets\OpenProposalsOverview;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Filament\Clusters\Reports\Pages\ReportsPage\Widgets\ReportsProposalsTableWidget;
 use App\Filament\Clusters\Settings\Resources\CallsDiaries\CallsDiariesResource;
@@ -14,7 +16,6 @@ use Blade;
 use Filament\Actions\Action;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\MenuItem;
 use Filament\Notifications\Livewire\Notifications;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -33,8 +34,8 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Kenepa\Banner\BannerPlugin;
-use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
+//use Kenepa\Banner\BannerPlugin;
+//use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 
 //use App\Http\Middleware\UpgradeToHttpsUnderNgrokMiddleware;
 
@@ -42,13 +43,8 @@ class FamiliesPanelProvider extends PanelProvider
 {
     public function boot()
     {
-        Table::configureUsing(function (Table $table) {
-            $table->paginationPageOptions([
-                10,
-                25,
-                50,
-                100,
-            ]);
+        Table::configureUsing(modifyUsing: function (Table $table) {
+            $table->paginationPageOptions([10, 25, 50, 100]);
         });
     }
 
@@ -73,12 +69,12 @@ class FamiliesPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->topNavigation()
 //            ->navigationGroups([])
             ->widgets([
 //                CalendarWidget::class,
 //                Widgets\AccountWidget::class,
+                OpenProposalsOverview::make(),
                 GoldListWidget::class,
             ])
             ->spa()

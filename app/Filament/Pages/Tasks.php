@@ -3,7 +3,7 @@
 namespace App\Filament\Pages;
 
 //use App\Filament\Widgets\CalendarWidget;
-use App\Filament\Widgets\NewCalenderWidget;
+use App\Filament\Widgets\NewCalendarWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Tasks extends BaseDashboard
@@ -27,7 +27,7 @@ class Tasks extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            NewCalenderWidget::class,
+            NewCalendarWidget::class
         ];
     }
 }
