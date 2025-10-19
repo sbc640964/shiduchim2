@@ -71,7 +71,10 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
     {
         $record = $this->getSubscription();
 
-        $holdActivityAt = $record->activities()->where('type', 'hold')->latest()->first()?->created_at ?? null;
+        $holdActivityAt = $record->activities()
+            ->whereIn('type', ['hold', 'completed', 'completed-active'])
+            ->latest()
+            ->first()?->created_at ?? null;
 
 
         return Action::make('toggleSubscription')
