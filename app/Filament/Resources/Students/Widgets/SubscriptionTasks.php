@@ -12,9 +12,8 @@ use Filament\Tables\Columns\TextColumn;
 use App\Models\Person;
 use App\Models\Task;
 use Filament\Tables\Table;
-use Filament\Forms;
-use Filament\Tables;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Contracts\View\View;
 
 class SubscriptionTasks extends BaseWidget
 {
@@ -32,6 +31,14 @@ class SubscriptionTasks extends BaseWidget
                 ->default(now()->addDay())
                 ->native(false)
                 ->required(),
+        ]);
+    }
+
+    public function placeholder(): View
+    {
+        return view('filament.widgets.placeholder', [
+            'heading' => "טוען משימות...",
+            'description' => 'רק רגע אחד בבקשה',
         ]);
     }
 

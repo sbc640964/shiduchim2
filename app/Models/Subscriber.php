@@ -278,6 +278,7 @@ class Subscriber extends Model
             'pending' => 'ממתין',
             'hold' => 'בהשהייה',
             'completed' => 'הושלם',
+            'completed-active' => 'הושלם - תשלומים פעילים',
             'canceled' => 'בוטל',
             default => 'לא ידוע',
         };

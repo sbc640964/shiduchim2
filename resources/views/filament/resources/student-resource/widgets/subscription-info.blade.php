@@ -1,6 +1,6 @@
 <x-filament-widgets::widget class="space-y-6">
     <x-filament::section>
-        <div class="[&>div]:px-8 flex divide-x divide-x-reverse">
+        <div class="[&>div]:px-8 flex divide-x">
             <div class="flex items-center">
                 <div class="flex gap-2 items-center">
                     @switch($this->getSubscription()->status)

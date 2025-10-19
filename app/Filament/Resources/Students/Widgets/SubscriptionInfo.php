@@ -23,9 +23,9 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms;
 use Filament\Support\RawJs;
 use Filament\Widgets\Widget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionInfo extends Widget implements HasActions, HasForms
@@ -45,6 +45,14 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
     public function getRecord(): Person
     {
         return $this->record;
+    }
+
+    public function placeholder(): View
+    {
+        return view('filament.widgets.placeholder', [
+            'heading' => "טוען פרטי מנוי...",
+            'description' => 'רק רגע אחד בבקשה',
+        ]);
     }
 
     public function activities(): Action
