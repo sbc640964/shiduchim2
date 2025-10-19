@@ -279,7 +279,7 @@ class SubscriptionInfo extends Widget implements HasActions, HasForms
             });
     }
 
-    public function cancelSubscription()
+    public function cancelSubscription(): Action
     {
         return Action::make('cancelSubscription')
             ->label('בטל מנוי')
