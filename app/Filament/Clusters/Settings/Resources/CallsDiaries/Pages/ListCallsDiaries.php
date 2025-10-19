@@ -6,7 +6,6 @@ use Filament\Actions\Action;
 use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\Settings\Resources\CallsDiaries\CallsDiariesResource;
 use App\Models\Call;
-use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListCallsDiaries extends ListRecords

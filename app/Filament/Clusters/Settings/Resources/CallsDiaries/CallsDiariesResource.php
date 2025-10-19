@@ -91,8 +91,8 @@ class CallsDiariesResource extends Resource
             ->columns([
                 TextColumn::make('user.name')
                     ->weight(FontWeight::Bold)
-                    ->formatStateUsing(fn (Call $call) => $call->user?->name ?? 'לא ידוע')
-                    ->description(fn (Call $call) => $call->extensionWithTarget(true))
+                    ->formatStateUsing(fn (Call $record) => $record->user?->name ?? 'לא ידוע')
+                    ->description(fn (Call $record) => $record->extensionWithTarget(true))
                     ->label('משתמש')
                     ->searchable()
                     ->visible(auth()->user()->canAccessAllCalls()),
@@ -122,12 +122,12 @@ class CallsDiariesResource extends Resource
                             fn ($phone) => str($phone)->substrReplace('-', 3, 0),
                             fn ($phone) => str($phone)->substrReplace('-', 2, 0)
                         )->value())
-                    ->description(function (Call $call) {
-                        if ($call->phoneModel?->model) {
-                            if ($call->phoneModel->model::class === Person::class) {
-                                return $call->phoneModel->model->full_name;
-                            } elseif ($call->phoneModel->model::class === Family::class) {
-                                return "משפ' ".$call->phoneModel->model->name;
+                    ->description(function (Call $record) {
+                        if ($record->phoneModel?->model) {
+                            if ($record->phoneModel->model::class === Person::class) {
+                                return $record->phoneModel->model->full_name;
+                            } elseif ($record->phoneModel->model::class === Family::class) {
+                                return "משפ' ".$record->phoneModel->model->name;
                             }
 
                             return 'לא ידוע';
@@ -204,7 +204,7 @@ class CallsDiariesResource extends Resource
                     ->icon('heroicon-o-speaker-wave')
                     ->modalWidth(Width::ScreenExtraLarge)
                     ->modalHeading('הקלטת שיחה')
-                    ->visible(fn (Call $call) => $call->audio_url !== null)
+                    ->visible(fn (Call $record) => $record->audio_url !== null)
                     ->color('gray')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('סגור')
@@ -270,12 +270,12 @@ class CallsDiariesResource extends Resource
                     ->icon('iconsax-bul-call')
                     ->label('חייג')
                     ->modalWidth(Width::Large)
-                    ->modalHeading(fn (Call $call) => $call->phoneModel ? null : 'יצירת מספר חדש וחיוג')
-                    ->modalDescription(fn (Call $call) => $call->phoneModel ? null : "מס' הטלפון לא קיים במערכת, בחר איש קשר אליו יצורף המספר, כמו כן בחר את סוג המספר (אישי או ביתי).")
+                    ->modalHeading(fn (Call $record) => $record->phoneModel ? null : 'יצירת מספר חדש וחיוג')
+                    ->modalDescription(fn (Call $record) => $record->phoneModel ? null : "מס' הטלפון לא קיים במערכת, בחר איש קשר אליו יצורף המספר, כמו כן בחר את סוג המספר (אישי או ביתי).")
                     ->modalSubmitActionLabel('צור טלפון וחייג')
-                    ->schema(function (Schema $schema, Call $call) {
+                    ->schema(function (Schema $schema, Call $record) {
 
-                        if ($call->phoneModel) {
+                        if ($record->phoneModel) {
                             return null;
                         }
 
@@ -325,18 +325,18 @@ class CallsDiariesResource extends Resource
                                 ->columns(4),
                         ]);
                     })
-                    ->action(function (Call $call, $livewire, $data, Action $action) {
+                    ->action(function (Call $record, $livewire, $data, Action $action) {
 
-                        $phone = $call->phoneModel;
+                        $phone = $record->phoneModel;
 
-                        if (! $call->phoneModel && $person = Person::find($data['person'])) {
+                        if (! $record->phoneModel && $person = Person::find($data['person'])) {
                             if ($data['type'] === 'personal') {
                                 $phone = $person->phones()->create([
-                                    'number' => $call->phone,
+                                    'number' => $record->phone,
                                 ]);
                             } else {
                                 $phone = $person->family->phones()->create([
-                                    'number' => $call->phone,
+                                    'number' => $record->phone,
                                 ]);
                             }
 
@@ -358,7 +358,7 @@ class CallsDiariesResource extends Resource
                     })
                     ->button(),
                     Action::make('diary_2')
-                        ->visible(fn (Call $call) => $call->phoneModel)
+                        ->visible(fn (Call $record) => $record->phoneModel)
                         ->tooltip('כרטיס שיחה')
                         ->iconButton()
                         ->icon('heroicon-o-cursor-arrow-rays')
@@ -382,10 +382,10 @@ class CallsDiariesResource extends Resource
                 </div>
             </div>
                          */
-                        ->modalHeading(fn (Call $call) => str(Blade::render('<div class="flex items-center gap-2">
+                        ->modalHeading(fn (Call $record) => str(Blade::render('<div class="flex items-center gap-2">
                             <div class="flex-shrink flex items-center">
                                 <div
-                                 @class(["rounded-full flex justify-center p-1 items-center", "bg-success-100" => !$call->finished_at,  "bg-red-100" => $call->finished_at])
+                                 @class(["rounded-full flex justify-center p-1 items-center", "bg-success-100" => !$record->finished_at,  "bg-red-100" => $call->finished_at])
                                 >
                                     <x-iconsax-bul-call @class([ "w-8 h-8", "text-success-600" => !$call->finished_at,  "text-red-600" => $call->finished_at])/>
                                 </div>
@@ -398,8 +398,8 @@ class CallsDiariesResource extends Resource
                                     {{ $call?->getDialName() }}
                                 </p>
                             </div>
-                        </div>', ['call' => $call]))->toHtmlString())
-                        ->modalContent(fn (Call $call) => str(Blade::render('<livewire:active-call-drawer :hidden-header="true" :current-call="$call" :key="$call->id" />', ['call' => $call]))->toHtmlString())
+                        </div>', ['call' => $record]))->toHtmlString())
+                        ->modalContent(fn (Call $record) => str(Blade::render('<livewire:active-call-drawer :hidden-header="true" :current-call="$call" :key="$call->id" />', ['call' => $record]))->toHtmlString())
                 //                Tables\Actions\EditAction::make(),
             ])
 //            ->contentGrid([
