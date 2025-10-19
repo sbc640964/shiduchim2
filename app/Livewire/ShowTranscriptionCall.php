@@ -30,7 +30,7 @@ class ShowTranscriptionCall extends Component implements HasActions, HasSchemas
         return view('livewire.show-transaction-call');
     }
 
-    public function parseTranscription()
+    public function parseTranscription(): Action
     {
         $record = $this->record;
 
