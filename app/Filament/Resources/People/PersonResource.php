@@ -56,7 +56,8 @@ class PersonResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([
+        return $schema
+            ->components([
             Grid::make(3)
                 ->schema([
                     Grid::make(1)
@@ -145,7 +146,7 @@ class PersonResource extends Resource
                             ]),
                         ])
                 ]),
-        ]);
+        ])->columns(1);
     }
 
     public static function table(Table $table): Table
@@ -461,7 +462,7 @@ class PersonResource extends Resource
                                             ->outlined()
                                             ->size(Size::ExtraSmall)
                                             ->action(function (array $data) use ($record, $person) {
-                                                $data['died_at'] = $data['died_at'] . '1970-01-02 00:00:00';
+                                                $data['died_at'] = filled($data['died_at']) ? $data['died_at'] : '1970-01-02 00:00:00';
                                                 $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->update($data);
                                             })
                                             ->requiresConfirmation()

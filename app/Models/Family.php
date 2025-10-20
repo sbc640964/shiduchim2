@@ -59,6 +59,7 @@ class Family extends Model
     {
         return Select::make($name)
             ->getOptionLabelFromRecordUsing(fn (Family $record) => $record->option_select)
+            ->getOptionLabelUsing(fn ($value) => Family::find($value)?->option_select ?? '')
             ->getSearchResultsUsing(fn ($search, $record) =>
                 array_merge(
                     Family::searchToSelect($search),

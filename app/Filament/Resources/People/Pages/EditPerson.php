@@ -48,6 +48,7 @@ class EditPerson extends EditRecord
                             ->placeholder('בחר אדם...')
                             ->searchable()
                             ->allowHtml()
+                            ->getOptionLabelUsing(fn ($value) => Person::find($value)?->getSelectOptionHtmlAttribute() ?? '')
                             ->getSearchResultsUsing(fn (string $search) =>
                                 Person::query()->searchName($search, inParents: true)
                                     ->with('father', 'father.city')
@@ -137,7 +138,7 @@ class EditPerson extends EditRecord
                     })
                     ->visible(fn (Person $person) => $person->isAlive() && auth()->user()->can('update_death'))
                     ->action(function (array $data, Person $person) {
-                        $data['died_at'] = $data['died_at'] . '1970-01-02 00:00:00';
+                        $data['died_at'] = filled($data['died_at']) ? $data['died_at'] : '1970-01-02 00:00:00';
                         $person->update($data);
                     })
                     ->requiresConfirmation(),
