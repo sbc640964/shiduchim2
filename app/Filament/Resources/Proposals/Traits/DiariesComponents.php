@@ -280,7 +280,7 @@ trait DiariesComponents
                                 ->schema(static::getFieldsByType($currentCall, $proposal)),
 
                             Hidden::make('statuses_info_pack')
-                                ->default(function (Get $get, Proposal $proposal) {
+                                ->default(function (Get $get) use ($proposal) {
                                     $statuses = [
                                         'all_statuses' => collect(Setting::firstOrNew(['key' => 'statuses_proposal'], ['value' => []])->value ?? []),
                                         'all_items_statuses' => collect(Setting::firstOrNew(['key' => 'statuses_proposal_person'], ['value' => []])->value ?? []),
