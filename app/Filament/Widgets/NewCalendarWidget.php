@@ -103,8 +103,7 @@ class NewCalendarWidget extends CalendarWidget
 
     protected function onEventDrop(EventDropInfo $info, \Illuminate\Database\Eloquent\Model $event): bool
     {
-        \Log::error($info->event->getStart()->format('Y-m-d H:i'));
-        $newTime = ((int) $info->event->getStart()->format('H')) > 0 ? $info->event->getStart()->addDay()->startOfDay() : $info->event->getStart();
+        $newTime = ((int) $info->event->getStart()->format('H')) > 0 ? $info->event->getStart()->addDay() : $info->event->getStart();
         $event->due_date = $newTime;
         return $event->save();
     }
