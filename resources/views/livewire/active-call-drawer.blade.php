@@ -136,7 +136,7 @@
                                         </div>
 
                                         <div x-show="open" class="-me-7 mt-2 flex flex-col gap-2">
-                                            <form>
+                                            <div>
                                                 {{ $this->getProposalForm($proposal) }}
 
                                                 <div class="mt-8 flex justify-end">
@@ -148,7 +148,7 @@
                                                         שמור
                                                     </x-filament::button>
                                                 </div>
-                                            </form>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="ps-2 flex flex-col h-full">

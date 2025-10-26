@@ -13,6 +13,7 @@ use App\Models\Proposal;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Illuminate\Support\HtmlString;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -135,6 +136,14 @@ class ActiveCallDrawer extends Component implements HasForms
                     Textarea::make('description')
                         ->label('תיאור')
                         ->rules(['required', 'min:20'])
+                        ->extraAlpineAttributes([
+                            //ctrl+enter to submit
+                            'wire:keydown.ctrl.enter' => 'saveProposalDiary('. $proposal->id .')',
+                        ])
+                        ->helperText(new HtmlString('<div>
+<div>מינימום 20 אותיות</div>
+<div>לחץ <b>Enter</b> ע"מ לרדת שורה ו <b>Ctrl+Enter</b> ע"מ לשלוח את הטופס</div>
+</div>'))
                         ->validationMessages([
                             'required' => 'שדה תיאור הינו שדה חובה',
                             'min' => 'מה אתה רציני?!... תיאור פחות מ20 אותיות?! :)',
