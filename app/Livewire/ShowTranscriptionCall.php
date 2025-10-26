@@ -34,7 +34,7 @@ class ShowTranscriptionCall extends Component implements HasActions, HasSchemas
     {
         $record = $this->record;
 
-        return Action::make('refresh_call_text')
+        return Action::make('parseTranscription')
             ->icon('heroicon-o-arrow-path')
             ->label('תמלל שיחה')
             ->color('gray')
@@ -51,7 +51,7 @@ class ShowTranscriptionCall extends Component implements HasActions, HasSchemas
     {
         $record = $this->record;
 
-        return Action::make('retranscription_chunk')
+        return Action::make('reTranscriptionChunk')
             ->label('נתח מחדש קטע זה')
             ->icon('heroicon-o-arrow-path')
             ->color('gray')
