@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\People\Pages;
 
+use App\Models\User;
 use Filament\Support\Enums\Width;
 use DB;
 use Filament\Schemas\Schema;
@@ -30,6 +31,21 @@ class EditPerson extends EditRecord
     {
         return [
             ActionGroup::make([
+                Action::make('activities')
+                    ->label('היסטוריית פעולות')
+                    ->icon('heroicon-o-clock')
+                    ->slideOver()
+                    ->modalHeading('היסטוריית פעולות')
+                    ->modalContent(function () {
+                        $activities = $this->getRecord()->activities()->with('user')->get();
+                        $people = Person::findMany([
+                            ...$activities->pluck('data.spouse_id'),
+                        ]);
+                        return view('filament.resources.person-resource.widgets.person-activities', [
+                            'activities' => $activities,
+                            'people' => $people,
+                        ]);
+                    }),
                 Action::make('merge_people')
                     ->modalWidth(Width::Small)
                     ->label('מיזוג אנשים')
