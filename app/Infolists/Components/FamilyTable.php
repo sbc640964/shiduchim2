@@ -9,8 +9,4 @@ class FamilyTable extends Entry
 {
     protected string $view = 'infolists.components.family-table';
 
-    public function getViewData(): array
-    {
-        return $this->viewData;
-    }
 }
