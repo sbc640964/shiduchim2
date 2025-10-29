@@ -109,6 +109,7 @@ class ProposalResource extends Resource
     public static function tableFilters(Table $table): Table
     {
         return $table
+            ->searchable(['people.first_name', 'people.last_name',])
             ->filters([
                 Filter::make('show-finished')
                     ->label('הצג הצעות סגורות')
@@ -564,8 +565,7 @@ class ProposalResource extends Resource
                     'class' => $proposal->{$side}->current_family_id ? 'bg-red-100' : 'bg-green-100',
                 ])
                 ->label($label)
-                ->url('#')
-                ->searchable(['first_name', 'last_name']),
+                ->url('#'),
             TextColumn::make("$side.age")
                 ->label('גיל'),
             TextColumn::make("last{$ucFirst}Diary.data.description")
