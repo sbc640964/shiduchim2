@@ -16,8 +16,6 @@ use App\Models\Phone;
 use App\Models\Proposal;
 use App\Models\Task;
 use Filament\Actions\Action;
-use Filament\Forms;
-use Filament\Tables;
 
 class Call
 {
@@ -72,7 +70,7 @@ class Call
             ->color('gray')
             ->icon('iconsax-bul-call')
             ->modalHeading(fn (Person $person) => 'צור קשר עם '.$person->full_name)
-            ->form(fn (Person $person, Schema $schema) => $schema
+            ->schema(fn (Person $person, Schema $schema) => $schema
                 ->components(static::getPhoneFormSchema($person, $proposal->contacts()->where('person_id', $person->id)->exists())),
             )
             ->action(function (Person $person, array $data, Action $action) use ($side, $proposal) {
@@ -147,7 +145,7 @@ class Call
                         ->hiddenLabel()
                         ->required()
                         ->columnSpan(2)
-                        ->unique('phones', 'number')
+                        ->unique('phones', 'number', ignoreRecord: false)
                         ->validationMessages([
                             'unique' => 'טלפון זה כבר קיים במערכת',
                         ])
