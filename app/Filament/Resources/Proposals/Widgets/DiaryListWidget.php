@@ -147,6 +147,7 @@ class DiaryListWidget extends BaseWidget
                             ->label('איש קשר')
                             ->searchable()
                             ->allowHtml()
+                            ->options($this->getRecord()->contacts()->limit(50)->get()->pluck('select_option_html', 'id'))
                             ->getSearchResultsUsing(function (string $query) {
                                 return $this->getRecord()->contacts()->searchName($query)->get()->pluck('select_option_html', 'id');
                             })
