@@ -74,8 +74,8 @@ class ProposalResource extends Resource
             ->with(
                 'lastGuyDiary',
                 'lastGirlDiary',
-                'guy.father', 'guy.mother', 'guy.parentsFamily', 'guy.schools', 'guy.lastSubscription.matchmaker',
-                'girl.father', 'girl.mother', 'girl.parentsFamily', 'girl.schools', 'girl.lastSubscription.matchmaker',
+                'guy.father', 'guy.mother', 'guy.parentsFamily.city', 'guy.schools', 'guy.lastSubscription.matchmaker',
+                'girl.father', 'girl.mother', 'girl.parentsFamily.city', 'girl.schools', 'girl.lastSubscription.matchmaker',
             );
     }
 
