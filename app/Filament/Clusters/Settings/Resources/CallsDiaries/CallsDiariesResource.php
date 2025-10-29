@@ -240,7 +240,7 @@ class CallsDiariesResource extends Resource
                                         ->get()
                                         ->mapWithKeys(fn (Proposal $proposal) => [$proposal->id => $proposal->families_names])
                                     )
-                                    ->afterStateUpdated(function ($state, Call $record, Set $set, $livewire) {
+                                    ->afterStateUpdated(function ($state, Call $record, Set $set) {
                                         if($state
                                             && $side = $record->getPersonContact()
                                                 ?->proposalContacts()
