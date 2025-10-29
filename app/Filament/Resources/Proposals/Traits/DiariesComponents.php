@@ -411,7 +411,7 @@ trait DiariesComponents
                                     }))
                                 ->label('קבצים')
                                 ->schema([
-                                    FileEntry::make('')
+                                    FileEntry::make('path')
                                         ->fileAttribute('path')
                                         ->hiddenLabel()
                                         ->registerActions([
