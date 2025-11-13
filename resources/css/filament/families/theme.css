@@ -275,3 +275,7 @@ pre.prettyjson{
         @apply !border-s-0;
     }
 }
+
+html.fi{
+    scrollbar-gutter: auto !important;
+}

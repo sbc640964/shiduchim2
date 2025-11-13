@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clusters\Settings\Resources\Banners\Utilities\BannerMiddleware;
 use App\Filament\Widgets\NewCalendarWidget;
 use App\Filament\Widgets\OpenProposalsOverview;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -89,6 +90,7 @@ class FamiliesPanelProvider extends PanelProvider
 //                DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
 //                UpgradeToHttpsUnderNgrokMiddleware::class,
+                BannerMiddleware::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
