@@ -60,10 +60,25 @@ class FamiliesPanelProvider extends PanelProvider
             ->profile()
             ->maxContentWidth('full')
             ->defaultAvatarProvider(GravatarProvider::class)
+            ->favicon(asset('storage/favicon.png'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => [
+                    50 => 'oklch(81.355% 0.05267 344.73)',
+                    100 => 'oklch(77.768% 0.06309 344.84)',
+                    200 => 'oklch(70.916% 0.08453 345.35)',
+                    300 => 'oklch(63.842% 0.1074 345.49)',
+                    400 => 'oklch(57.115% 0.13162 345.98)',
+                    500 => 'oklch(50.608% 0.11732 346)',
+                    600 => 'oklch(43.749% 0.09879 345.18)',
+                    700 => 'oklch(35.696% 0.07779 344.36)',
+                    800 => 'oklch(27.167% 0.05526 342.76)',
+                    900 => 'oklch(17.88% 0.02905 341.47)',
+                    950 => 'oklch(12.573% 0.01376 340.32)',
+                ],
             ])
             ->brandName('שידוכון')
+            ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->brandLogoHeight(40)
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

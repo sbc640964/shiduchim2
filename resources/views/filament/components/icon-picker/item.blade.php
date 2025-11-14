@@ -1,4 +1,3 @@
-
 <div class="flex items-center gap-2">
     <x-filament::icon
         :icon="constant($set.'::'.$icon)"
