@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Filament\Clusters\Settings\Resources\Banners\Utilities\Location;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
@@ -57,5 +58,28 @@ class Banner extends Model
         return $this->config['style']['icon_color']
             ?? $this->config['style']['text_color']
             ?? '#000000';
+    }
+
+    public function getIconCase()
+    {
+        $icon = $this->config['style']['icon'] ?? null;
+
+        if ($icon === null) {
+            return null;
+        }
+
+        $iconCases = collect(Heroicon::cases());
+
+        $iconCase = $iconCases->firstWhere('value', $icon)?->name ?? null;
+
+        if ($iconCase === null) {
+            return null;
+        }
+
+        try {
+            return constant(Heroicon::class.'::'.$iconCase);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

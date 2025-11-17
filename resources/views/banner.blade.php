@@ -38,7 +38,7 @@
                 </div>
             @elseif($banner->config['style']['icon'] ?? false)
                 <div class="flex items-center">
-                    <x-filament::icon :icon="'heroicon-'.$banner->config['style']['icon']" style="color: {{ $banner->getIconColor() }};" />
+                    <x-filament::icon :icon="$banner->getIconCase()" style="color: {{ $banner->getIconColor() }};" />
                 </div>
             @endif
             <div>
