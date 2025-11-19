@@ -43,6 +43,7 @@ class GoldListWidget extends BaseWidget
             ->emptyStateIcon('heroicon-o-list-bullet')
             ->emptyStateDescription('המנהל עדיין לא ייחד לך תלמידים')
             ->defaultSort('work_day')
+            ->paginated(auth()->user()->can('manage_reports'))
             ->query(
                 Subscriber::query()
                     ->withWorkMonth()
