@@ -94,9 +94,9 @@ class ProcessGisWebhookJob implements ShouldQueue
 
                 $call = $this->resolveCall($this->data, $extension, $phoneNumber);
 
-                if($call && $extension) {
+                if($call) {
                     $call->update([
-                        'extension' => $extension,
+                        'extension' => $extension ?? $call->extension,
                         'user_id' => $user?->id ?? null,
                     ]);
                 } else {
@@ -205,6 +205,10 @@ class ProcessGisWebhookJob implements ShouldQueue
             $call = Call::query()
                 ->where('data_raw->events[0]->ID', $data['original_call_id'])
                 ->first();
+        }
+
+        if(! $call && ! $extension) {
+            return null;
         }
 
         return $call ?? Call::query()
