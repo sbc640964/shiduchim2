@@ -2,19 +2,17 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Cache\Lock;
 use App\Events\CallActivityEvent;
 use App\Http\Controllers\WebhookGisController;
 use App\Models\Call;
 use App\Models\CallDiary;
-use App\Models\Diary;
 use App\Models\Person;
 use App\Models\Phone;
 use App\Models\User;
 use App\Models\WebhookEntry;
 use App\Services\PhoneCallGis\ActiveCall;
-use Exception;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,12 +32,13 @@ class ProcessGisWebhookJob implements ShouldQueue
      *
      * @param array $data The webhook data to process
      * @param int $webhookId The ID of the webhook entry to update upon completion
-     * @throws Exception
+     * @throws \Exception
      */
     public function __construct(
         protected array $data,
-        protected int $webhookId
-    ) {
+        protected int   $webhookId
+    )
+    {
     }
 
     /**
@@ -55,135 +54,62 @@ class ProcessGisWebhookJob implements ShouldQueue
     {
         $this->setWebhook();
 
+        $isOutgoing = $this->data['is_outgoing'] !== 'incoming';
+
+        $phone = $this->resolvePhone($isOutgoing ? $this->data['target_phone'] : $this->data['from_phone']);
+
+        $extension = Str::before($this->data['extension'] ?? '', '-');
+
+        if (blank($extension)) {
+            $extension = null;
+        }
+
+        $user = $this->resolveUser($isOutgoing ? $this->data['from_phone'] : $this->data['target_phone'], $extension);
+
+        CallDiary::create([
+            'event' => $this->data['action'],
+            'call_id' => $this->data['original_call_id'],
+            'direction' => $isOutgoing ? 'out' : 'in',
+            'from' => $this->data['from_phone'],
+            'to' => $this->data['target_phone'],
+            'user_id' => $user?->id,
+            'person_id' => $phone?->model instanceof Person ? $phone?->model_id : null,
+            'phone_id' => $phone?->id,
+            'extension' => $extension,
+            'data' => $this->data,
+        ]);
+
+        $action = $this->data['action'];
+
+        $phoneNumber = ActiveCall::normalizedPhoneNumber($isOutgoing
+            ? $this->data['target_phone']
+            : $this->data['from_phone']
+        );
+
+        $lockKey = 'lock:call:' . $this->data['linkedid'];
+        $lock = Cache::lock($lockKey, 3);
+
         try {
-            $isOutgoing = $this->data['is_outgoing'] !== 'incoming';
-
-            $phone = $this->resolvePhone($isOutgoing ? $this->data['target_phone'] : $this->data['from_phone']);
-
-            $extension = Str::before($this->data['extension'] ?? '', '-');
-
-            if(blank($extension)) {
-                $extension = null;
-            }
-
-            $user = $this->resolveUser($isOutgoing ? $this->data['from_phone'] : $this->data['target_phone'], $extension);
-
-            CallDiary::create([
-                'event' => $this->data['action'],
-                'call_id' => $this->data['original_call_id'],
-                'direction' => $isOutgoing ? 'in' : 'out',
-                'from' => $this->data['from_phone'],
-                'to' => $this->data['target_phone'],
-                'user_id' => $user?->id,
-                'person_id' => $phone?->model instanceof Person ? $phone?->model_id : null,
-                'phone_id' => $phone?->id,
-                'extension' => $extension,
-                'data' => $this->data,
-            ]);
-
-            $action = $this->data['action'];
-            $phoneNumber = ActiveCall::normalizedPhoneNumber($isOutgoing
-                ? $this->data['target_phone']
-                : $this->data['from_phone']
+            $lock->block(
+                3,
+                fn() => $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing, $lock)
             );
-
-            if ($action === 'ring') {
-                $lockKey = 'lock:call:' . $this->data['original_call_id'] . ':' . $this->data['action'];
-
-                $lock = Cache::lock($lockKey, 3)->block(3);
-
-                $call = $this->resolveCall($this->data, $extension, $phoneNumber);
-
-                if($call) {
-                    $call->update([
-                        'extension' => $extension ?? $call->extension,
-                        'user_id' => $user?->id ?? null,
-                    ]);
-                } else {
-                    $this->createCall($this->data, $extension, $phoneNumber, $phone, $user, $isOutgoing);
-                    $this->webhook->completed();
-                    return;
-                }
-
-                if ($lock instanceof Lock) {
-                    $lock->release();
-                }
-            }
-
-            $call = $this->resolveCall($this->data, $extension, $phoneNumber);
-
-            if (! $call
-                && (
-                    ($this->data['action'] === 'answered' && $isOutgoing)
-                    || ($this->data['action'] === 'missed' && ! $isOutgoing)
-                )
-            ) {
-                $call = $this->createCall(
-                    $this->data,
-                    $extension,
-                    $phoneNumber,
-                    $phone,
-                    $user,
-                    $isOutgoing
-                );
-            }
-
-            if (! $call) {
-                $this->webhook->setError([
-                    'error' => 'Call not found',
-                ]);
-
-                return;
-            }
-
-            $callEvents = $call->data_raw;
-
-            if(! $call->wasRecentlyCreated) {
-                $callEvents['events'][] = $this->data;
-            }
-
-            $updateAttributes = [
-                'data_raw' => $callEvents,
-                'unique_id' => $this->data['linkedid'] ?? $this->data['original_call_id'],
-                'extension' => $call->extension ?? $extension,
-                'user_id' => !$call->extension ? ($user?->id ?? null) : $call->user_id ?? null,
-            ];
-
-            if ($action === 'answered') {
-                $updateAttributes['started_at'] = now();
-            }
-
-            if ($action === 'missed') {
-                $updateAttributes['finished_at'] = now();
-            }
-
-            if ($action === 'ended') {
-                $updateAttributes['finished_at'] = now();
-                $updateAttributes['audio_url'] = $this->data['record_url'];
-                $updateAttributes['duration'] = $this->data['duration'];
-            }
-
-            $call->update($updateAttributes);
-
-            if ($action === 'ended') {
-                $this->updateAllDiaries($call);
-            }
-
-            CallActivityEvent::dispatch($user, $call);
-
-            $this->webhook->completed();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->webhook->setError([
-                'message' => $e->getMessage(),
+                'message' => 'Error processing webhook (Lock error): ' . $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'code' => $e->getCode(),
             ]);
+
+            if ($lock->get()) {
+                $lock->release();
+            }
         }
     }
 
-    private function resolveCall($data, $extension, null|Phone|string $phone = null): ?Call
+    private function resolveCall($data, $extension): ?Call
     {
         $isOutgoing = $data['is_outgoing'] !== 'incoming';
 
@@ -193,27 +119,29 @@ class ProcessGisWebhookJob implements ShouldQueue
         );
 
         $call = Call::query()
-            ->where('unique_id', $data['linkedid'])
-            ->orWhere('unique_id',$data['original_call_id'])
+            ->whereIn(
+                'unique_id',
+                array_filter([$data['linkedid'] ?? null, $data['original_call_id'] ?? null])
+            )
             ->first();
 
         if ($call) {
             return $call;
         }
 
-        if($isOutgoing) {
+        if ($isOutgoing) {
             $call = Call::query()
                 ->where('data_raw->events[0]->ID', $data['original_call_id'])
                 ->first();
         }
 
-        if(! $call && ! $extension) {
+        if (!$call && !$extension) {
             return null;
         }
 
         return $call ?? Call::query()
             ->whereNull('finished_at')
-            ->where(fn (Builder $query) => $query->where('extension', $extension)
+            ->where(fn(Builder $query) => $query->where('extension', $extension)
                 ->where('phone', $phoneNumber)
                 ->where('direction', $isOutgoing ? 'outgoing' : 'incoming')
             )
@@ -224,7 +152,7 @@ class ProcessGisWebhookJob implements ShouldQueue
     {
         $phoneNumber = ActiveCall::normalizedPhoneNumber($phoneNumber);
 
-        if (! $phoneNumber) {
+        if (!$phoneNumber) {
             return null;
         }
 
@@ -262,7 +190,7 @@ class ProcessGisWebhookJob implements ShouldQueue
         WebhookGisController::updateAllDiaries($call);
     }
 
-    private function createCall(array $data, ?string $extension, mixed $phoneNumber, ?Phone $phone, mixed $user, $isOutgoing = false): ?Call
+    private function createCall(array $data, ?string $extension, ?string $phoneNumber, ?Phone $phone, ?User $user, $isOutgoing = false): ?Call
     {
         $call = Call::create([
             'extension' => $extension,
@@ -289,9 +217,70 @@ class ProcessGisWebhookJob implements ShouldQueue
         $webhook = WebhookEntry::find($this->webhookId);
 
         if (!$webhook) {
-            throw new Exception("Webhook entry $this->webhookId not found");
+            throw new \Exception("Webhook entry $this->webhookId not found");
         }
 
         $this->webhook = $webhook;
+    }
+
+    private function processCall(string $action, ?string $extension, string $phoneNumber, ?Phone $phone, ?User $user, bool $isOutgoing, Lock $lock): void
+    {
+        try {
+            $call = $this->resolveCall($this->data, $extension);
+
+            if (!$call) {
+                $call = $this->createCall(
+                    $this->data,
+                    $extension,
+                    $phoneNumber,
+                    $phone,
+                    $user,
+                    $isOutgoing
+                );
+            }
+
+            $call->extension = $extension ?? $call->extension;
+            $call->user_id = $user?->id ?? $call->user_id;
+            $call->unique_id = $this->data['linkedid'] ?? $this->data['original_call_id'];
+
+            if (!$call->wasRecentlyCreated) {
+                $callEvents = $call->data_raw ?? ['events' => []];
+
+                if (!isset($callEvents['events']) || !is_array($callEvents['events'])) {
+                    $callEvents['events'] = [];
+                }
+
+                $callEvents['events'][] = $this->data;
+                $call->data_raw = $callEvents;
+            }
+
+            if ($action === 'answered') {
+                $call->started_at = now();
+            }
+            if ($action === 'missed') {
+                $call->finished_at = now();
+            }
+
+            if ($action === 'ended') {
+                $call->finished_at = now();
+                $call->duration = $this->data['duration'];
+                $call->audio_url = $this->data['record_url'];
+                $this->updateAllDiaries($call);
+            }
+
+            CallActivityEvent::dispatch($user, $call);
+
+            $this->webhook->completed();
+        } catch (\Exception $e) {
+            $this->webhook->setError([
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'code' => $e->getCode(),
+            ]);
+        } finally {
+            optional($lock)->release();
+        }
     }
 }
