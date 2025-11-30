@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Students\Pages;
 
+use App\Filament\Exports\StudentExporter;
+use Filament\Actions\ExportAction;
 use Filament\Schemas\Components\Tabs\Tab;
 use Str;
 use App\Filament\Imports\StudentImporter;
@@ -31,6 +33,10 @@ class ListStudents extends ListRecords
                     ->importer(StudentImporter::class)
                     ->job(ImportCsv::class)
                     ->label('ייבוא תלמידים'),
+                ExportAction::make('export-students')
+                    ->exporter(StudentExporter::class)
+                    ->chunkSize(200) // lower chunk size to reduce memory per-export-job
+                    ->label('ייצוא תלמידים'),
             ]),
         ];
     }
