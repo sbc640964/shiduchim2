@@ -13,6 +13,7 @@ use App\Models\WebhookEntry;
 use App\Services\PhoneCallGis\ActiveCall;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,7 +22,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Str;
 
-class ProcessGisWebhookJob implements ShouldQueue
+class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -39,6 +40,11 @@ class ProcessGisWebhookJob implements ShouldQueue
         protected int   $webhookId
     )
     {
+    }
+
+    public function uniqueId(): string
+    {
+        return 'call:'.$this->data['linkedid'];
     }
 
     /**
@@ -86,14 +92,15 @@ class ProcessGisWebhookJob implements ShouldQueue
             : $this->data['from_phone']
         );
 
-        $lockKey = 'lock:call:' . $this->data['linkedid'];
-        $lock = Cache::lock($lockKey, 5);
+//        $lockKey = 'lock:call:' . $this->data['linkedid'];
+//        $lock = Cache::lock($lockKey, 5);
 
         try {
-            $lock->block(
-                0,
-                fn() => $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing, $lock)
-            );
+            $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing);
+//            $lock->block(
+//                0,
+//                fn() => $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing, $lock)
+//            );
         } catch (\Exception $e) {
             $this->webhook->setError([
                 'message' => 'Error processing webhook (Lock error): ' . $e->getMessage(),
@@ -103,9 +110,9 @@ class ProcessGisWebhookJob implements ShouldQueue
                 'code' => $e->getCode(),
             ]);
 
-            if ($lock->get()) {
-                $lock->release();
-            }
+//            if ($lock->get()) {
+//                $lock->release();
+//            }
         }
     }
 
@@ -228,7 +235,7 @@ class ProcessGisWebhookJob implements ShouldQueue
         return ['GIS', 'webhook', 'call:' . $this->data['linkedid'], 'from:' . ($this->data['from_phone'] ?? 'unknown')];
     }
 
-    private function processCall(string $action, ?string $extension, string $phoneNumber, ?Phone $phone, ?User $user, bool $isOutgoing, Lock $lock): void
+    private function processCall(string $action, ?string $extension, string $phoneNumber, ?Phone $phone, ?User $user, bool $isOutgoing): void
     {
         try {
             $call = $this->resolveCall($this->data, $extension);
@@ -284,8 +291,6 @@ class ProcessGisWebhookJob implements ShouldQueue
                 'line' => $e->getLine(),
                 'code' => $e->getCode(),
             ]);
-        } finally {
-            optional($lock)->release();
         }
     }
 }
