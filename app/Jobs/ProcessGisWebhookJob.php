@@ -94,8 +94,6 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
         $lockKey = 'call_lock:' . $this->data['linkedid'];
 
-        $lock = null;
-
         // Busy wait until we get the lock
         while (true) {
             $lock = Cache::lock($lockKey, 10);
@@ -209,7 +207,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
     {
         $call = Call::create([
             'extension' => $extension,
-            'unique_id' => $data['original_call_id'],
+            'unique_id' => $data['linkedid'],
             'phone' => $phoneNumber,
             'phone_id' => $phone?->id ?? null,
             'is_pending' => true,
@@ -261,7 +259,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
             $call->extension = $extension ?? $call->extension;
             $call->user_id = $user?->id ?? $call->user_id;
-            $call->unique_id = $this->data['linkedid'] ?? $this->data['original_call_id'];
+            $call->unique_id = $this->data['linkedid'];
 
             if (!$call->wasRecentlyCreated) {
                 $callEvents = $call->data_raw ?? ['events' => []];
