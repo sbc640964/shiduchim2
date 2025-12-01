@@ -87,11 +87,11 @@ class ProcessGisWebhookJob implements ShouldQueue
         );
 
         $lockKey = 'lock:call:' . $this->data['linkedid'];
-        $lock = Cache::lock($lockKey, 3);
+        $lock = Cache::lock($lockKey, 5);
 
         try {
             $lock->block(
-                3,
+                0,
                 fn() => $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing, $lock)
             );
         } catch (\Exception $e) {
