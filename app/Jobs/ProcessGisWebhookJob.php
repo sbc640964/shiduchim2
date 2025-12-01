@@ -223,6 +223,11 @@ class ProcessGisWebhookJob implements ShouldQueue
         $this->webhook = $webhook;
     }
 
+    public function tags()
+    {
+        return ['GIS', 'webhook', 'call:' . $this->data['linkedid'], 'from:' . ($this->data['from_phone'] ?? 'unknown')];
+    }
+
     private function processCall(string $action, ?string $extension, string $phoneNumber, ?Phone $phone, ?User $user, bool $isOutgoing, Lock $lock): void
     {
         try {
