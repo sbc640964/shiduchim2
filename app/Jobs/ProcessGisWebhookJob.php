@@ -42,11 +42,6 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
     {
     }
 
-    public function uniqueId(): string
-    {
-        return 'call:'.$this->data['linkedid'];
-    }
-
     /**
      * Execute the job.
      *
@@ -103,7 +98,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             }
 
             // wait 20ms then try again
-            usleep(20000);
+            usleep(200000);
         }
 
         try {
