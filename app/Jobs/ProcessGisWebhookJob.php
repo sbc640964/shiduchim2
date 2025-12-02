@@ -89,20 +89,10 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
         $lockKey = 'call_lock:' . $this->data['linkedid'];
 
-        // Busy wait until we get the lock
-        while (true) {
-            $lock = Cache::lock($lockKey, 10);
-
-            if ($lock->get()) {
-                break; // lock taken
-            }
-
-            // wait 20ms then try again
-            usleep(200000);
-        }
+        $lock = Cache::lock($lockKey, 3);
 
         try {
-            $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing);
+            $lock->block(3, fn () => $this->processCall($action, $extension, $phoneNumber, $phone, $user, $isOutgoing));
         } catch (\Exception $e) {
             $this->webhook->setError([
                 'message' => 'Error processing webhook (Lock error): ' . $e->getMessage(),
@@ -281,7 +271,9 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
                 $this->updateAllDiaries($call);
             }
 
-            CallActivityEvent::dispatch($user, $call);
+            if($call->save()) {
+                CallActivityEvent::dispatch($user, $call);
+            }
 
             $this->webhook->completed();
         } catch (\Exception $e) {
