@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\Students\Pages;
 
+use App\Filament\Resources\Students\Schemas\CreateProposals;
+use App\Models\Person;
 use Exception;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Actions\EditAction;
+use Filament\Schemas\Schema;
 use Filament\Tables\Filters\Filter;
 use Filament\Schemas\Components\Group;
 use Filament\Tables\Filters\QueryBuilder;
@@ -77,9 +80,23 @@ class AddProposal extends ListRecords
                     ->label('צור הצעות')
                     ->deselectRecordsAfterCompletion()
                     ->requiresConfirmation()
+                    ->fillForm(fn (Person $record, Collection $records) => [
+                        'proposalsPeople' => $records,
+                        'record' => $record,
+                    ])
+                    ->schema(function (Person $record, Collection $records, Schema $schema) {
+                        return CreateProposals::configure($schema, $record, $records);
+                    })
                     ->modalHeading("המערכת תיצור באופן אוטו' הצעות לכלל המסומנים")
-                    ->action(function (Collection $records, BulkAction $action) {
-                        $records->each(function (Student $student) {
+                    ->action(function (Collection $records, BulkAction $action, array $data) {
+                        $data = collect($data['proposalsPeople'] ?? [])
+                            ->mapWithKeys(fn ($value) => [$value['id'] => $value['remove_proposal'] ?? false])->toArray();
+
+                        $records->each(function (Student $student) use ($data){
+                            if ($data[$student->id]) {
+                                return;
+                            }
+
                             $this->addProposal($student);
                         });
 
