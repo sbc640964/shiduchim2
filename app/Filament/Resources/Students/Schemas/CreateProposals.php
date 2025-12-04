@@ -64,7 +64,7 @@ class CreateProposals
             ]);
     }
 
-    private static function getAlertsProposal($proposal, Person $person)
+    private static function getAlertsProposal($proposal, Person $person): array
     {
         $alerts = [];
 
@@ -82,11 +82,13 @@ class CreateProposals
             $namesA = explode(' ', $names[0]);
             $namesB = explode(' ', $names[1]);
 
-            if (count($namesA) === count($namesB) && count(array_intersect($namesA, $namesB)) > 0) {
+            $has = array_intersect($namesA, $namesB);
+
+            if ($has) {
                 $gender = $key === 'record' ? $person->gender : $proposal['gender'];
-                $alerts[] = $gender === 'G'
+                $alerts[] = ($gender === 'G'
                     ? 'שם פרטי זהה בין המדוברת לאם המדובר'
-                    : 'שם פרטי זהה בין המדובר לאבי המדוברת';
+                    : 'שם פרטי זהה בין המדובר לאבי המדוברת (') . \Arr::join($has, ', ') . ')';
             }
         }
 
