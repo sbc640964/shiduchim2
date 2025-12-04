@@ -100,7 +100,13 @@ class StudentResource extends Resource
             ->when(method_exists($table->getLivewire(), 'getExtraColumns'), function (Table $table) use (&$extraColumns) {
                 $extraColumns = $table->getLivewire()->getExtraColumns();
             })
-            ->modifyQueryUsing(fn ($query) => $query->with(static::withRelationship()))
+            ->modifyQueryUsing(fn ($query) => $query
+                ->with(static::withRelationship())
+                ->where(function (Builder $query) {
+                    $query->whereNull('families.id')
+                        ->orWhere('families.status', '!=', 'married');
+                })
+            )
             ->recordUrl(fn (Model $record, $livewire) =>
                 $livewire->activeTab === 'subscriptions'
                     ? Subscription::getUrl(['record' => $record])
@@ -213,11 +219,7 @@ class StudentResource extends Resource
             ->whereNotNull('external_code_students')
             ->leftJoin('family_person', 'people.id', '=', 'family_person.person_id')
             ->leftJoin('families', 'family_person.family_id', '=', 'families.id')
-            ->select('people.*')
-            ->where(function (Builder $query) {
-                $query->whereNull('families.id')
-                    ->orWhere('families.status', '!=', 'married');
-            });
+            ->select('people.*');
     }
 
     public static function infolist(Schema $schema): Schema

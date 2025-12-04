@@ -15,6 +15,21 @@ class ViewStudent extends ViewRecord
 
     protected static string | \BackedEnum | null $navigationIcon = '';
 
+    public function getHeading(): string|Htmlable|null
+    {
+        return str(Blade::render(
+                <<<'HTML'
+                    <div class="flex items-center gap-2">
+                       {{ $record->full_name }}
+                       @if($record->family && $record->family->status === 'married')
+                           <span class="inline-flex items-center gap-2 bg-red-600 text-white text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg ring-2 ring-red-400 animate-pulse" role="status" aria-label="נשוי">נשוי</span>
+                       @endif
+                    </div>
+                HTML,
+            ['record' => $this->getRecord()]
+        ))->toHtmlString();
+    }
+
     public function getSubheading(): string|Htmlable|null
     {
         return str(Blade::render(
