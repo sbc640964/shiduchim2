@@ -87,7 +87,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             : $this->data['from_phone']
         );
 
-        $lockKey = 'call_lock:' . $this->data['linkedid'];
+        $lockKey = 'call_lock:' . $this->data['original_call_id'];
 
         $lock = Cache::lock($lockKey, 3);
 
@@ -119,7 +119,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
         $call = Call::query()
             ->whereIn(
                 'unique_id',
-                array_filter([$data['linkedid'] ?? null, $data['original_call_id'] ?? null])
+                array_filter([$data['original_call_id'] ?? null, $data['linkedid'] ?? null])
             )
             ->first();
 
@@ -192,7 +192,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
     {
         $call = Call::create([
             'extension' => $extension,
-            'unique_id' => $data['linkedid'],
+            'unique_id' => $data['original_call_id'],
             'phone' => $phoneNumber,
             'phone_id' => $phone?->id ?? null,
             'is_pending' => true,
@@ -223,7 +223,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
     public function tags()
     {
-        return ['GIS', 'webhook', 'call:' . $this->data['linkedid'], 'from:' . ($this->data['from_phone'] ?? 'unknown')];
+        return ['GIS', 'webhook', 'call:' . $this->data['original_call_id'], 'from:' . ($this->data['from_phone'] ?? 'unknown')];
     }
 
     private function processCall(string $action, ?string $extension, string $phoneNumber, ?Phone $phone, ?User $user, bool $isOutgoing): void
@@ -244,7 +244,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
             $call->extension = $extension ?? $call->extension;
             $call->user_id = $user?->id ?? $call->user_id;
-            $call->unique_id = $this->data['linkedid'];
+            $call->unique_id = $this->data['original_call_id'];
 
             if (!$call->wasRecentlyCreated) {
                 $callEvents = $call->data_raw ?? ['events' => []];
