@@ -22,7 +22,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Str;
 
-class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
+class ProcessGisWebhookJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
