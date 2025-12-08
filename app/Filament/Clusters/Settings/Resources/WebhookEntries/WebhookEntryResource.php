@@ -13,6 +13,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\KeyValue;
 use Filament\Infolists\Components\CodeEntry;
 use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
@@ -81,6 +82,22 @@ class WebhookEntryResource extends Resource
                         ->label('שגיאה')
                         ->grammar(Grammar::Json),
                 ])->hidden(fn($record) => $record->is_completed),
+
+                Section::make('הערות')
+                    ->collapsible()
+                    ->collapsed(true)
+                    ->columns(1)
+                    ->schema([
+                        RepeatableEntry::make('notes')
+                            ->hiddenLabel()
+                            ->schema([
+                                Fieldset::make(fn ($state) => $state['date'])
+                                    ->schema([
+                                        TextEntry::make('value')
+                                            ->hiddenLabel()
+                                    ])
+                            ])
+                    ]),
 
                 Section::make('מודל משוייך')
                     ->columns(2)

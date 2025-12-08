@@ -37,6 +37,8 @@ class WebhookGisController extends Controller
             'headers' => $request->header(),
         ]);
 
+        $webhook->addNote('Received webhook');
+
         if ($validate->fails()) {
             $webhook->setError([
                 'error' => 'Validation failed',

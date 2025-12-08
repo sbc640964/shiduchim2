@@ -59,6 +59,8 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
         $phone = $this->resolvePhone($isOutgoing ? $this->data['target_phone'] : $this->data['from_phone']);
 
+        $this->webhook->addNote('Resolved phone: ' . ($phone?->id ?? 'null'));
+
         $extension = Str::before($this->data['extension'] ?? '', '-');
 
         if (blank($extension)) {
@@ -67,7 +69,9 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
 
         $user = $this->resolveUser($isOutgoing ? $this->data['from_phone'] : $this->data['target_phone'], $extension);
 
-        CallDiary::create([
+        $this->webhook->addNote('Resolved user: ' . ($user?->name ?? 'null'));
+
+        $diaryCall = CallDiary::create([
             'event' => $this->data['action'],
             'call_id' => $this->data['original_call_id'],
             'direction' => $isOutgoing ? 'out' : 'in',
@@ -79,6 +83,8 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             'extension' => $extension,
             'data' => $this->data,
         ]);
+
+        $this->webhook->addNote('Created call diary entry ID: ' . $diaryCall->id);
 
         $action = $this->data['action'];
 
@@ -231,6 +237,8 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
         try {
             $call = $this->resolveCall($this->data, $extension);
 
+            $this->webhook->addNote('Resolved call: ' . ($call?->id ?? 'null'));
+
             if (!$call) {
                 $call = $this->createCall(
                     $this->data,
@@ -240,6 +248,8 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
                     $user,
                     $isOutgoing
                 );
+
+                $this->webhook->addNote('Created call ID: ' . $call->id);
             }
 
             $call->extension = $extension ?? $call->extension;
@@ -247,6 +257,7 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             $call->unique_id = $this->data['original_call_id'];
 
             if (!$call->wasRecentlyCreated) {
+                $this->webhook->addNote('Updating call ID: ' . $call->id);
                 $callEvents = $call->data_raw ?? ['events' => []];
 
                 if (!isset($callEvents['events']) || !is_array($callEvents['events'])) {
@@ -258,13 +269,16 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             }
 
             if ($action === 'answered') {
+                $this->webhook->addNote('Call answered');
                 $call->started_at = now();
             }
             if ($action === 'missed') {
+                $this->webhook->addNote('Call missed');
                 $call->finished_at = now();
             }
 
             if ($action === 'ended') {
+                $this->webhook->addNote('Call ended');
                 $call->finished_at = now();
                 $call->duration = $this->data['duration'];
                 $call->audio_url = $this->data['record_url'];
@@ -272,11 +286,13 @@ class ProcessGisWebhookJob implements ShouldQueue, ShouldBeUniqueUntilProcessing
             }
 
             if($call->save()) {
+                $this->webhook->addNote('Saved call ID: ' . $call->id);
                 CallActivityEvent::dispatch($user, $call);
             }
 
             $this->webhook->completed();
         } catch (\Exception $e) {
+            $this->webhook->addNote('Error processing webhook: ' . $e->getMessage());
             $this->webhook->setError([
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

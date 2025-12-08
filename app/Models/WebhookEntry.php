@@ -11,6 +11,7 @@ class WebhookEntry extends Model
         'headers',
         'body',
         'error',
+        'notes'
     ];
 
     protected function casts(): array
@@ -20,6 +21,7 @@ class WebhookEntry extends Model
             'body' => 'array',
             'is_completed' => 'boolean',
             'error' => 'array',
+            'notes' => 'array',
         ];
     }
 
@@ -38,5 +40,21 @@ class WebhookEntry extends Model
     public function getHeadersStackAttribute($value): array
     {
         return array_map(fn ($item) => $item[0], $this->headers);
+    }
+
+    public function addNote(string $value): self
+    {
+        $notes = $this->notes;
+
+        $notes[] = [
+            'value' => $value,
+            'created_at' => now()->format('Y-m-d H:i:s'),
+        ];
+
+        $this->notes = $notes;
+
+        $this->saveQuietly();
+
+        return $this;
     }
 }
