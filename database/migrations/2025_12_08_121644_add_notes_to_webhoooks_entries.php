@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('webhooks_entries', function (Blueprint $table) {
+        Schema::table('webhook_entries', function (Blueprint $table) {
             $table->json('notes')->default(DB::raw('(JSON_ARRAY())'))->after('error');
         });
     }
 
     public function down(): void
     {
-        Schema::table('webhooks_entries', function (Blueprint $table) {
+        Schema::table('webhook_entries', function (Blueprint $table) {
             $table->dropColumn('notes');
         });
     }
