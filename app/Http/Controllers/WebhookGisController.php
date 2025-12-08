@@ -56,7 +56,7 @@ class WebhookGisController extends Controller
             }
 
             // Dispatch the job to process the webhook data
-            ProcessGisWebhookJob::dispatchAfterResponse($data, $webhook->id);
+            ProcessGisWebhookJob::dispatch($data, $webhook->id);
 
             return 'Webhook received and processing';
         } catch (Exception $e) {
