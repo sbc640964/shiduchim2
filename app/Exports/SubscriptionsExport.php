@@ -68,7 +68,7 @@ class SubscriptionsExport implements FromCollection, WithHeadings, ShouldQueue
                         .' | '. $renewedSubscriber?->matchmaker?->name
                         : 'אין',
                     'matchmaker_is_changed' => $replaceMatchmaker ? 'כן' : 'לא',
-                    'matchmaker_old_name' => $replaceMatchmaker ? $users->find($replaceMatchmaker->data['old'])->first()?->name : '',
+                    'matchmaker_old_name' => $replaceMatchmaker ? $users->firstWhere('id', $replaceMatchmaker->data['old'])?->name : '',
                     'start_at' => $subscriber->start_date?->format("d/m/Y") ?? '',
                     'end_at' => $subscriber->end_date?->format("d/m/Y") ?? '',
                     'end_reason' => $subscriber->activities->where('type', 'cancel')->first()?->description ?? '',
