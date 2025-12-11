@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Subscriber extends Model
 {
@@ -188,6 +189,19 @@ class Subscriber extends Model
             'end_date' => 'datetime',
             'next_payment_date' => 'datetime',
         ];
+    }
+
+    public function renewedSubscribers(): hasMany
+    {
+        return $this->hasMany(static::class, 'person_id', 'person_id');
+    }
+
+    public function renewedSubscriber(): ?Subscriber
+    {
+        return $this->renewedSubscribers
+            ->where('id', '!=', $this->id)
+            ->sortByDesc('start_date')
+            ->first();
     }
 
     public function student(): BelongsTo

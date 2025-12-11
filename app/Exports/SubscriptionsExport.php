@@ -31,7 +31,7 @@ class SubscriptionsExport implements FromCollection, WithHeadings, ShouldQueue
             ->role('שדכן')->get();
 
         return Subscriber::query()
-            ->with("student", "matchmaker", 'activities', 'creditCard', 'payer')
+            ->with("student", "matchmaker", 'activities', 'creditCard', 'payer', 'renewedSubscribers.matchmaker')
             ->with(["transactions" => function ($query) {
                 $query->where('status', 'OK');
             }])
@@ -40,6 +40,7 @@ class SubscriptionsExport implements FromCollection, WithHeadings, ShouldQueue
                 $person = $subscriber->student;
                 $matchmaker = $subscriber->matchmaker;
                 $payments = $subscriber->transactions;
+                $renewedSubscriber = $subscriber->renewedSubscriber();
 
                 $replaceMatchmaker = $subscriber->activities->where('type', 'replace_matchmaker')->last();
 
@@ -61,6 +62,11 @@ class SubscriptionsExport implements FromCollection, WithHeadings, ShouldQueue
                                 return data_get($activity->data, 'new.end_date')
                                     && Carbon::make($activity->data['new']['end_date'])->gt($activity->data['old']['end_date']);
                             })->isNotEmpty(),
+                    //האם הייתה תקופת מנוי נוסף עליו
+                    'renewed_period' => $renewedSubscriber
+                        ? ($renewedSubscriber->start_date?->format("d/m/Y") . ' - ' . $renewedSubscriber->end_date?->format("d/m/Y"))
+                        .' | '. $renewedSubscriber?->matchmaker?->name
+                        : 'אין',
                     'matchmaker_is_changed' => $replaceMatchmaker ? 'כן' : 'לא',
                     'matchmaker_old_name' => $replaceMatchmaker ? $users->find($replaceMatchmaker->data['old'])->first()?->name : '',
                     'start_at' => $subscriber->start_date?->format("d/m/Y") ?? '',
@@ -94,6 +100,7 @@ class SubscriptionsExport implements FromCollection, WithHeadings, ShouldQueue
             'matchmaker_created_at' => 'תאריך חיבור לשדכן',
             'matchmaker_name' => 'שם השדכן',
             'is_renewed' => 'האם התקופה התארכה',
+            'renewed_period' => 'תקופה מנוי קודם',
             'matchmaker_is_changed' => 'האם הוחלף שדכן באמצע',
             'matchmaker_old_name' => 'שם השדכן הקודם (אם רלוונטי)',
             'start_at' => 'תאריך תחילת עבודה',
