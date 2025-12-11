@@ -4,11 +4,9 @@ namespace App\Filament\Clusters\Reports\Pages\OpenProposalPage;
 
 use Filament\Actions\Action;
 use Filament\Support\Enums\Width;
-use App\Models\Person;
 use App\Models\Proposal;
 use Filament\Forms\Components\Textarea;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -41,13 +39,16 @@ class OpenProposalsTable extends BaseWidget
                     ->searchable(['first_name', 'last_name'])
                     ->label('בחורה')
                     ->description(fn (Proposal $proposal) => $proposal->girl->parents_info),
+                TextColumn::make('opened_at')
+                    ->label('תאריך פתיחה')
+                    ->date('d/m/Y H:i:s'),
                 TextColumn::make('closed_at')
+                    ->label('תאריך סגירה')
+                    ->date('d/m/Y H:i:s'),
+                TextColumn::make('status_open')
                     ->label('סטטוס')
                     ->sortable()
-                    ->date()
-                    ->color(fn ($state) => $state ? 'danger' : 'success')
-                    ->formatStateUsing(fn ($state) => $state ? 'נסגרה' : 'פתוחה')
-                    ->dateTimeTooltip()
+                    ->color(fn (Proposal $record) => $record->closed_at ? 'danger' : 'success')
                     ->badge(),
                 TextColumn::make('reason_closed')
                     ->label('סיבת סגירה')

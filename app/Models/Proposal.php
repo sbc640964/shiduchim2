@@ -12,13 +12,11 @@ use App\Models\Traits\HasActivities;
 use App\Models\Traits\HasProposalFilamentFormsFields;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
@@ -764,5 +762,14 @@ class Proposal extends Model
         return $query
             ->whereNotNull('opened_at')
             ->whereNull('closed_at');
+    }
+
+    public function getStatusOpenAttribute(): ?string
+    {
+        if(!$this->opened_at) {
+            return null;
+        }
+
+        return $this->closed_at ? 'נסגרה' : 'פתוחה';
     }
 }
