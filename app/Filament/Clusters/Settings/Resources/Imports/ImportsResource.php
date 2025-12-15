@@ -40,7 +40,7 @@ class ImportsResource extends Resource
 
     protected static ?string $pluralLabel = 'העלאת נתונים';
 
-    public static function can(string $action, ?Model $record = null): bool
+    public static function canAccess(): bool
     {
         return auth()->user()->can('import_manager');
     }
