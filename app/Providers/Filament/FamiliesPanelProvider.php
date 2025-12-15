@@ -90,7 +90,7 @@ class FamiliesPanelProvider extends PanelProvider
             ->widgets([
 //                CalendarWidget::class,
 //                Widgets\AccountWidget::class,
-                OpenProposalsOverview::make(),
+                OpenProposalsOverview::class,
                 GoldListWidget::class,
             ])
             ->spa()
