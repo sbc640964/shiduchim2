@@ -29,6 +29,11 @@ class BannerResource extends Resource
 
     protected static ?string $pluralLabel = 'באנרים';
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('manage_banners');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return BannerForm::configure($schema);
