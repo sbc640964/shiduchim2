@@ -25,6 +25,8 @@ class Proposals extends ManageRelatedRecords
 
     protected static ?string $title = 'הצעות';
 
+    protected static ?string $navigationLabel = 'אנשי קשר בהצעות';
+
     public function form(Schema $schema): Schema
     {
         return $schema

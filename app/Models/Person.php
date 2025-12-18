@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Filament\Resources\People\Pages\Comments;
+use App\Filament\Resources\Students\Pages\EditStudent;
+use App\Filament\Resources\Students\Pages\ViewStudent;
 use App\Models\Traits\HasFormEntries;
 use App\Models\Traits\HasPersonFormFields;
 use App\Models\Traits\HasPersonFilamentTableColumns;
 use Cache;
+use Closure;
 use Exception;
 use Kirschbaum\Commentions\Contracts\Commentable;
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
+use Kirschbaum\Commentions\Filament\Infolists\Components\CommentsEntry;
 use Kirschbaum\Commentions\HasComments;
 use Throwable;
 use Arr;
@@ -980,4 +986,35 @@ class Person extends Model implements Commentable
         $this->save() && $this->reBackStatusInMarriedLastSubscription();
     }
 
+    public static function commentsAction()
+    {
+        return  CommentsAction::make()
+            ->iconButton()
+            ->slideOver()
+            ->perPage(10)
+            ->loadMoreIncrementsBy(10)
+            ->loadMoreLabel('טוען עוד תגובות')
+            ->poll('5s')
+            ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all()));
+    }
+
+    public static function commentsEntry()
+    {
+        return CommentsEntry::make('comments')
+            ->label('תגובות')
+            ->perPage(10)
+            ->loadMoreIncrementsBy(10)
+            ->loadMoreLabel('טוען עוד תגובות')
+            ->poll('5s')
+            ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all()));
+    }
+
+    public function getCommentUrl(): string
+    {
+        if($this->spouse_id) {
+            return Comments::getUrl(['record' => $this->id]);
+        }
+
+        return ViewStudent::getUrl(['record' => $this->id]);
+    }
 }

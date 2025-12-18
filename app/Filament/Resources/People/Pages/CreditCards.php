@@ -30,14 +30,12 @@ class CreditCards extends ManageRelatedRecords
 
     protected static ?string $title = 'כרטיסי אשראי';
 
+    protected static ?string $navigationLabel = 'כרטיסי אשראי';
+
     public static function canAccess(array $parameters = []): bool
     {
         return auth()->user()->can('students_subscriptions');
     }
-//    public static function getNavigationLabel(): string
-//    {
-//        return 'כרטיסי אשראי';
-//    }
 
     public function form(Schema $schema): Schema
     {

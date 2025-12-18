@@ -31,6 +31,7 @@ class Family extends ManageRelatedRecords
     protected static string | \UnitEnum | null $navigationGroup = 'קשרים';
 
     //    protected static bool $shouldSkipAuthorization = true;
+    protected static ?string $navigationLabel = 'משפחה';
 
     protected static ?string $title = 'משפחה';
 

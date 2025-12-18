@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\People;
 
+use App\Filament\Resources\People\Pages\Comments;
 use App\Filament\Resources\People\Pages\CreditCards;
 use App\Filament\Resources\People\Pages\EditPerson;
 use App\Filament\Resources\People\Pages\Proposals;
@@ -151,6 +152,13 @@ class PersonResource extends Resource
         ])->columns(1);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Person::commentsEntry()
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table->columns(static::tableColumns())
@@ -217,10 +225,7 @@ class PersonResource extends Resource
                     ->placeholder('הכל'),
             ])
             ->recordActions([
-                CommentsAction::make()
-                    ->iconButton()
-                    ->slideOver()
-                    ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all())),
+                Person::commentsAction(),
             ])
             ->paginationPageOptions([10, 25, 50, 100, 250, 500, 1000])
             ->defaultSort(
@@ -250,6 +255,7 @@ class PersonResource extends Resource
             'family' => Pages\Family::route('/{record}/family'),
             'proposals' => Pages\Proposals::route('/{record}/proposals'),
             'cards' => Pages\CreditCards::route('/{record}/cards'),
+            'comments' => Pages\Comments::route('/{record}/comments'),
         ];
     }
 
@@ -260,6 +266,7 @@ class PersonResource extends Resource
             Pages\Family::class,
             Proposals::class,
             CreditCards::class,
+            Comments::class,
         ]);
     }
 
