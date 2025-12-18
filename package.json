@@ -16,6 +16,7 @@
         "laravel-vite-plugin": "^2.0.1",
         "postcss": "^8.4.47",
         "pusher-js": "^8.4.0-rc2",
+        "shadcn": "^3.6.1",
         "tailwind-scrollbar": "^4.0.2",
         "tailwindcss": "^4.1.12",
         "vite": "^7.1.6"
