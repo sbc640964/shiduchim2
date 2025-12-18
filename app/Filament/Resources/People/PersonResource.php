@@ -5,6 +5,7 @@ namespace App\Filament\Resources\People;
 use App\Filament\Resources\People\Pages\CreditCards;
 use App\Filament\Resources\People\Pages\EditPerson;
 use App\Filament\Resources\People\Pages\Proposals;
+use App\Models\User;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -37,6 +38,7 @@ use Filament\Support\Colors\Color;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
 
 class PersonResource extends Resource
 {
@@ -213,6 +215,12 @@ class PersonResource extends Resource
                     ->label('בן/בת')
                     ->native(false)
                     ->placeholder('הכל'),
+            ])
+            ->recordActions([
+                CommentsAction::make()
+                    ->iconButton()
+                    ->slideOver()
+                    ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all())),
             ])
             ->paginationPageOptions([10, 25, 50, 100, 250, 500, 1000])
             ->defaultSort(

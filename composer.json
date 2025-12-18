@@ -19,6 +19,7 @@
         "guava/calendar": "^2.0.2",
         "ibrahim-bougaoua/filaprogress": "^0.1.0",
         "itsgoingd/clockwork": "^5.2",
+        "kirschbaum-development/commentions": "^0.7.5",
         "laravel/framework": "^11.0",
         "laravel/horizon": "^5.21",
         "laravel/nightwatch": "^1.7",

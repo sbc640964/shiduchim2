@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Students;
 
 use App\Filament\Tables\StudentsTable;
+use App\Models\User;
 use Closure;
 use Filament\Forms\Components\ModalTableSelect;
 use Filament\Forms\Components\TableSelect;
@@ -47,6 +48,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
 use Spatie\Tags\Tag;
 
 class StudentResource extends Resource
@@ -115,6 +117,10 @@ class StudentResource extends Resource
             ->columns(static::getTableColumns($extraColumns))
             ->paginationPageOptions([5, 10, 25, 50, 100, 250])
             ->recordActions([
+                CommentsAction::make()
+                    ->iconButton()
+                    ->slideOver()
+                    ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all())),
                 Action::make('go-to-search-proposal')
                     ->tooltip('לחיפוש הצעה')
                     ->label('חיפוש הצעה')

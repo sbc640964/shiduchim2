@@ -7,6 +7,8 @@ use App\Models\Traits\HasPersonFormFields;
 use App\Models\Traits\HasPersonFilamentTableColumns;
 use Cache;
 use Exception;
+use Kirschbaum\Commentions\Contracts\Commentable;
+use Kirschbaum\Commentions\HasComments;
 use Throwable;
 use Arr;
 use App\Filament\Resources\People\PersonResource;
@@ -32,7 +34,7 @@ use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Staudenmeir\EloquentHasManyDeep\HasTableAlias;
 
-class Person extends Model
+class Person extends Model implements Commentable
 {
     use HasRelationships,
         HasTableAlias,
@@ -40,6 +42,7 @@ class Person extends Model
         HasFormEntries,
         HasPersonFormFields,
         HasPersonFilamentTableColumns,
+        HasComments,
         HasActivities;
 
 
