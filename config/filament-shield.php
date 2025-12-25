@@ -229,7 +229,12 @@ return [
     */
 
     'custom_permissions' => [
-        'show_hebrew_birthday'
+        'show_hebrew_birthday',
+        'change_other_messages',
+        'open_proposals_manager',
+        'manage_reports',
+        'banner_manager',
+        'view_telescope',
     ],
 
     /*
