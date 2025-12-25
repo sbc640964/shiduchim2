@@ -6,6 +6,7 @@ use App\Filament\Resources\People\Pages\Comments;
 use App\Filament\Resources\Students\Pages\EditStudent;
 use App\Filament\Resources\Students\Pages\ViewStudent;
 use App\Models\Traits\HasFormEntries;
+use App\Models\Traits\HasHebrewBirthday;
 use App\Models\Traits\HasPersonFormFields;
 use App\Models\Traits\HasPersonFilamentTableColumns;
 use Cache;
@@ -49,7 +50,8 @@ class Person extends Model implements Commentable
         HasPersonFormFields,
         HasPersonFilamentTableColumns,
         HasComments,
-        HasActivities;
+        HasActivities,
+        HasHebrewBirthday;
 
 
     protected static array $defaultActivityDescription = [
@@ -470,11 +472,6 @@ class Person extends Model implements Commentable
             ->when($this->spouse_id && $this->gender === 'G', fn ($str) => $str->append(' '.$this->father?->last_name))
             ->value();
 
-    }
-
-    public function getAgeAttribute(): int|float|null
-    {
-        return $this->born_at?->hebcal()?->age();
     }
 
     /*********** Overrides __call & __get ***********/

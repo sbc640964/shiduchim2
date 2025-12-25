@@ -45,6 +45,8 @@ class Hebcal
 
     public function set(int $units, $type = 'day'): static
     {
+        $this->getJewishDate();
+
         if ($type === 'day') {
             //TODO: check valid day
             $this->jewishDate->day = $units;

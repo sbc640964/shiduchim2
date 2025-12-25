@@ -475,6 +475,22 @@ class StudentResource extends Resource
                 ->label('תאריך לידה')
                 ->sortable(),
 
+            TextColumn::make('hebrew_birthday_human_diff')
+                ->label('יום הולדת עברי')
+                ->tooltip(fn (Person $person) => $person->hebrew_birthday_diff_days !== null
+                    ? $person->hebrew_birthday_diff_days.' ימים'
+                    : null
+                )
+                ->badge()
+                ->color(fn (Person $person) => match (true) {
+                    $person->hebrew_birthday_diff_days !== null && $person->hebrew_birthday_diff_days >= 0 && $person->hebrew_birthday_diff_days <= 7 => Color::Red,
+                    $person->hebrew_birthday_diff_days !== null && $person->hebrew_birthday_diff_days > 7 && $person->hebrew_birthday_diff_days <= 30 => Color::Orange,
+                    default => null,
+                })
+                ->visible(auth()->user()->can('show_hebrew_birthday'))
+                ->toggleable()
+                ->toggledHiddenByDefault(),
+
             //            TextColumn::make('prevSchool.name')
             //                ->label('בית ספר קודם')
             //                ->searchable()

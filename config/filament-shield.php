@@ -229,7 +229,7 @@ return [
     */
 
     'custom_permissions' => [
-        'prefix' => 'custom_permission'
+        'show_hebrew_birthday'
     ],
 
     /*

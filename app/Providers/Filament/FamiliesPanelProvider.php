@@ -177,7 +177,7 @@ class FamiliesPanelProvider extends PanelProvider
                     ->icon('iconsax-bul-call')
                     ->url(fn (): string => CallsDiariesResource::getUrl()),
             ])
-            ->assets(config('app.env') === 'local' ? [
+            ->assets(app()->environment('local') && ! app()->runningInConsole()  ? [
                 Js::make('livewire-hot-reload', Vite::asset('resources/js/livewire-hot-reload.js'))->module()
             ]: [])
             ->viteTheme('resources/css/filament/families/theme.css');
