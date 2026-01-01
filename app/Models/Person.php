@@ -3,27 +3,20 @@
 namespace App\Models;
 
 use App\Filament\Resources\People\Pages\Comments;
-use App\Filament\Resources\Students\Pages\EditStudent;
-use App\Filament\Resources\Students\Pages\ViewStudent;
-use App\Models\Traits\HasFormEntries;
-use App\Models\Traits\HasHebrewBirthday;
-use App\Models\Traits\HasPersonFormFields;
-use App\Models\Traits\HasPersonFilamentTableColumns;
-use Cache;
-use Closure;
-use Exception;
-use Kirschbaum\Commentions\Contracts\Commentable;
-use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
-use Kirschbaum\Commentions\Filament\Infolists\Components\CommentsEntry;
-use Kirschbaum\Commentions\HasComments;
-use Throwable;
-use Arr;
 use App\Filament\Resources\People\PersonResource;
+use App\Filament\Resources\Students\Pages\ViewStudent;
 use App\Models\Pivot\PersonFamily;
 use App\Models\Traits\HasActivities;
+use App\Models\Traits\HasFormEntries;
+use App\Models\Traits\HasHebrewBirthday;
+use App\Models\Traits\HasPersonFilamentTableColumns;
+use App\Models\Traits\HasPersonFormFields;
 use App\Services\Nedarim;
+use Arr;
+use Cache;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
@@ -36,23 +29,27 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Kirschbaum\Commentions\Contracts\Commentable;
+use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
+use Kirschbaum\Commentions\Filament\Infolists\Components\CommentsEntry;
+use Kirschbaum\Commentions\HasComments;
 use Spatie\Tags\HasTags;
 use Staudenmeir\EloquentHasManyDeep\HasManyDeep;
 use Staudenmeir\EloquentHasManyDeep\HasRelationships;
 use Staudenmeir\EloquentHasManyDeep\HasTableAlias;
+use Throwable;
 
 class Person extends Model implements Commentable
 {
-    use HasRelationships,
-        HasTableAlias,
-        HasTags,
-        HasFormEntries,
-        HasPersonFormFields,
-        HasPersonFilamentTableColumns,
+    use HasActivities,
         HasComments,
-        HasActivities,
-        HasHebrewBirthday;
-
+        HasFormEntries,
+        HasHebrewBirthday,
+        HasPersonFilamentTableColumns,
+        HasPersonFormFields,
+        HasRelationships,
+        HasTableAlias,
+        HasTags;
 
     protected static array $defaultActivityDescription = [
         'married' => 'נישואין',
@@ -124,7 +121,7 @@ class Person extends Model implements Commentable
         'billing_referrer_id',
         'billing_notes',
         'billing_published',
-        'last_diary_id'
+        'last_diary_id',
     ];
 
     /**
@@ -154,7 +151,6 @@ class Person extends Model implements Commentable
     {
         return 'tags:students:'.auth()->id();
     }
-
 
     public function city(): BelongsTo
     {
@@ -258,6 +254,11 @@ class Person extends Model implements Commentable
         return $this->morphMany(Diary::class, 'model');
     }
 
+    public function notes(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'documentable');
+    }
+
     public function phones(): MorphMany
     {
         return $this->morphMany(Phone::class, 'model');
@@ -290,7 +291,7 @@ class Person extends Model implements Commentable
             Person::class,
             [
                 PersonFamily::class,
-                Person::class. ' as p1',
+                Person::class.' as p1',
                 PersonFamily::class.' as fp',
             ],
             [
@@ -340,8 +341,9 @@ class Person extends Model implements Commentable
             $query->where('gender', $gender);
         }
 
-        if(is_numeric($search)) {
+        if (is_numeric($search)) {
             $query->searchExternalCode($search, $isStudent);
+
             return $query;
         }
 
@@ -363,8 +365,8 @@ class Person extends Model implements Commentable
 
     public function scopeSearchExternalCode(Builder $query, string $search, ?bool $student = false): Builder
     {
-        if(is_numeric($search)) {
-            $query->where($student ? 'external_code_students' :'external_code', $search);
+        if (is_numeric($search)) {
+            $query->where($student ? 'external_code_students' : 'external_code', $search);
         }
 
         return $query;
@@ -415,14 +417,14 @@ class Person extends Model implements Commentable
 
         $parentsNames = collect([$fatherName, $fatherInLawName])->filter()->join(' | ');
 
-        $address = $withAddress ? (filled($parentsNames) ? ' | ' : ''). collect([
-                $this->address ?? $this->family?->address ?? null,
-                $this->city?->name ?? $this->family?->city?->name ?? null,
-            ])->filter(fn ($str) => filled(trim($str)))->join(', ') : '';
+        $address = $withAddress ? (filled($parentsNames) ? ' | ' : '').collect([
+            $this->address ?? $this->family?->address ?? null,
+            $this->city?->name ?? $this->family?->city?->name ?? null,
+        ])->filter(fn ($str) => filled(trim($str)))->join(', ') : '';
 
-        $subText = trim($parentsNames . ' '. $address);
+        $subText = trim($parentsNames.' '.$address);
 
-        if($subText === ',') {
+        if ($subText === ',') {
             $subText = '';
         }
 
@@ -507,7 +509,7 @@ class Person extends Model implements Commentable
         return Cache::remember(
             'older_siblings_'.$this->id,
             now()->addMinutes(10),
-            fn() => Person::query()
+            fn () => Person::query()
                 ->where('parents_family_id', $this->parents_family_id)
                 ->where('id', '!=', $this->id)
                 ->when($this->born_at, fn (Builder $query) => $query
@@ -517,6 +519,7 @@ class Person extends Model implements Commentable
                 ->get()
         );
     }
+
     private function updateMarriageFields(Person $spouse, int $familyId): void
     {
         $this->recordActivity('married', [
@@ -528,29 +531,29 @@ class Person extends Model implements Commentable
         $this->spouse_id = $spouse->id;
         $this->father_in_law_id = $spouse->father_id;
         $this->mother_in_law_id = $spouse->mother_id;
-//        $this->status_family = 'married';
+        //        $this->status_family = 'married';
 
         $this->save();
 
-        if($this->lastSubscription?->isActive()) {
+        if ($this->lastSubscription?->isActive()) {
             $this->lastSubscription->status = 'married';
             $this->lastSubscription->save()
             && $this->lastSubscription->recordActivity('married',
-                    [
-                        'old_status' => 'active',
-                        'person_id' => $spouse->id
-                    ],
-                );
+                [
+                    'old_status' => 'active',
+                    'person_id' => $spouse->id,
+                ],
+            );
         }
     }
 
-    public function married(Person $person, Carbon $date, Proposal $proposal = null): ?Family
+    public function married(Person $person, Carbon $date, ?Proposal $proposal = null): ?Family
     {
         if ($this->gender === 'G') {
             return null;
         }
 
-        if($this->current_family_id || $person->current_family_id) {
+        if ($this->current_family_id || $person->current_family_id) {
             throw new Exception('לא יכול להתחתן, אחד האנשים כבר נשוי.');
         }
 
@@ -611,7 +614,7 @@ class Person extends Model implements Commentable
                 )->get();
 
             $proposals->each(function (Proposal $proposal) {
-                if(!$proposal->guy->current_family_id && !$proposal->girl->current_family_id) {
+                if (! $proposal->guy->current_family_id && ! $proposal->girl->current_family_id) {
                     $proposal->reopen(
                         status: $proposal->lastDiary->data['statuses']['proposal'] ?? null,
                         changeStatusOnly: true
@@ -629,9 +632,6 @@ class Person extends Model implements Commentable
         }
     }
 
-    /**
-     * @return void
-     */
     private function reBackStatusInMarriedLastSubscription(): void
     {
         if ($this->lastSubscription && $this->lastSubscription->status === 'married') {
@@ -667,7 +667,7 @@ class Person extends Model implements Commentable
             return false;
         }
 
-        //Update
+        // Update
         $notAllowedIds = Person::whereIsInhuman(true)->pluck('id')->toArray();
 
         $relatives = [];
@@ -705,9 +705,9 @@ class Person extends Model implements Commentable
 
         $relatives->groupBy('gender');
 
-//        $relativesSync = [];
+        //        $relativesSync = [];
 
-        //TODO: Add relatives to $relativesSync and sync with person relatives table
+        // TODO: Add relatives to $relativesSync and sync with person relatives table
 
         $this->last_update_relatives = now();
         $this->save();
@@ -807,7 +807,7 @@ class Person extends Model implements Commentable
                 match ($operator) {
                     '<' => $query->where('born_at', '>', $date),
                     '>' => $query->where('born_at', '<', $date),
-                    default => $query->whereBetween('born_at',[$date, $date->clone()->addYear()]),
+                    default => $query->whereBetween('born_at', [$date, $date->clone()->addYear()]),
                 };
             })
             ->when($data['tags'] ?? null, function (Builder $query, $value) use ($data) {
@@ -826,8 +826,7 @@ class Person extends Model implements Commentable
             ->when($data['father_mother_name'] ?? null, fn (Builder $query, $value) => $query->whereRelation('mother.father', fn (Builder $query) => $query->searchName($value)));
     }
 
-
-    //Billing
+    // Billing
 
     public function billingMatchmaker(): BelongsTo
     {
@@ -894,9 +893,10 @@ class Person extends Model implements Commentable
 
     public function getCurrentSubscriptionMatchmakerAttribute(): ?string
     {
-        if($this->lastSubscription?->status === 'active') {
+        if ($this->lastSubscription?->status === 'active') {
             return $this->lastSubscription->matchmaker?->name;
         }
+
         return null;
     }
 
@@ -933,7 +933,7 @@ class Person extends Model implements Commentable
             collect($tableMorph)
                 ->groupBy('TABLE_NAME')
                 ->each(function (\Illuminate\Support\Collection $items, $table) use ($oldId, $newId) {
-                    if($items->count() === 2){
+                    if ($items->count() === 2) {
                         DB::table($table)
                             ->where('model_id', $oldId)
                             ->where('model_type', Relation::getMorphAlias(static::class))
@@ -941,17 +941,16 @@ class Person extends Model implements Commentable
                     }
                 });
 
-            if($deleteAfterMerge) {
-//                \Schema::disableForeignKeyConstraints();
+            if ($deleteAfterMerge) {
+                //                \Schema::disableForeignKeyConstraints();
                 $person->delete();
-//                \Schema::enableForeignKeyConstraints();
+                //                \Schema::enableForeignKeyConstraints();
             }
 
             $this->recordActivity('merge', [
                 'old_person_id' => $oldId,
                 'is_delete_after_merge' => $deleteAfterMerge,
             ]);
-
 
             DB::commit();
 
@@ -963,9 +962,8 @@ class Person extends Model implements Commentable
     }
 
     /**
-     * @param mixed $family
-     * @param mixed $spouse
-     * @return void
+     * @param  mixed  $family
+     * @param  mixed  $spouse
      */
     protected function updateRollbackMarriageFields(Family $family): void
     {
@@ -977,7 +975,7 @@ class Person extends Model implements Commentable
 
             $lastStatusFamily = $this->activities()->latest()->firstWhere('type', 'married')?->data['old_status'] ?? 'single';
 
-//            $this->status_family = $lastStatusFamily;
+            //            $this->status_family = $lastStatusFamily;
         }
 
         $this->save() && $this->reBackStatusInMarriedLastSubscription();
@@ -985,14 +983,14 @@ class Person extends Model implements Commentable
 
     public static function commentsAction()
     {
-        return  CommentsAction::make()
+        return CommentsAction::make()
             ->iconButton()
             ->slideOver()
             ->perPage(10)
             ->loadMoreIncrementsBy(10)
             ->loadMoreLabel('טוען עוד תגובות')
             ->poll('5s')
-            ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all()));
+            ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn () => User::all()));
     }
 
     public static function commentsEntry()
@@ -1003,12 +1001,12 @@ class Person extends Model implements Commentable
             ->loadMoreIncrementsBy(10)
             ->loadMoreLabel('טוען עוד תגובות')
             ->poll('5s')
-            ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn() => User::all()));
+            ->mentionables(cache()->remember('mentionables_comments', now()->addHour(), fn () => User::all()));
     }
 
     public function getCommentUrl(): string
     {
-        if($this->spouse_id) {
+        if ($this->spouse_id) {
             return Comments::getUrl(['record' => $this->id]);
         }
 

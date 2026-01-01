@@ -6,40 +6,38 @@ use App\Filament\Resources\People\Pages\Comments;
 use App\Filament\Resources\People\Pages\CreditCards;
 use App\Filament\Resources\People\Pages\EditPerson;
 use App\Filament\Resources\People\Pages\Proposals;
-use App\Models\User;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Actions;
-use Filament\Actions\Action;
-use Filament\Tables\Filters\TernaryFilter;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Resources\Pages\Page;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\Repeater;
-use Filament\Support\Enums\Width;
-use DB;
-use Arr;
-use Filament\Forms\Components\Placeholder;
-use Filament\Support\Enums\Size;
-use Filament\Forms\Components\Textarea;
 use App\Models\Family;
 use App\Models\Matchmaker;
 use App\Models\Person;
 use App\Models\Proposal;
+use Arr;
+use DB;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Notifications\Notification;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Size;
+use Filament\Support\Enums\Width;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
-use Kirschbaum\Commentions\Filament\Actions\CommentsAction;
 
 class PersonResource extends Resource
 {
@@ -47,7 +45,7 @@ class PersonResource extends Resource
 
     protected static ?string $slug = 'people';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-house';
+    protected static string|\BackedEnum|null $navigationIcon = 'iconsax-bul-house';
 
     protected static ?string $navigationLabel = 'אנשים';
 
@@ -61,101 +59,101 @@ class PersonResource extends Resource
     {
         return $schema
             ->components([
-            Grid::make(3)
-                ->schema([
-                    Grid::make(1)
-                        ->columnSpan(1)
-                        ->schema([
-                            Section::make('גור')
-                                ->schema([
-                                    Person::externalCodeColumn()
-                                ]),
-                            Section::make('כללי')
-                                ->columns(1)
-                                ->columnSpan(1)
-                                ->schema([
-//                                    Forms\Components\ToggleButtons::make('gender')
-//                                        ->options([
-//                                            'B' => 'בן',
-//                                            'G' => 'בת',
-//                                        ])
-//                                        ->disabledOn('edit')
-//                                        ->default('B')
-//                                        ->live()
-//                                        ->grouped()
-//                                        ->label('מין')
-//                                        ->required(),
-                                    Family::filamentSelect('parents_family_id')
-                                        ->label('משפחת הורים'),
+                Grid::make(3)
+                    ->schema([
+                        Grid::make(1)
+                            ->columnSpan(1)
+                            ->schema([
+                                Section::make('גור')
+                                    ->schema([
+                                        Person::externalCodeColumn(),
+                                    ]),
+                                Section::make('כללי')
+                                    ->columns(1)
+                                    ->columnSpan(1)
+                                    ->schema([
+                                        //                                    Forms\Components\ToggleButtons::make('gender')
+                                        //                                        ->options([
+                                        //                                            'B' => 'בן',
+                                        //                                            'G' => 'בת',
+                                        //                                        ])
+                                        //                                        ->disabledOn('edit')
+                                        //                                        ->default('B')
+                                        //                                        ->live()
+                                        //                                        ->grouped()
+                                        //                                        ->label('מין')
+                                        //                                        ->required(),
+                                        Family::filamentSelect('parents_family_id')
+                                            ->label('משפחת הורים'),
 
-                                    TextInput::make('first_name')
-                                        ->label('שם פרטי')
-                                        ->required(),
+                                        TextInput::make('first_name')
+                                            ->label('שם פרטי')
+                                            ->required(),
 
-                                    TextInput::make('last_name')
-                                        ->label('שם משפחה')
-                                        ->required(),
+                                        TextInput::make('last_name')
+                                            ->label('שם משפחה')
+                                            ->required(),
 
-                                    TextInput::make('address')
-                                        ->label('כתובת'),
+                                        TextInput::make('address')
+                                            ->label('כתובת'),
 
-                                    Select::make('city_id')
-                                        ->relationship('city', 'name')
-                                        ->label('עיר')
-                                        ->searchable()
-                                        ->preload(),
+                                        Select::make('city_id')
+                                            ->relationship('city', 'name')
+                                            ->label('עיר')
+                                            ->searchable()
+                                            ->preload(),
 
-                                    Group::make([
-                                        Fieldset::make('פרטי אשה')
-                                            ->columns(1)
-                                            ->schema([
+                                        Group::make([
+                                            Fieldset::make('פרטי אשה')
+                                                ->columns(1)
+                                                ->schema([
 
-                                                Family::filamentSelect('spouse_parents_family_id')
-                                                    ->label('משפחת הורים')
-                                                    ->relationship('family'),
+                                                    Family::filamentSelect('spouse_parents_family_id')
+                                                        ->label('משפחת הורים')
+                                                        ->relationship('family'),
 
-                                                TextInput::make('wife_first_name')
-                                                    ->label('שם פרטי')
-                                                    ->required(),
-                                            ])
-                                    ])
-                                        ->visibleOn('create')
+                                                    TextInput::make('wife_first_name')
+                                                        ->label('שם פרטי')
+                                                        ->required(),
+                                                ]),
+                                        ])
+                                            ->visibleOn('create'),
 
-                                    //                                    Forms\Components\TextInput::make('phone_number')
-                                    //                                        ->label('טלפון')
-                                    //                                        ->required(),
-                                ]),
-                        ]),
-                    Grid::make(1)
-                        ->columnSpan(2)
-                        ->schema([
-                            static::familiesCard()->columnSpanFull()->visibleOn('edit'),
-                            static::phonesCard()->columnSpanFull(),
-                        ]),
-                    Section::make('פעולות')
-                        ->visibleOn('edit')
-                        ->columnSpanFull()
-                        ->schema([
-                            Actions::make([
-                                Action::make('data-raw')
-                                    ->action(fn () => null)
-                                    ->schema(function (Schema $schema, $record) {
-                                        return $schema
-                                            ->record($record)
-                                            ->components([
-                                                KeyValueEntry::make('data_raw'),
-                                            ]);
-                                    }),
+                                        //                                    Forms\Components\TextInput::make('phone_number')
+                                        //                                        ->label('טלפון')
+                                        //                                        ->required(),
+                                    ]),
                             ]),
-                        ])
-                ]),
-        ])->columns(1);
+                        Grid::make(1)
+                            ->columnSpan(2)
+                            ->schema([
+                                static::familiesCard()->columnSpanFull()->visibleOn('edit'),
+                                static::phonesCard()->columnSpanFull(),
+                            ]),
+                        Section::make('פעולות')
+                            ->visibleOn('edit')
+                            ->columnSpanFull()
+                            ->schema([
+                                Actions::make([
+                                    Action::make('data-raw')
+                                        ->action(fn () => null)
+                                        ->schema(function (Schema $schema, $record) {
+                                            return $schema
+                                                ->record($record)
+                                                ->components([
+                                                    KeyValueEntry::make('data_raw'),
+                                                ]);
+                                        }),
+                                ]),
+                            ]),
+                    ]),
+            ])->columns(1);
     }
 
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Person::commentsEntry()
+            Person::commentsEntry(),
         ]);
     }
 
@@ -167,7 +165,7 @@ class PersonResource extends Resource
                     ->with([
                         'family',
                         'spouse',
-                        'families' => fn ($query) => $query->withCount('children')
+                        'families' => fn ($query) => $query->withCount('children'),
                     ]);
             })
             ->filters([
@@ -254,6 +252,7 @@ class PersonResource extends Resource
             'edit' => Pages\EditPerson::route('/{record}/edit'),
             'family' => Pages\Family::route('/{record}/family'),
             'proposals' => Pages\Proposals::route('/{record}/proposals'),
+            'notes' => Pages\Notes::route('/{record}/notes'),
             'cards' => Pages\CreditCards::route('/{record}/cards'),
             'comments' => Pages\Comments::route('/{record}/comments'),
         ];
@@ -265,6 +264,7 @@ class PersonResource extends Resource
             EditPerson::class,
             Pages\Family::class,
             Proposals::class,
+            Pages\Notes::class,
             CreditCards::class,
             Comments::class,
         ]);
@@ -371,8 +371,9 @@ class PersonResource extends Resource
                                 ->update(['current_family_id' => $family->id]);
                         });
 
-                        if ($inserted)
+                        if ($inserted) {
                             $action->success();
+                        }
                     })
                 )
                 ->relationship('families', modifyQueryUsing: fn ($query) => $query->with(['people.father', 'people.fatherInLaw']))
@@ -384,115 +385,112 @@ class PersonResource extends Resource
                 ->deletable(false)
                 ->hiddenOn('create')
                 ->schema(fn (Person $person) => [
-                        Placeholder::make('wife')
-                            ->content(fn (Family $record) => new HtmlString($record->people->firstWhere('id', '!=', $person->id)->select_option_html))
-                            ->label('בן/בת זוג'),
-                        Placeholder::make('marriage_date')
-                            ->label('תאריך אירוסין')
-                            ->content(fn (Family $record) => $record->engagement_at?->hebcal()->hebrewDate(false, true) ?? '-'),
-                        Placeholder::make('status')
-                            ->label('מצב משפחתי')
-                            ->content(fn (Family $record) => $record->status_label),
-                        Fieldset::make('פעולות')
-                            ->columns(1)
-                            ->columnSpan(1)
-                            ->extraAttributes(['class' => '!p-2'])
-                            ->schema(function ($rawState, Family $record) use ($person) {
-                                return  [
-                                    Actions::make([
-                                        Action::make('edit')
-                                            ->label('עריכה')
-                                            ->icon('heroicon-o-pencil')
-                                            ->size(Size::ExtraSmall)
-                                            ->url(fn () => PersonResource::getUrl('edit', ['record' => $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->id]), true),
-                                        Action::make('cancel_close_proposal')
-                                            ->label('בטל סגירת שידוך')
-                                            ->icon('heroicon-o-x-mark')
-                                            ->size(Size::ExtraSmall)
-                                            ->disabled(fn () => !$record->proposal?->canReopen())
-                                            ->schema(fn (Schema $schema) => $schema->components([
-                                                Proposal::make()->statusField(true, 'status')
-                                                    ->default($record->proposal->lastDiary->data['statuses']['proposal'] ?? null)
-                                                    ->helperText($record->proposal->lastDiary->data['statuses']['proposal'] ?? null
-                                                        ? 'הסטטוס ברירת המחדל הינו הסטטוס האחרון שהיה לפני הסגירה'
-                                                        : null
-                                                    )
-                                                    ->required(),
-                                                Textarea::make('reason_status')
-                                                    ->label('הערה')
-                                                    ->default('נפתח מחדש ע"י '.auth()->user()->name),
-                                            ]))
-                                            ->modalWidth(Width::Small)
-                                            ->modalSubmitActionLabel('ביטול סגירה')
-                                            ->action(fn (array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
-                                        Action::make('divorce')
-                                            ->label('גירושין')
-                                            ->disabled(fn () =>
-                                                !auth()->user()->can('update_divorce')
-                                                || $record->status !== 'married'
-                                            )
-                                            ->color(fn () =>
-                                            !auth()->user()->can('update_divorce')
+                    Placeholder::make('wife')
+                        ->content(fn (Family $record) => new HtmlString($record->people->firstWhere('id', '!=', $person->id)->select_option_html))
+                        ->label('בן/בת זוג'),
+                    Placeholder::make('marriage_date')
+                        ->label('תאריך אירוסין')
+                        ->content(fn (Family $record) => $record->engagement_at?->hebcal()->hebrewDate(false, true) ?? '-'),
+                    Placeholder::make('status')
+                        ->label('מצב משפחתי')
+                        ->content(fn (Family $record) => $record->status_label),
+                    Fieldset::make('פעולות')
+                        ->columns(1)
+                        ->columnSpan(1)
+                        ->extraAttributes(['class' => '!p-2'])
+                        ->schema(function ($rawState, Family $record) use ($person) {
+                            return [
+                                Actions::make([
+                                    Action::make('edit')
+                                        ->label('עריכה')
+                                        ->icon('heroicon-o-pencil')
+                                        ->size(Size::ExtraSmall)
+                                        ->url(fn () => PersonResource::getUrl('edit', ['record' => $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->id]), true),
+                                    Action::make('cancel_close_proposal')
+                                        ->label('בטל סגירת שידוך')
+                                        ->icon('heroicon-o-x-mark')
+                                        ->size(Size::ExtraSmall)
+                                        ->disabled(fn () => ! $record->proposal?->canReopen())
+                                        ->schema(fn (Schema $schema) => $schema->components([
+                                            Proposal::make()->statusField(true, 'status')
+                                                ->default($record->proposal->lastDiary->data['statuses']['proposal'] ?? null)
+                                                ->helperText($record->proposal->lastDiary->data['statuses']['proposal'] ?? null
+                                                    ? 'הסטטוס ברירת המחדל הינו הסטטוס האחרון שהיה לפני הסגירה'
+                                                    : null
+                                                )
+                                                ->required(),
+                                            Textarea::make('reason_status')
+                                                ->label('הערה')
+                                                ->default('נפתח מחדש ע"י '.auth()->user()->name),
+                                        ]))
+                                        ->modalWidth(Width::Small)
+                                        ->modalSubmitActionLabel('ביטול סגירה')
+                                        ->action(fn (array $data) => $record->proposal->reopen($data['status'], $data['reason_status'] ?? null)),
+                                    Action::make('divorce')
+                                        ->label('גירושין')
+                                        ->disabled(fn () => ! auth()->user()->can('update_divorce')
                                             || $record->status !== 'married'
-                                                ? Color::Blue
-                                                : Color::Red
-                                            )
-                                            ->size(Size::ExtraSmall)
-                                            ->requiresConfirmation()
-                                            ->successNotification(function (Notification $notification) use ($person) {
-                                                return $notification
-                                                    ->actions([
-                                                        Action::make('cancel')
-                                                            ->label('ביטול')
-                                                            ->action(function () use ($person){
-                                                                $person->rollbackDivorces();
-                                                            })
-                                                    ])
-                                                    ->title('הגירושין נרשם בהצלחה')
-                                                    ->body('הגירושין נרשם בהצלחה ונשמר במערכת');
-                                            })
-                                            ->label('עדכון גירושין')
-                                            ->outlined()
-                                            ->icon('iconsax-bul-arrow-square')
-                                            ->action(function (Action $action, $livewire) use ($record): void {
-                                                if( $record && $record->divorce()) {
-                                                    $action->success();
-                                                    $livewire->refreshFormDataB(['father_in_law_id', 'spouse_id', 'families']);
-                                                }
-                                            }),
-                                        Action::make('death')
-                                            ->label('עדכון פטירה')
-                                            ->schema(function (Schema $schema) {
-                                                return $schema->components([
-                                                    DatePicker::make('died_at')
-                                                        ->label('תאריך פטירה')
-                                                        ->helperText('ניתן להזין תאריך פטירה, במקרה ואינך יודע השאר ריק בבקשה!'),
-                                                ]);
-                                            })
-                                            ->disabled(fn () =>
-                                                ! $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->isAlive()
-                                                || ! auth()->user()->can('update_death')
-                                            )
-                                            ->color('danger')
-                                            ->outlined()
-                                            ->size(Size::ExtraSmall)
-                                            ->action(function (array $data) use ($record, $person) {
-                                                $data['died_at'] = filled($data['died_at']) ? $data['died_at'] : '1970-01-02 00:00:00';
-                                                $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->update($data);
-                                            })
-                                            ->requiresConfirmation()
-                                    ])
-                                ];
-                            }),
-//                        Forms\Components\Select::make('wife')
-//                            ->relationship(
-//                                'wife',
-////                            modifyQueryUsing: fn ($query) => $query->with('father', 'fatherInLaw')
-//                            )
-//                            ->label('אישה')
-////                        ->getOptionLabelFromRecordUsing(fn (Person $record) => $record->select_option_html)
-//                            ->allowHtml()
-//                            ->searchable(['first_name', 'last_name'])
+                                        )
+                                        ->color(fn () => ! auth()->user()->can('update_divorce')
+                                        || $record->status !== 'married'
+                                            ? Color::Blue
+                                            : Color::Red
+                                        )
+                                        ->size(Size::ExtraSmall)
+                                        ->requiresConfirmation()
+                                        ->successNotification(function (Notification $notification) use ($person) {
+                                            return $notification
+                                                ->actions([
+                                                    Action::make('cancel')
+                                                        ->label('ביטול')
+                                                        ->action(function () use ($person) {
+                                                            $person->rollbackDivorces();
+                                                        }),
+                                                ])
+                                                ->title('הגירושין נרשם בהצלחה')
+                                                ->body('הגירושין נרשם בהצלחה ונשמר במערכת');
+                                        })
+                                        ->label('עדכון גירושין')
+                                        ->outlined()
+                                        ->icon('iconsax-bul-arrow-square')
+                                        ->action(function (Action $action, $livewire) use ($record): void {
+                                            if ($record && $record->divorce()) {
+                                                $action->success();
+                                                $livewire->refreshFormDataB(['father_in_law_id', 'spouse_id', 'families']);
+                                            }
+                                        }),
+                                    Action::make('death')
+                                        ->label('עדכון פטירה')
+                                        ->schema(function (Schema $schema) {
+                                            return $schema->components([
+                                                DatePicker::make('died_at')
+                                                    ->label('תאריך פטירה')
+                                                    ->helperText('ניתן להזין תאריך פטירה, במקרה ואינך יודע השאר ריק בבקשה!'),
+                                            ]);
+                                        })
+                                        ->disabled(fn () => ! $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->isAlive()
+                                            || ! auth()->user()->can('update_death')
+                                        )
+                                        ->color('danger')
+                                        ->outlined()
+                                        ->size(Size::ExtraSmall)
+                                        ->action(function (array $data) use ($record, $person) {
+                                            $data['died_at'] = filled($data['died_at']) ? $data['died_at'] : '1970-01-02 00:00:00';
+                                            $record->people->firstWhere('gender', $person->gender === 'B' ? 'G' : 'B')->update($data);
+                                        })
+                                        ->requiresConfirmation(),
+                                ]),
+                            ];
+                        }),
+                    //                        Forms\Components\Select::make('wife')
+                    //                            ->relationship(
+                    //                                'wife',
+                    // //                            modifyQueryUsing: fn ($query) => $query->with('father', 'fatherInLaw')
+                    //                            )
+                    //                            ->label('אישה')
+                    // //                        ->getOptionLabelFromRecordUsing(fn (Person $record) => $record->select_option_html)
+                    //                            ->allowHtml()
+                    //                            ->searchable(['first_name', 'last_name'])
 
                 ]),
         ]);
@@ -515,7 +513,6 @@ class PersonResource extends Resource
                         )
                         ->searchable(),
                 ])->columns(3)->columnSpanFull(),
-
 
                 Repeater::make('phones')
                     ->relationship('phones')

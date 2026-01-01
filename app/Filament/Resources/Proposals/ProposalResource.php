@@ -2,34 +2,17 @@
 
 namespace App\Filament\Resources\Proposals;
 
-use Closure;
-use Filament\Schemas\Components\FusedGroup;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Filters\Filter;
-use App\Filament\Resources\Proposals\Pages\ListProposals;
-use Filament\Schemas\Components\Group;
-use View;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\BulkAction;
-use Filament\Support\Enums\Width;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\Action;
-use App\Filament\Resources\Proposals\Pages\EditProposal;
-use App\Filament\Resources\Proposals\Pages\ViewProposal;
-use App\Filament\Resources\Proposals\Pages\Family;
-use App\Filament\Resources\Proposals\Pages\ManageContacts;
-use App\Filament\Resources\Proposals\Pages\ManageFiles;
-use App\Filament\Resources\Proposals\Pages\Schools;
-use App\Filament\Resources\Proposals\Pages\UserAssignmentManagement;
-use Filament\Tables\Columns\ViewColumn;
-use Filament\Forms\Components\DatePicker;
-use Throwable;
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use App\Filament\Resources\Proposals\Pages\Diaries;
+use App\Filament\Resources\Proposals\Pages\EditProposal;
+use App\Filament\Resources\Proposals\Pages\Family;
+use App\Filament\Resources\Proposals\Pages\ListProposals;
+use App\Filament\Resources\Proposals\Pages\ManageContacts;
+use App\Filament\Resources\Proposals\Pages\ManageFiles;
+use App\Filament\Resources\Proposals\Pages\Notes;
+use App\Filament\Resources\Proposals\Pages\Schools;
+use App\Filament\Resources\Proposals\Pages\UserAssignmentManagement;
+use App\Filament\Resources\Proposals\Pages\ViewProposal;
 use App\Models\City;
 use App\Models\Diary;
 use App\Models\Person;
@@ -38,18 +21,35 @@ use App\Models\School;
 use App\Models\SettingOld as Setting;
 use App\Models\User;
 use Carbon\Carbon;
+use Closure;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Navigation\NavigationGroup;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\FusedGroup;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ViewColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Malzariey\FilamentDaterangepickerFilter\Fields\DateRangePicker;
+use View;
 
 class ProposalResource extends Resource
 {
@@ -61,7 +61,7 @@ class ProposalResource extends Resource
 
     protected static ?string $pluralLabel = 'הצעות';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'iconsax-bul-lamp-charge';
+    protected static string|\BackedEnum|null $navigationIcon = 'iconsax-bul-lamp-charge';
 
     protected static ?string $recordTitleAttribute = 'families_names';
 
@@ -87,6 +87,7 @@ class ProposalResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
+
         return $schema->components([
             Textarea::make('not')
                 ->label('הערה'),
@@ -109,7 +110,7 @@ class ProposalResource extends Resource
     public static function tableFilters(Table $table): Table
     {
         return $table
-            ->searchable(['people.first_name', 'people.last_name',])
+            ->searchable(['people.first_name', 'people.last_name'])
             ->filters([
                 Filter::make('show-finished')
                     ->label('הצג הצעות סגורות')
@@ -123,19 +124,18 @@ class ProposalResource extends Resource
                     ->label('הצג רק שיתופי פעולה')
                     ->toggle()
                     ->baseQuery(function (Builder $query, array $data) {
-                        return $query->when($data['isActive'] ?? false, fn (Builder $query) =>
-                            $query->whereIn('id', function ($sub) {
-                                $sub->select('proposal_id') // שנה ל-id של הטבלה הראשית שלך
-                                    ->from('user_proposal') // טבלת הפיבוט
-                                    ->groupBy('proposal_id')
-                                    ->havingRaw('COUNT(user_id) >= 2');
-                            })
+                        return $query->when($data['isActive'] ?? false, fn (Builder $query) => $query->whereIn('id', function ($sub) {
+                            $sub->select('proposal_id') // שנה ל-id של הטבלה הראשית שלך
+                                ->from('user_proposal') // טבלת הפיבוט
+                                ->groupBy('proposal_id')
+                                ->havingRaw('COUNT(user_id) >= 2');
+                        })
                         );
                     }),
                 Filter::make('show-hidden')
                     ->label('הצג הצעות מוסתרות')
                     ->toggle()
-                    ->default(fn ($livewire) => ! ( $livewire instanceof ListProposals ))
+                    ->default(fn ($livewire) => ! ($livewire instanceof ListProposals))
                     ->baseQuery(function (Builder $query, array $data) {
                         return $query->when($data['isActive'] ?? false, fn (Builder $query) => $query
                             ->withoutGlobalScope('withoutHidden')
@@ -359,13 +359,13 @@ class ProposalResource extends Resource
             ])
             ->toolbarActions(static::getBulkActions())
             ->recordClasses(fn (Proposal $proposal) => [
-                "bg-red-50 hover:bg-red-100" => $proposal->hidden_at,
-//                "relative before:content-[''] before:border-s-[6px] before:z-20 before:border-red-600 before:h-full before:absolute before:start-0" => $proposal->hidden_at,
+                'bg-red-50 hover:bg-red-100' => $proposal->hidden_at,
+                //                "relative before:content-[''] before:border-s-[6px] before:z-20 before:border-red-600 before:h-full before:absolute before:start-0" => $proposal->hidden_at,
             ])
             ->columns(static::getColumns());
     }
 
-    static public function getBulkActions(): array
+    public static function getBulkActions(): array
     {
         return [
             BulkAction::make('hidden')
@@ -381,14 +381,14 @@ class ProposalResource extends Resource
                     Select::make('users')
                         ->label('שדכנים')
                         ->options(User::orderBy('name')->pluck('name', 'id'))
-                        ->multiple()
+                        ->multiple(),
                 ])
                 ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data) {
                     $users = $records->map->share($data['users'])
                         ->flatten(1)->unique('id');
 
                     Notification::make()
-                        ->title(auth()->user()->name . " שיתף איתך {$records->count()} הצעות")
+                        ->title(auth()->user()->name." שיתף איתך {$records->count()} הצעות")
                         ->icon('iconsax-bul-notification-bing')
                         ->iconColor('primary')
                         ->body('עבור כל אחת מהם קיבלת הודעה בתיבת ההתראות, על מנת להציג אותם עליך ללחוץ על הפעמון בצד שמאל של המסך למעלה')
@@ -491,6 +491,7 @@ class ProposalResource extends Resource
             //            'families' => Pages\ManageFamilies::route('/{record}/families'),
             'families' => Family::route('/{record}/{side}/families'),
             'diaries' => Diaries::route('/{record}/{side}/diaries'),
+            'notes' => Notes::route('/{record}/notes'),
             //            'diaries' => Pages\ManageDiaries::route('/{record}/diaries'),
             'contacts' => ManageContacts::route('/{record}/{side}/contacts'),
             'documents' => ManageFiles::route('/{record}/documents'),
@@ -509,6 +510,8 @@ class ProposalResource extends Resource
 
         return collect([
             ...ViewProposal::getNavigationItems($parameters),
+
+            Notes::getNavigationItems($parameters)[0],
             NavigationGroup::make('בחור')
                 ->items(static::getNavigationItemBySide($parameters, 'guy')),
             NavigationGroup::make('בחורה')

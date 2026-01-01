@@ -3,8 +3,12 @@
 namespace App\Providers;
 
 // use Illuminate\Support\Facades\Gate;
+use App\Models\Note;
+use App\Models\NoteComment;
 use App\Models\User;
 use App\Policies\ExportPolicy;
+use App\Policies\NoteCommentPolicy;
+use App\Policies\NotePolicy;
 use Filament\Actions\Exports\Models\Export;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +22,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Export::class => ExportPolicy::class,
+        Note::class => NotePolicy::class,
+        NoteComment::class => NoteCommentPolicy::class,
     ];
 
     /**

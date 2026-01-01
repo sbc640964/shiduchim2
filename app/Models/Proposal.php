@@ -2,29 +2,29 @@
 
 namespace App\Models;
 
-use DB;
-use View;
-use Arr;
-use Filament\Actions\Action;
 use App\Filament\Clusters\Settings\Pages\Statuses;
 use App\Filament\Resources\Proposals\ProposalResource;
+use App\Models\SettingOld as Setting;
 use App\Models\Traits\HasActivities;
 use App\Models\Traits\HasProposalFilamentFormsFields;
+use Arr;
 use Carbon\CarbonInterface;
+use DB;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Spatie\Tags\HasTags;
-use App\Models\SettingOld as Setting;
-use Filament\Notifications\Notification;
-
+use View;
 
 class Proposal extends Model
 {
@@ -101,7 +101,7 @@ class Proposal extends Model
 
     public function getModelLabel(): string
     {
-        return $this->guy?->fullName . ' ו' . $this->girl?->fullName;
+        return $this->guy?->fullName.' ו'.$this->girl?->fullName;
     }
 
     protected static function booted()
@@ -163,6 +163,11 @@ class Proposal extends Model
     public function diaries(): HasMany
     {
         return $this->hasMany(Diary::class)->chaperone();
+    }
+
+    public function notes(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'documentable');
     }
 
     public function guy(): BelongsTo
@@ -268,7 +273,6 @@ class Proposal extends Model
             });
         }
 
-
         return $query;
     }
 
@@ -351,7 +355,7 @@ class Proposal extends Model
 
             $action->failureNotification(fn (Notification $notification) => $notification
                 ->title('סגירת הצעה נכשלה')
-                ->body($e->getMessage() . " - " . $e->getFile() . ':' . $e->getLine())
+                ->body($e->getMessage().' - '.$e->getFile().':'.$e->getLine())
             );
 
             $action->failure();
@@ -383,7 +387,7 @@ class Proposal extends Model
                         'reason_status' => $data['reason_status'] ?? null,
                         'family_id' => $family->id,
                     ])->saveOrFail() && $this->recordActivity('close-married', $data['external'] ?? false ? [
-                        'note' => 'ע"י שדכן חיצוני'
+                        'note' => 'ע"י שדכן חיצוני',
                     ] : []);
                 } else {
                     throw new \Exception('לא ניתן לסגור את ההצעה עם נישואין, יש בעיה ביצירת המשפחה');
@@ -393,7 +397,7 @@ class Proposal extends Model
                     'status' => $closeStatus,
                     'reason_status' => 'נסגר בשידוך '.$data,
                 ])->saveOrFail() && $this->recordActivity('close-married-other', [
-                    'closed_proposal_id' => $data
+                    'closed_proposal_id' => $data,
                 ]);
             }
 
@@ -408,15 +412,15 @@ class Proposal extends Model
 
     public function reopen(?string $status = null, ?string $reason = null, ?bool $changeStatusOnly = false): void
     {
-        if($status && $status === Statuses::getClosedProposalStatus() && ! $changeStatusOnly) {
+        if ($status && $status === Statuses::getClosedProposalStatus() && ! $changeStatusOnly) {
             return;
         }
 
-        if($changeStatusOnly) {
+        if ($changeStatusOnly) {
             $this->update([
                 'status' => $status ?? Statuses::getDefaultProposalStatus(),
                 'reason_status' => $reason,
-            ]) &&  $this->recordActivity('reopen');
+            ]) && $this->recordActivity('reopen');
 
             return;
         }
@@ -426,7 +430,7 @@ class Proposal extends Model
             $family = $this->getSpoken('guy')
                 ->reMarried($this, $this->family);
 
-            if($family) {
+            if ($family) {
                 $this->update([
                     'status' => $status,
                     'finished_at' => null,
@@ -467,11 +471,11 @@ class Proposal extends Model
             }
         }
 
-        //remove closed status from list
+        // remove closed status from list
         $closedStatus = Statuses::getClosedProposalStatus();
 
         if ($closedStatus && $currentStatus['name'] !== $closedStatus) {
-            if((bool) $currentStatus['is_not_include'] === false) {
+            if ((bool) $currentStatus['is_not_include'] === false) {
                 $currentStatus['list'][] = $closedStatus;
             } else {
                 $currentStatus['list'] = array_filter($currentStatus['list'], function ($status) use ($closedStatus) {
@@ -656,7 +660,7 @@ class Proposal extends Model
 
     public function canReopen(): bool
     {
-        //is today finished
+        // is today finished
         $toDayFinished = $this->finished_at?->isToday();
 
         return $this->status === Statuses::getClosedProposalStatus()
@@ -680,15 +684,14 @@ class Proposal extends Model
     }
 
     /**
-     * @param string $side - guy|girl
-     * @return int
+     * @param  string  $side  - guy|girl
      */
-    function countSideCalls(string $side): int
+    public function countSideCalls(string $side): int
     {
         $side = $this->getSpoken($side);
 
         $phones = collect([
-            $side->contacts->pluck("phones")->flatten(1),
+            $side->contacts->pluck('phones')->flatten(1),
             $side->parentsFamily->phones,
             $side->father->phones,
             $side->mother->phones,
@@ -729,28 +732,27 @@ class Proposal extends Model
 
     public function getIsOpenAttribute()
     {
-        return $this->opened_at && !$this->closed_at;
+        return $this->opened_at && ! $this->closed_at;
     }
 
     public function share(int|array $id): Collection
     {
         $result = $this->users()->syncWithoutDetaching(Arr::wrap($id));
 
-        if(count($result['attached']) === 0) {
+        if (count($result['attached']) === 0) {
             return collect();
         }
-
 
         $users = User::whereIn('id', $result['attached'])->get();
 
         Notification::make()
             ->title('שותפה אתך הצעת שידוך')
-            ->body(auth()->user()->name . " שיתף איתך הצעת שידוך " . $this->guy->full_name . ' ו' . $this->girl->full_name)
+            ->body(auth()->user()->name.' שיתף איתך הצעת שידוך '.$this->guy->full_name.' ו'.$this->girl->full_name)
             ->actions([
                 Action::make('get_to_page')
                     ->label('פתח הצעת שידוך')
                     ->markAsRead()
-                    ->url(ProposalResource::getUrl('view', ['record' => $this->getKey()]))
+                    ->url(ProposalResource::getUrl('view', ['record' => $this->getKey()])),
             ])
             ->sendToDatabase($users, isEventDispatched: true);
 
@@ -766,7 +768,7 @@ class Proposal extends Model
 
     public function getStatusOpenAttribute(): ?string
     {
-        if(!$this->opened_at) {
+        if (! $this->opened_at) {
             return null;
         }
 
