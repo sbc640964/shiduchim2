@@ -244,6 +244,7 @@ return [
         'update_death',
         'banner_manager',
         'view_telescope',
+        'ai_beta'
     ],
 
     /*
