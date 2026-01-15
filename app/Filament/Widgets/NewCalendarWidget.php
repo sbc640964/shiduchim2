@@ -234,7 +234,7 @@ Html
 
             Action::make('completing')
                 ->label('עדכון ביצוע משימה')
-                ->hidden(fn ($record) => $record->completed_at || ($record->data['contact_to'] ?? null))
+                ->hidden(fn ($record) => $record->completed_at)
                 ->button()
                 ->modalWidth(Width::Small)
                 ->requiresConfirmation()
