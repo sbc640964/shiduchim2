@@ -58,10 +58,11 @@ class Proposals extends ManageRelatedRecords
                 //                Tables\Actions\AssociateAction::make(),
             ])
             ->recordActions([
+                ProposalResource::getAddDiaryAction(),
+                ProposalResource::getAddDiaryAction('guy'),
+                ProposalResource::getAddDiaryAction('girl'),
                 ActionGroup::make([
-                    ProposalResource::getAddDiaryAction(),
-                    ProposalResource::getAddDiaryAction('guy'),
-                    ProposalResource::getAddDiaryAction('girl'),
+
                 ]),
                 ProposalResource::getCloseProposalAction(),
                 ViewAction::make()
