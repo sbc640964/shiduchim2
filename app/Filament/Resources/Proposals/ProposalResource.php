@@ -456,7 +456,7 @@ class ProposalResource extends Resource
 //            ->action(function (Form $form) {
 //                dd($form->getState());
 //            })
-//            ->hidden(fn (Proposal $proposal) => ! $proposal->userCanAccess())
+            ->hidden(fn (Proposal $record) => ! $record->userCanAccess())
             ->schema(fn ($form, $arguments, $record) => Diaries::getDiaryForm($form, $record, $arguments['side'] ?? null));
     }
 
